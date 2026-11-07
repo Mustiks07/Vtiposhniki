@@ -156,6 +156,24 @@ export function EvaluationPage() {
     retry: 0,
   });
 
+  // `?evidence=<index>` (links from the comparison page) opens that evidence item of the
+  // selected criterion in the chosen scope once, then leaves the URL as a normal card link.
+  const evidenceParam = params.get('evidence');
+  useEffect(() => {
+    if (evidenceParam === null || !e || !conversation.data || !checklist.data) return;
+    const proposals = scope === 'automatic' ? e.artifact.automatic_final : e.effective_proposals;
+    const item = proposals.find((p) => p.criterion_id === selectedParam)?.evidence[Number(evidenceParam)];
+    const next = new URLSearchParams(params);
+    next.delete('evidence');
+    if (item?.kind === 'source' && item.source_chunk_id) setOpenSource(item.source_chunk_id);
+    else if (item) {
+      setHighlighted(evidenceMessageIds(item, conversation.data.messages));
+      setFocusToken((t) => t + 1);
+      next.set('view', 'transcript');
+    }
+    setParams(next, { replace: true });
+  }, [evidenceParam, e, conversation.data, checklist.data, scope, selectedParam, params, setParams]);
+
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value);
@@ -169,6 +187,7 @@ export function EvaluationPage() {
     const next = new URLSearchParams(params);
     next.set('criterion', cid);
     next.delete('view');
+    next.delete('evidence');
     setParams(next);
     setCriterionToFocus(cid);
   }
