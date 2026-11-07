@@ -75,10 +75,11 @@ class Usage:
 
 
 def _record_tokens(record: CallRecord) -> int | None:
+    """Input plus output. Provider adapters already include reasoning tokens in output."""
     usage = record.usage
     if usage is None or usage.input_tokens is None or usage.output_tokens is None:
         return None
-    return usage.input_tokens + usage.output_tokens + (usage.reasoning_tokens or 0)
+    return usage.input_tokens + usage.output_tokens
 
 
 def summarize_usage(records: Sequence[CallRecord]) -> Usage:
@@ -393,18 +394,19 @@ class JobQueue:
         self._lease = timedelta(seconds=lease_seconds)
         self._retry = retry
 
-    def _fail_without_attempt(self, conn: Connection, job: RowMapping, reason: str) -> None:
-        error = make_error(ErrorCode.BUDGET_EXCEEDED, reason)
+    def _fail_without_attempt(self, conn: Connection, job: RowMapping, error_json: str) -> None:
         run(
             conn,
             "UPDATE jobs SET state = 'failed', stage = 'done', next_attempt_at = NULL, "
             "error_json = :error, updated_at = :now WHERE id = :id",
-            {
-                "error": error.model_dump_json(),
-                "now": to_wire_time(self._clock()),
-                "id": job["id"],
-            },
+            {"error": error_json, "now": to_wire_time(self._clock()), "id": job["id"]},
         )
+
+    def _attempts_used(self, conn: Connection, job_id: str) -> int:
+        count = row(
+            conn, "SELECT COUNT(*) AS n FROM job_attempts WHERE job_id = :id", {"id": job_id}
+        )
+        return int(count["n"]) if count else 0
 
     def claim_next(self) -> Claim | None:
         now = self._clock()
@@ -420,17 +422,22 @@ class JobQueue:
                 )
                 if job is None:
                     return None
+                # An exhausted job is never retried automatically, whatever ended its last
+                # attempt: a failure, an expired lease or a shutdown all count.
                 reason = budget_exhaustion(job, call_records(conn, job["id"]), now)
-                if reason is None:
+                if reason is not None:
+                    error = make_error(ErrorCode.BUDGET_EXCEEDED, reason)
+                    self._fail_without_attempt(conn, job, error.model_dump_json())
+                elif self._attempts_used(conn, job["id"]) >= int(job["max_attempts"]):
+                    limit = make_error(ErrorCode.BUDGET_EXCEEDED, "Job attempt limit is exhausted")
+                    self._fail_without_attempt(
+                        conn, job, job["error_json"] or limit.model_dump_json()
+                    )
+                else:
                     return self._start_attempt(conn, job, now)
-                # An exhausted job is never retried automatically.
-                self._fail_without_attempt(conn, job, reason)
 
     def _start_attempt(self, conn: Connection, job: RowMapping, now: datetime) -> Claim:
-        count = row(
-            conn, "SELECT COUNT(*) AS n FROM job_attempts WHERE job_id = :id", {"id": job["id"]}
-        )
-        number = int(count["n"]) + 1 if count else 1
+        number = self._attempts_used(conn, job["id"]) + 1
         attempt_id, lease_id = f"att_{uuid4().hex}", f"lease_{uuid4().hex}"
         wire_now = to_wire_time(now)
         run(
@@ -504,7 +511,11 @@ class JobQueue:
             "SELECT * FROM jobs WHERE state = 'running' AND lease_expires_at <= :now",
             {"now": wire_now},
         ):
-            error = make_error(ErrorCode.LEASE_LOST, "Attempt lease expired", retryable=True)
+            reason = budget_exhaustion(job, call_records(conn, job["id"]), now)
+            can_retry = (
+                self._attempts_used(conn, job["id"]) < int(job["max_attempts"]) and reason is None
+            )
+            error = make_error(ErrorCode.LEASE_LOST, "Attempt lease expired", retryable=can_retry)
             run(
                 conn,
                 "UPDATE job_attempts SET state = 'expired', finished_at = :now, error_json = :error"
@@ -512,14 +523,6 @@ class JobQueue:
                 {"now": wire_now, "error": error.model_dump_json(), "attempt": job["attempt_id"]},
             )
             self._close_open_calls(conn, job["attempt_id"])
-            count = row(
-                conn,
-                "SELECT COUNT(*) AS n FROM job_attempts WHERE job_id = :id",
-                {"id": job["id"]},
-            )
-            used = int(count["n"]) if count else 0
-            reason = budget_exhaustion(job, call_records(conn, job["id"]), now)
-            can_retry = used < int(job["max_attempts"]) and reason is None
             run(
                 conn,
                 "UPDATE jobs SET state = :state, stage = 'done', next_attempt_at = :next, "
@@ -557,14 +560,20 @@ class JobQueue:
             return True
 
     def release(self, claim: Claim) -> None:
-        """Clean shutdown: the attempt is cancelled and the job resumes after restart."""
+        """Clean shutdown: the attempt is cancelled. The job resumes only if the limits allow."""
         now = self._clock()
         wire_now = to_wire_time(now)
-        error = make_error(ErrorCode.CANCELLED, "Attempt stopped by shutdown", retryable=True)
         with self._db.write() as conn:
             job = self._current_job(conn, claim.job_id)
             if not self._holds_lease(job, claim):
                 return
+            can_retry = (
+                self._attempts_used(conn, claim.job_id) < int(job["max_attempts"])
+                and budget_exhaustion(job, call_records(conn, claim.job_id), now) is None
+            )
+            error = make_error(
+                ErrorCode.CANCELLED, "Attempt stopped by shutdown", retryable=can_retry
+            )
             run(
                 conn,
                 "UPDATE job_attempts SET state = 'cancelled', finished_at = :now, "
@@ -574,10 +583,16 @@ class JobQueue:
             self._close_open_calls(conn, claim.attempt_id)
             run(
                 conn,
-                "UPDATE jobs SET state = 'retry_wait', stage = 'done', next_attempt_at = :now, "
+                "UPDATE jobs SET state = :state, stage = 'done', next_attempt_at = :next, "
                 "lease_id = NULL, lease_expires_at = NULL, error_json = :error, updated_at = :now "
                 "WHERE id = :id",
-                {"now": wire_now, "error": error.model_dump_json(), "id": claim.job_id},
+                {
+                    "state": "retry_wait" if can_retry else "failed",
+                    "next": wire_now if can_retry else None,
+                    "now": wire_now,
+                    "error": error.model_dump_json(),
+                    "id": claim.job_id,
+                },
             )
 
     def find_reusable(self, keys: Sequence[str]) -> tuple[str, EvaluationArtifact] | None:
@@ -609,10 +624,7 @@ class JobQueue:
             reason = budget_exhaustion(job, call_records(conn, job_id), now)
             if reason is not None:
                 raise ApiFailure(make_error(ErrorCode.BUDGET_EXCEEDED, reason))
-            count = row(
-                conn, "SELECT COUNT(*) AS n FROM job_attempts WHERE job_id = :id", {"id": job_id}
-            )
-            needed = (int(count["n"]) if count else 0) + 1
+            needed = self._attempts_used(conn, job_id) + 1
             if needed > MAX_ATTEMPTS_LIMIT:
                 raise ApiFailure(
                     make_error(ErrorCode.INVALID_STATE, "Job attempt limit is exhausted")
@@ -710,14 +722,20 @@ class JobQueue:
 
     def record_call_finished(self, claim: Claim, event: CallEvent) -> ExecutionBudget:
         """Known spend is kept even for a stale attempt, which then learns it lost the lease."""
+        if event.logical_job_id != claim.job_id or event.attempt_id != claim.attempt_id:
+            raise _persistence_error(claim.job_id, "Call event identity does not match")
         with self._db.write() as conn:
             job = self._current_job(conn, claim.job_id)
             known = row(
                 conn,
-                "SELECT attempt_id, outcome FROM provider_calls WHERE call_id = :id",
+                "SELECT job_id, attempt_id, outcome FROM provider_calls WHERE call_id = :id",
                 {"id": event.call_id},
             )
-            if known is None or known["attempt_id"] != event.attempt_id:
+            if (
+                known is None
+                or known["job_id"] != claim.job_id
+                or known["attempt_id"] != claim.attempt_id
+            ):
                 raise _persistence_error(claim.job_id, "Finished call was never started")
             if known["outcome"] in ("started", "unknown"):
                 run(

@@ -256,7 +256,7 @@ def test_job_deadline_stops_a_hanging_evaluator(client_factory, tmp_path):
         await release.wait()
 
     evaluator = ScriptedEvaluator(hang)
-    client = client_factory(make_settings(tmp_path), evaluator=evaluator)
+    client = client_factory(make_settings(tmp_path, deadline_grace_seconds=0.1), evaluator=evaluator)
     add_profile(client, job_deadline_seconds=1)
     job_id, *_ = setup_job(client)
     assert drain(client) == 1

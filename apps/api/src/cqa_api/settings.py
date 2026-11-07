@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     worker_concurrency: int = 2
     worker_poll_seconds: float = 0.5
     lease_seconds: float = 60.0
+    deadline_grace_seconds: float = 10.0
     retry_base_seconds: float = 5.0
     retry_max_seconds: float = 60.0
 

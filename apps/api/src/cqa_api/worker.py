@@ -163,6 +163,15 @@ class Worker:
         await self._db(self._queue.commit_success, claim, artifact, score, provenance)
 
     async def _evaluate(self, claim: Claim, inputs: ExecutionInputs) -> EvaluationArtifact:
+        """The evaluator owns the logical deadline; the worker only keeps a hard stop.
+
+        The evaluator bounds every call by the time left, and after a valid initial an
+        unfinished optional review still returns that initial with a limitation. Cancelling
+        exactly at the deadline would race it and lose a finished result, so the worker
+        waits a short bounded grace. No new provider call can start in it: the observer
+        refuses them once the deadline has passed. Cancellation, a lost lease and a failed
+        event write are not affected and still end the attempt.
+        """
         remaining = (inputs.budget.deadline_at - self._services.clock()).total_seconds()
         return await asyncio.wait_for(
             self._services.evaluator(
@@ -173,7 +182,7 @@ class Worker:
                 inputs.budget,
                 AttemptObserver(self._queue, claim),
             ),
-            timeout=max(remaining, 0),
+            timeout=max(remaining, 0) + self._services.settings.deadline_grace_seconds,
         )
 
     async def _with_heartbeat(
