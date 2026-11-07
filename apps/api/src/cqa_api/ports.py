@@ -33,6 +33,7 @@ class DomainPort:
     evaluation_reuse_key: Callable[[EvaluationIdentity], str]
     # Optional until the shared interfaces name it (handoff request R-3).
     original_checklist_draft: Callable[[], ChecklistDraft] | None = None
+    sectioned_original_checklist_draft: Callable[[], ChecklistDraft] | None = None
 
 
 def production_domain() -> DomainPort:
@@ -47,6 +48,7 @@ def production_domain() -> DomainPort:
         corpus_snapshot_hash=cqa_domain.corpus_snapshot_hash,
         evaluation_reuse_key=cqa_domain.evaluation_reuse_key,
         original_checklist_draft=getattr(cqa_domain, "original_checklist_draft", None),
+        sectioned_original_checklist_draft=cqa_domain.sectioned_original_checklist_draft,
     )
 
 

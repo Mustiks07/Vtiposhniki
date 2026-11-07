@@ -6,7 +6,7 @@ import logging
 import httpx
 import pytest
 from conftest import make_settings
-from cqa_api.audio import _record_state
+from cqa_api.audio import MAX_AUDIO_PAGE_BYTES, _record_state
 from cqa_api.db import row, run
 
 ALLOWED = "media.example.test"
@@ -276,6 +276,119 @@ def test_range_requests(client_factory, tmp_path):
         f"/api/v1/conversations/{conversation_id}/audio", headers={"Range": "bytes=999999-"}
     )
     assert unsatisfiable.status_code == 416
+
+
+def test_audio_page_entities_redirects_seek_and_unsatisfied_range(client_factory, tmp_path):
+    page_host = "pages.example.test"
+    requested = []
+
+    def handler(request):
+        requested.append((request.url.host, request.url.path, request.headers.get("range")))
+        if request.url.host == page_host:
+            if request.url.path == "/page":
+                return httpx.Response(302, headers={"location": "/watch"})
+            return httpx.Response(
+                200,
+                text=f'<audio><source src="https://{ALLOWED}/signed?token=SIGNED-VALUE&amp;x=1"></audio>'
+                '<script>location="https://evil.example/never"</script>',
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if request.url.path == "/signed":
+            assert request.url.params["x"] == "1"
+            return httpx.Response(302, headers={"location": "/resolved.mp3"})
+        span = request.headers["range"].removeprefix("bytes=").split("-")
+        first, last = int(span[0]), int(span[1]) if span[1] else len(AUDIO) - 1
+        if first >= len(AUDIO):
+            return httpx.Response(416, headers={"content-range": f"bytes */{len(AUDIO)}"})
+        return httpx.Response(
+            206,
+            content=AUDIO[first : last + 1],
+            headers={"content-type": "audio/mpeg", "content-range": f"bytes {first}-{last}/{len(AUDIO)}"},
+        )
+
+    client, cid = audio_client(
+        client_factory, tmp_path, handler,
+        audio_url=f"https://{page_host}/page?signature=SIGNED-VALUE",
+        audio_allowed_hosts=f"{page_host},{ALLOWED}",
+    )
+    path = f"/api/v1/conversations/{cid}/audio"
+    for first in (0, 7000):
+        response = client.get(path, headers={"Range": f"bytes={first}-{first + 9}"})
+        assert response.status_code == 206
+        assert response.content == AUDIO[first : first + 10]
+        assert response.headers["content-range"] == f"bytes {first}-{first + 9}/{len(AUDIO)}"
+        assert "SIGNED-VALUE" not in str(response.headers)
+    response = client.get(path, headers={"Range": "bytes=999999-"})
+    assert response.status_code == 416
+    assert response.headers["content-range"] == f"bytes */{len(AUDIO)}"
+    assert response.json()["code"] == "validation_error"
+    assert sum(host == page_host and path == "/page" for host, path, _ in requested) == 3
+    assert client.get(f"/api/v1/conversations/{cid}").json()["audio"]["availability"] == "available"
+
+
+@pytest.mark.parametrize(
+    "html",
+    [
+        '<script>const src="https://media.example.test/a.mp3"</script>',
+        '<audio><source src="https://evil.example/a.mp3"></audio>',
+        '<audio src="http://media.example.test/a.mp3"></audio>',
+        '<audio src="https://private.example.test/a.mp3"></audio>',
+        '<audio src="/a.mp3"><source src="/b.mp3"></audio>',
+        '<audio src="/a.mp3" src="/b.mp3"></audio>',
+        " " * (MAX_AUDIO_PAGE_BYTES + 1),
+    ],
+)
+def test_unsafe_or_unsupported_audio_page_keeps_transcript(client_factory, tmp_path, html):
+    requests = []
+
+    def handler(request):
+        requests.append(request.url.path)
+        return httpx.Response(200, text=html, headers={"content-type": "text/html"})
+
+    client, cid = audio_client(
+        client_factory, tmp_path, handler,
+        audio_allowed_hosts=f"{ALLOWED},private.example.test",
+        resolver=lambda host: ["127.0.0.1"] if host == "private.example.test" else public_resolver(host),
+    )
+    assert_unavailable(client.get(f"/api/v1/conversations/{cid}/audio"))
+    assert requests == ["/a.mp3"]
+    document = client.get(f"/api/v1/conversations/{cid}").json()
+    assert len(document["messages"]) == 2
+    assert document["audio"]["alignment_status"] == "unverified"
+
+
+def test_expired_embedded_link_refreshes_once_and_never_loops(client_factory, tmp_path):
+    pages = []
+    expired = [False]
+
+    def handler(request):
+        if request.url.path == "/a.mp3":
+            pages.append(len(pages) + 1)
+            return httpx.Response(
+                200, text=f'<audio src="/media-{pages[-1]}.mp3?signature=SIGNED-VALUE"></audio>',
+                headers={"content-type": "text/html"},
+            )
+        if expired[0] or request.url.path == "/media-1.mp3":
+            return httpx.Response(403, text="SIGNED-VALUE expired")
+        return httpx.Response(200, content=AUDIO, headers={"content-type": "audio/mpeg"})
+
+    client, cid = audio_client(client_factory, tmp_path, handler)
+    assert client.get(f"/api/v1/conversations/{cid}/audio").content == AUDIO
+    assert len(pages) == 2
+    expired[0] = True
+    assert_unavailable(client.get(f"/api/v1/conversations/{cid}/audio"))
+    assert len(pages) == 4
+
+
+def test_invalid_partial_response_is_not_forwarded(client_factory, tmp_path):
+    for content_range in ("", "bytes 8-2/100", "bytes 0-9/100"):
+        client, cid = audio_client(
+            client_factory, tmp_path,
+            lambda request: httpx.Response(
+                206, content=b"x", headers={"content-type": "audio/mpeg", "content-range": content_range}
+            ),
+        )
+        assert_unavailable(client.get(f"/api/v1/conversations/{cid}/audio", headers={"Range": "bytes=0-9"}))
 
 
 def test_historical_revision_uses_its_own_source(client_factory, tmp_path):

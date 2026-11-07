@@ -24,6 +24,7 @@ import {
 import { evidenceMessageIds, evidenceRefText } from '../lib/evidence';
 import { approxRu, decimalRu, serverTime, shortId, totalRu } from '../lib/format';
 import { applicabilityLabel, scoreStatusExplanation, speakerLabel } from '../lib/labels';
+import { reusedRunCallsText } from '../lib/runSummary';
 
 function kindTone(kind: ChangeKind): string {
   if (RULE_KINDS.includes(kind)) return 'rule';
@@ -39,7 +40,7 @@ function evaluationHref(view: EvaluationView, cid: string, scope: Scope, evidenc
 
 function originText(view: EvaluationView): string {
   return view.reuse.reused_from_evaluation_id
-    ? `Ответы переиспользованы из оценки ${shortId(view.reuse.reused_from_evaluation_id)} без нового вызова; баллы пересчитаны сервером по своей версии`
+    ? `Ответы переиспользованы из оценки ${shortId(view.reuse.reused_from_evaluation_id)}. ${reusedRunCallsText(view.run)} Баллы пересчитаны сервером по своей версии.`
     : `Новый вызов оценщика (режим ${view.reuse.mode})`;
 }
 

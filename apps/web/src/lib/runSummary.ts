@@ -49,6 +49,14 @@ export function costText(run: Run | null | undefined): string {
   return 'неизвестна: цена вызовов не подтверждена';
 }
 
+/** Reuse can follow an earlier paid/failed attempt of the same job. Read its ledger. */
+export function reusedRunCallsText(run: Run | null | undefined): string {
+  if (!run) return 'История вызовов этого задания недоступна.';
+  return run.calls.length
+    ? `В этом задании сохранено вызовов модели: ${run.calls.length}; их расход учтён в стоимости запуска.`
+    : 'Новых вызовов модели не было.';
+}
+
 function ms(start: string, end: string | null | undefined): number | null {
   if (!end) return null;
   const v = new Date(end).getTime() - new Date(start).getTime();

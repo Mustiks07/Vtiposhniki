@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type FormEvent } from 'react';
 import { ApiError, api } from '../api/client';
 import type { Appeal, Criterion, CriterionProposal, Decision, DecisionRequest, EvaluationView, Message } from '../api/types';
-import { decimalRu, serverTime, totalRu } from '../lib/format';
+import { approxRu, decimalRu, serverTime, totalRu } from '../lib/format';
 import { reasonCodeLabel } from '../lib/labels';
 import { answerText } from './CriterionDetail';
 import { ErrorPanel } from './States';
@@ -376,7 +376,7 @@ export function DecisionComparison({
         <li>
           <strong>Ответ оценщика:</strong> {answerText(criterion, automatic)}
           {autoC && criterion.response_type !== 'flag' ? (
-            <span className="muted"> · вклад {decimalRu(autoC.normalized_contribution)}</span>
+            <span className="muted" title={autoC.normalized_contribution ?? undefined}> · вклад {approxRu(autoC.normalized_contribution)}</span>
           ) : null}
         </li>
         {decisions.map((d) => (
@@ -400,7 +400,7 @@ export function DecisionComparison({
         <li>
           <strong>Действующий ответ:</strong> {answerText(criterion, effective)}
           {effC && criterion.response_type !== 'flag' ? (
-            <span className="muted"> · вклад {decimalRu(effC.normalized_contribution)}</span>
+            <span className="muted" title={effC.normalized_contribution ?? undefined}> · вклад {approxRu(effC.normalized_contribution)}</span>
           ) : null}
           <div>
             Итог: automatic {evaluation.automatic_score.total_score === null ? 'нет итога' : totalRu(evaluation.automatic_score.total_score)} →

@@ -17,6 +17,7 @@ from cqa_contracts.models import (
     Choice,
     Criterion,
     EvidencePolicy,
+    Section,
 )
 
 from .checklist import build_checklist_version
@@ -252,3 +253,37 @@ def original_checklist() -> ChecklistVersion:
 
 def original_checklist_json() -> str:
     return original_checklist().model_dump_json(indent=2) + "\n"
+
+
+def sectioned_original_checklist_draft() -> ChecklistDraft:
+    """PDF grouping as a new scoring configuration; the v1 rubric stays immutable."""
+    draft = original_checklist_draft()
+    groups = [
+        ("opening", "Начало и понимание запроса", ["c1_contact", "c2_needs"]),
+        ("resolution", "Безопасность и решение", ["c3_identification", "c4_consultation"]),
+        (
+            "dialogue",
+            "Ведение и завершение диалога",
+            ["c5_empathy", "c6_dialog_management", "c7_closing"],
+        ),
+        ("violations", "Грубые нарушения", ["c8_gross_errors"]),
+    ]
+    section_by_criterion = {cid: sid for sid, _, ids in groups for cid in ids}
+    return draft.model_copy(
+        update={
+            "sections": [Section(id=sid, title=title) for sid, title, _ in groups],
+            "criteria": [
+                c.model_copy(update={"section_id": section_by_criterion[c.id]})
+                for c in draft.criteria
+            ],
+        }
+    )
+
+
+def sectioned_original_checklist() -> ChecklistVersion:
+    return build_checklist_version(
+        sectioned_original_checklist_draft(),
+        checklist_id=ORIGINAL_CHECKLIST_ID,
+        version_id="cqa-original-v2-sections",
+        created_at=datetime(2026, 11, 8, tzinfo=UTC),
+    )

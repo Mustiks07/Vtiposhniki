@@ -29,7 +29,12 @@ from .hashing import (
     text_hash,
 )
 from .proposals import validate_proposals
-from .rubric import original_checklist, original_checklist_draft
+from .rubric import (
+    original_checklist,
+    original_checklist_draft,
+    sectioned_original_checklist,
+    sectioned_original_checklist_draft,
+)
 from .scoring import score
 
 __all__ = [
@@ -52,6 +57,8 @@ __all__ = [
     "evaluation_reuse_key",
     "original_checklist",
     "original_checklist_draft",
+    "sectioned_original_checklist",
+    "sectioned_original_checklist_draft",
     "profile_hash",
     "score",
     "scoring_projection",

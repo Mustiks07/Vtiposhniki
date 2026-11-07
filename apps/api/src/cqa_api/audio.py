@@ -5,15 +5,17 @@ and no redirect exposes it. Every hop is checked: HTTPS only, an allowlisted hos
 credentials, and no address that resolves outside the public internet.
 """
 
+import asyncio
 import ipaddress
 import re
 import socket
 from collections.abc import AsyncIterator, Callable
+from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
 
 import httpx
 from cqa_contracts.models import AudioMetadata, Conversation, ErrorCode
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlalchemy import Connection
 from starlette.concurrency import run_in_threadpool
 
@@ -28,6 +30,56 @@ MAX_REDIRECTS = 3
 SINGLE_RANGE = re.compile(r"^bytes=(\d+-\d*|-\d+)$")
 ALLOWED_PREFIXES = ("audio/", "application/octet-stream")
 CHUNK_BYTES = 64 * 1024
+MAX_AUDIO_PAGE_BYTES = 64 * 1024
+CONTENT_RANGE = re.compile(r"^bytes (\d+)-(\d+)/(\d+|\*)$")
+UNSATISFIED_RANGE = re.compile(r"^bytes \*/\d+$")
+
+
+class _AudioPage(HTMLParser):
+    """Only the organizer's audio/source markup. Never scripts, embeds or page links."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.audio_depth = 0
+        self.sources: set[str] = set()
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "audio":
+            self.audio_depth += 1
+        if tag == "audio" or (tag == "source" and self.audio_depth):
+            candidates = [value for name, value in attrs if name == "src"]
+            if len(candidates) > 1:
+                raise _unavailable()
+            if candidates and candidates[0] and candidates[0].strip():
+                self.sources.add(candidates[0].strip())
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "audio":
+            self.audio_depth = max(0, self.audio_depth - 1)
+
+
+def _media_type(response: httpx.Response) -> str:
+    return str(response.headers.get("content-type", "")).split(";")[0].strip().lower()
+
+
+async def _page_source(response: httpx.Response) -> str:
+    try:
+        declared = response.headers.get("content-length", "")
+        if declared.isdigit() and int(declared) > MAX_AUDIO_PAGE_BYTES:
+            raise _unavailable()
+        content = bytearray()
+        async for chunk in response.aiter_bytes(4096):
+            content.extend(chunk)
+            if len(content) > MAX_AUDIO_PAGE_BYTES:
+                raise _unavailable()
+        parser = _AudioPage()
+        parser.feed(content.decode("utf-8", errors="replace"))
+        parser.close()
+        if len(parser.sources) != 1:
+            raise _unavailable()
+        return urljoin(str(response.url), next(iter(parser.sources)))
+    finally:
+        await response.aclose()
 
 
 def _unavailable() -> ApiFailure:
@@ -205,6 +257,43 @@ async def _open_upstream(
     raise _unavailable()
 
 
+async def _open_media(
+    client: httpx.AsyncClient, source_url: str, range_header: str | None, services: Services
+) -> httpx.Response:
+    # Resolve the page afresh for every request/seek. One bounded refresh for an
+    # expired embedded link; an expired page itself needs a source reimport.
+    for refresh in range(2):
+        page = await _open_upstream(client, source_url, range_header, services)
+        if _media_type(page) != "text/html":
+            return page
+        if page.status_code == 206:
+            await page.aclose()
+            page = await _open_upstream(client, source_url, None, services)
+        if page.status_code != 200 or _media_type(page) != "text/html":
+            await page.aclose()
+            raise _unavailable()
+        media_url = await _page_source(page)
+        media = await _open_upstream(client, media_url, range_header, services)
+        if refresh == 0 and media.status_code in (401, 403, 410):
+            await media.aclose()
+            continue
+        return media
+    raise _unavailable()
+
+
+def _valid_partial(response: httpx.Response, limit: int) -> bool:
+    match = CONTENT_RANGE.fullmatch(response.headers.get("content-range", ""))
+    if match is None:
+        return False
+    first, last = int(match[1]), int(match[2])
+    if first > last or last - first + 1 > limit:
+        return False
+    if match[3] != "*" and (last >= int(match[3]) or int(match[3]) > limit):
+        return False
+    length = response.headers.get("content-length")
+    return length is None or (length.isdigit() and int(length) == last - first + 1)
+
+
 async def stream_audio(
     services: Services,
     conversation_id: str,
@@ -216,6 +305,7 @@ async def stream_audio(
     )
     if range_header is not None and not SINGLE_RANGE.match(range_header.strip()):
         raise ApiFailure(make_error(ErrorCode.VALIDATION_ERROR, "Invalid byte range"), status=416)
+    range_header = range_header.strip() if range_header else None
     if source_url is None:
         raise _unavailable()
 
@@ -224,18 +314,28 @@ async def stream_audio(
         transport=services.audio_transport,
         timeout=settings.audio_timeout_seconds,
         follow_redirects=False,
+        headers={"Accept-Encoding": "identity"},
     )
     upstream: httpx.Response | None = None
     try:
         try:
-            upstream = await _open_upstream(client, source_url, range_header, services)
-        except httpx.HTTPError as exc:
+            async with asyncio.timeout(settings.audio_timeout_seconds):
+                upstream = await _open_media(client, source_url, range_header, services)
+        except (httpx.HTTPError, TimeoutError) as exc:
             raise _unavailable() from exc
         if upstream.status_code == 416:
-            raise ApiFailure(
-                make_error(ErrorCode.VALIDATION_ERROR, "Invalid byte range"), status=416
+            headers = {"Accept-Ranges": "bytes", "Cache-Control": "no-store"}
+            content_range = upstream.headers.get("content-range", "")
+            if UNSATISFIED_RANGE.fullmatch(content_range):
+                headers["Content-Range"] = content_range
+            await upstream.aclose()
+            await client.aclose()
+            return JSONResponse(
+                make_error(ErrorCode.VALIDATION_ERROR, "Invalid byte range").model_dump(mode="json"),
+                status_code=416,
+                headers=headers,
             )
-        media_type = upstream.headers.get("content-type", "").split(";")[0].strip().lower()
+        media_type = _media_type(upstream)
         declared = upstream.headers.get("content-length")
         too_big = (
             declared is not None
@@ -246,13 +346,14 @@ async def stream_audio(
             upstream.status_code not in (200, 206)
             or not media_type.startswith(ALLOWED_PREFIXES)
             or too_big
+            or (upstream.status_code == 206 and not _valid_partial(upstream, settings.audio_max_bytes))
         ):
             raise _unavailable()
-    except ApiFailure as failure:
+    except BaseException as failure:
         if upstream is not None:
             await upstream.aclose()
         await client.aclose()
-        if failure.error.code == ErrorCode.AUDIO_UNAVAILABLE:
+        if isinstance(failure, ApiFailure) and failure.error.code == ErrorCode.AUDIO_UNAVAILABLE:
             await run_in_threadpool(
                 _record_state, services, conversation_id, selected, source_url, False, None
             )

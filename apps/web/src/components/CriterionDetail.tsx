@@ -9,7 +9,7 @@ import type {
   SourceFragment,
 } from '../api/types';
 import { evidenceMessageIds, evidenceRefText } from '../lib/evidence';
-import { decimalRu, rawValueText } from '../lib/format';
+import { approxRu, decimalRu, rawValueText } from '../lib/format';
 import { applicabilityLabel, originLabel, reasonCodeLabel, relationLabel, responseTypeLabel } from '../lib/labels';
 import { Badge } from './States';
 
@@ -64,8 +64,8 @@ export function ContributionLine({ criterion, contribution }: { criterion: Crite
           : `— / ${decimalRu(contribution.original_weight)} (${applicabilityLabel[contribution.applicability]}, исключён из расчёта)`}
       </dd>
       <dt>Нормализованный вклад в общий итог</dt>
-      <dd data-testid="normalized">
-        {contribution.normalized_contribution === null ? '—' : `${decimalRu(contribution.normalized_contribution)} п. из 100`}
+      <dd data-testid="normalized" title={contribution.normalized_contribution ?? undefined}>
+        {contribution.normalized_contribution === null ? '—' : `${approxRu(contribution.normalized_contribution)} п. из 100`}
       </dd>
     </dl>
   );

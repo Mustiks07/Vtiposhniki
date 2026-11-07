@@ -16,7 +16,9 @@ logger = logging.getLogger("cqa_api.checklists")
 ZERO_HASH = "0" * 64
 
 
-def _build_version(services: Services, checklist_id: str, draft: ChecklistDraft) -> ChecklistVersion:
+def _build_version(
+    services: Services, checklist_id: str, draft: ChecklistDraft
+) -> ChecklistVersion:
     """Runs before any transaction: the validator is pure but may be slow."""
     pending = ChecklistVersion(
         **draft.model_dump(),
@@ -68,15 +70,37 @@ def create_checklist(services: Services, draft: ChecklistDraft) -> ChecklistVers
 
 
 def seed_original_checklist(services: Services) -> None:
-    """The starting rubric from the domain, once, into an empty checklist table."""
+    """Seed the PDF grouping, or append it to an untouched legacy starter rubric.
+
+    Saved versions, evaluations, appeals and pinned submission configs are immutable.
+    A user's edited latest version is never migrated.
+    """
     draft_source = services.domain.original_checklist_draft
     if draft_source is None or not services.settings.seed_original_checklist:
         return
-    with services.db.read() as conn:
-        if row(conn, "SELECT 1 AS x FROM checklists LIMIT 1") is not None:
-            return
+    grouped_source = services.domain.sectioned_original_checklist_draft or draft_source
     try:
-        create_checklist(services, draft_source())
+        with services.db.read() as conn:
+            latest = rows(
+                conn,
+                "SELECT document_json FROM checklist_versions WHERE seq IN "
+                "(SELECT MAX(seq) FROM checklist_versions GROUP BY checklist_id)",
+            )
+        if not latest:
+            create_checklist(services, grouped_source())
+            return
+        legacy = _build_version(services, "seed-probe", draft_source())
+        grouped = grouped_source()
+        for stored in latest:
+            version = ChecklistVersion.model_validate_json(stored["document_json"])
+            if (
+                version.title == legacy.title
+                and version.semantic_hash == legacy.semantic_hash
+                and version.scoring_config_hash == legacy.scoring_config_hash
+                and not version.sections
+                and grouped.sections
+            ):
+                create_version(services, version.checklist_id, version.version_id, grouped)
     except (ContractError, NotImplementedError) as exc:
         # Not fatal: the server stays diagnosable and other checklists stay usable.
         message = f"original checklist not seeded: {type(exc).__name__}"

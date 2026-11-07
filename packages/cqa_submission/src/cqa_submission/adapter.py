@@ -117,12 +117,16 @@ def atomic_write(path: Path, payload: bytes) -> None:
 
 def check_rubric(checklist: ChecklistVersion, version_id: str) -> None:
     original = domain.original_checklist()
+    allowed_scoring = {
+        original.scoring_config_hash,
+        domain.sectioned_original_checklist().scoring_config_hash,
+    }
     domain.validate_checklist(checklist)
     if checklist.version_id != version_id:
         raise PreparationError("wrong_pinned_checklist_version")
     if (
         domain.checklist_semantic_hash(checklist) != original.semantic_hash
-        or domain.checklist_scoring_hash(checklist) != original.scoring_config_hash
+        or domain.checklist_scoring_hash(checklist) not in allowed_scoring
     ):
         raise PreparationError("checklist_is_not_the_official_rubric")
     if checklist.semantic_hash != domain.checklist_semantic_hash(

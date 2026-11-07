@@ -43,6 +43,36 @@ function ScoreBlock({
   );
 }
 
+function FlagList({ flags, criterionTitle, scope }: {
+  flags: ScoreSummary["flags"];
+  criterionTitle: Map<string, string>;
+  scope: "automatic" | "effective";
+}) {
+  return flags.length ? (
+        <ul className="flags" aria-label="Флаги грубых нарушений">
+          {flags.map((f) => (
+            <li key={f.criterion_id} data-testid="flag" data-detected={String(f.detected)}>
+              <span className={`flag-icon ${f.detected ? 'flag-on' : ''}`} aria-hidden="true">
+                {f.detected ? '⚑' : '⚐'}
+              </span>{' '}
+              {criterionTitle.get(f.criterion_id) ?? f.criterion_id}:{' '}
+              <strong>
+                {f.detected === true
+                  ? 'нарушение обнаружено'
+                  : f.detected === false
+                    ? 'нарушение не обнаружено'
+                    : 'не определено'}
+              </strong>
+              <span className="hint">
+                {' '}
+                · флаг без баллов, не меняет итог · {scope === 'automatic' ? 'оценка AI' : 'после пересмотра'}
+              </span>
+            </li>
+          ))}
+        </ul>
+  ) : null;
+}
+
 export function ScorePanel({
   evaluation,
   checklist,
@@ -61,6 +91,15 @@ export function ScorePanel({
   const criterionTitle = new Map((checklist?.criteria ?? []).map((c) => [c.id, c.title]));
   const effective = evaluation.effective_score;
   const displayed = scope === 'automatic' ? evaluation.automatic_score : effective;
+  const flagSections = new Map(
+    (checklist?.sections ?? []).flatMap((section) => {
+      const criteria = checklist?.criteria.filter((c) => c.section_id === section.id) ?? [];
+      return criteria.length && criteria.every((c) => c.response_type === 'flag')
+        ? [[section.id, displayed.flags.filter((f) => criteria.some((c) => c.id === f.criterion_id))] as const]
+        : [];
+    }),
+  );
+  const sectionFlagIds = new Set([...flagSections.values()].flat().map((f) => f.criterion_id));
   const humanCompleted =
     hasDecisions && evaluation.automatic_score.status !== 'complete' && effective.status === 'complete';
 
@@ -127,8 +166,8 @@ export function ScorePanel({
 
       {displayed.section_results.length ? (
         <div className="table-wrap" tabIndex={0} aria-label="Результаты секций">
-          <table className="table compact">
-            <caption>Секции ({scope}). Проценты секций не складываются в общий итог.</caption>
+          <table className="table compact section-table">
+            <caption>Разделы чек-листа. Проценты секций не складываются в общий итог.</caption>
             <thead>
               <tr>
                 <th scope="col">Секция</th>
@@ -140,10 +179,16 @@ export function ScorePanel({
               {displayed.section_results.map((s) => (
                 <tr key={s.section_id} data-testid="section-row">
                   <th scope="row">{sectionTitle.get(s.section_id) ?? s.section_id}</th>
-                  <td>
-                    {decimalRu(s.section_earned_weight)} / {decimalRu(s.section_applicable_weight)}
-                  </td>
-                  <td>{s.section_percent === null ? 'нет применимого веса' : `${totalRu(s.section_percent)} %`}</td>
+                  {flagSections.has(s.section_id) ? (
+                    <td colSpan={2}>
+                      <FlagList flags={flagSections.get(s.section_id) ?? []} criterionTitle={criterionTitle} scope={scope} />
+                    </td>
+                  ) : (
+                    <>
+                      <td>{decimalRu(s.section_earned_weight)} / {decimalRu(s.section_applicable_weight)}</td>
+                      <td>{s.section_percent === null ? 'нет применимого веса' : `${totalRu(s.section_percent)} %`}</td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -151,29 +196,11 @@ export function ScorePanel({
         </div>
       ) : null}
 
-      {displayed.flags.length ? (
-        <ul className="flags" aria-label="Флаги грубых нарушений">
-          {displayed.flags.map((f) => (
-            <li key={f.criterion_id} data-testid="flag" data-detected={String(f.detected)}>
-              <span className={`flag-icon ${f.detected ? 'flag-on' : ''}`} aria-hidden="true">
-                {f.detected ? '⚑' : '⚐'}
-              </span>{' '}
-              {criterionTitle.get(f.criterion_id) ?? f.criterion_id}:{' '}
-              <strong>
-                {f.detected === true
-                  ? 'нарушение обнаружено'
-                  : f.detected === false
-                    ? 'нарушение не обнаружено'
-                    : 'не определено'}
-              </strong>
-              <span className="hint">
-                {' '}
-                · флаг без баллов, не меняет итог · {scope === 'automatic' ? 'оценка AI' : 'после пересмотра'}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <FlagList
+        flags={displayed.flags.filter((f) => !sectionFlagIds.has(f.criterion_id))}
+        criterionTitle={criterionTitle}
+        scope={scope}
+      />
     </section>
   );
 }

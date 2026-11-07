@@ -68,11 +68,13 @@ function validTime(value: string): string | null {
   if (RELATIVE_TIME.test(value)) return null;
   const iso = ISO_TIME.exec(value);
   if (iso) {
-    const [, y, mo, d, h, mi, s] = iso;
+    const [, y, mo, d, h, mi, s, zone] = iso;
+    const offset = zone.replace(':', '').slice(1);
+    const zoneOk = zone === 'Z' || (Number(offset.slice(0, 2)) < 24 && Number(offset.slice(2)) < 60);
     const date = new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d)));
     const dateOk =
       date.getUTCFullYear() === Number(y) && date.getUTCMonth() === Number(mo) - 1 && date.getUTCDate() === Number(d);
-    if (dateOk && Number(h) < 24 && Number(mi) < 60 && (s === undefined || Number(s) < 60)) return null;
+    if (dateOk && zoneOk && Number(h) < 24 && Number(mi) < 60 && (s === undefined || Number(s) < 60)) return null;
     return `несуществующие дата или время «${value}»`;
   }
   if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(value)) {

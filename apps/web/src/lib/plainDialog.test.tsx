@@ -44,6 +44,9 @@ test('accepts the time forms the server import understands and rejects others wi
   expect(bad.errors[2].message).toContain('нет часового пояса');
   expect(bad.errors[3].message).toContain('несуществующие');
   expect(bad.errors[4].message).toContain('пустые квадратные скобки');
+  for (const zone of ['+24:00', '-00:60', '+99:99']) {
+    expect(parsePlainDialog(`[2026-11-07T10:00:00${zone}] client: text`).errors).toHaveLength(1);
+  }
 });
 
 test('unknown roles, missing roles, orphan continuations and empty input are explained, never guessed', () => {

@@ -3,7 +3,7 @@ import { expect, test } from 'vitest';
 import type { CallRecord, ChecklistVersion, Criterion, CriterionProposal, EvaluationView, ScoreSummary } from '../api/types';
 import { compareEvaluations, decimalDelta, normDecimal, summarize, type Scope } from './comparison';
 import { approxRu } from './format';
-import { costText, durations, modelPairs, tokenText, tokenTotals } from './runSummary';
+import { costText, durations, modelPairs, reusedRunCallsText, tokenText, tokenTotals } from './runSummary';
 
 function crit(id: string, over: Partial<Criterion> = {}): Criterion {
   return {
@@ -164,6 +164,9 @@ test('run summary: cost is the server summary; confirmed zero, unknown and known
   expect(costText(run(null, false, [call({})]))).toContain('неизвестна');
   expect(costText(run('0.5', false, [call({}), call({})]))).toBe('неизвестна полностью; известная часть 0,5 USD');
   expect(costText(null)).toContain('нет истории');
+  expect(reusedRunCallsText(run('0', true, []))).toContain('Новых вызовов модели не было');
+  expect(reusedRunCallsText(run('0.75', true, [call({ outcome: 'failed' })]))).toContain('вызовов модели: 1');
+  expect(reusedRunCallsText(null)).toContain('недоступна');
   const timed = {
     ...run(null, false, [call({}), call({ started_at: '2026-11-07T10:00:05Z', finished_at: '2026-11-07T10:00:06Z' })]),
     job: { attempts: [

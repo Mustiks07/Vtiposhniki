@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { CallRecord, EvaluationView, Job } from '../api/types';
 import { decimalRu, durationText, serverTime, shortId } from '../lib/format';
-import { costText, durations, modelPairs, tokenText, tokenTotals } from '../lib/runSummary';
+import { costText, durations, modelPairs, reusedRunCallsText, tokenText, tokenTotals } from '../lib/runSummary';
 import { callOutcomeLabel, callPurposeLabel, errorCodeLabel, jobStateLabel } from '../lib/labels';
 
 function CallTable({ calls, attempts }: { calls: CallRecord[]; attempts?: Job['attempts'] }) {
@@ -76,7 +76,7 @@ export function RunSummary({ evaluation }: { evaluation: EvaluationView }) {
       <p className={`run-origin ${reusedFrom ? 'run-origin-reuse' : 'run-origin-fresh'}`} data-testid="run-origin">
         {reusedFrom ? (
           <>
-            <strong>Переиспользован сохранённый результат</strong> — новых вызовов модели не было. Ответы взяты из
+            <strong>Переиспользован сохранённый результат</strong>. {reusedRunCallsText(run)} Ответы взяты из
             оценки{' '}
             <Link to={`/evaluations/${encodeURIComponent(reusedFrom)}`}>
               <code>{shortId(reusedFrom)}</code>

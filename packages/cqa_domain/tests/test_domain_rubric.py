@@ -17,6 +17,27 @@ EXPECTED = [
 ]
 
 
+def test_sectioned_version_preserves_answers_total_and_na_denominators() -> None:
+    from _cqa_domain_helpers import proposal
+    from cqa_domain import score, sectioned_original_checklist
+
+    old, grouped = original_checklist(), sectioned_original_checklist()
+    validate_checklist(grouped)
+    assert old.semantic_hash == grouped.semantic_hash
+    assert old.scoring_config_hash != grouped.scoring_config_hash
+    answers = [
+        proposal(c.id, None, "not_applicable")
+        if c.id in {"c2_needs", "c3_identification"}
+        else proposal(c.id, c.choices[0].id)
+        for c in old.criteria
+    ]
+    before, after = score(old, answers), score(grouped, answers)
+    assert before.total_score == after.total_score == Decimal(100)
+    assert before.flags == after.flags
+    assert [s.section_applicable_weight for s in after.section_results] == [10, 20, 35, 0]
+    assert [s.section_percent for s in after.section_results] == [100, 100, 100, None]
+
+
 def test_original_rubric_matches_master_section_4() -> None:
     checklist = original_checklist()
     validate_checklist(checklist)

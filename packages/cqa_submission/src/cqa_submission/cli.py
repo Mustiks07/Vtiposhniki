@@ -22,7 +22,7 @@ from cqa_contracts.submission import (
     SubmissionManifest,
     SubmissionRun,
 )
-from cqa_domain import original_checklist_draft
+from cqa_domain import sectioned_original_checklist_draft
 from pydantic import ValidationError
 
 from .adapter import (
@@ -69,7 +69,7 @@ def initialize(args: argparse.Namespace) -> None:
                 api(client, "GET", f"checklist-versions/{config.checklist_version_id}")
             )
         else:
-            draft = original_checklist_draft().model_copy(
+            draft = sectioned_original_checklist_draft().model_copy(
                 update={
                     "title": "CQA — официальный чек-лист сдачи 1.0",
                 }

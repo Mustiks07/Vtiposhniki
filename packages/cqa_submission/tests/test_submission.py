@@ -28,6 +28,7 @@ from cqa_submission.adapter import (
     atomic_write,
     build_results,
     check_conversation,
+    check_rubric,
     convert,
     load_json,
     safe_rationale,
@@ -38,6 +39,25 @@ from cqa_submission.adapter import (
 from pydantic import ValidationError
 
 NOW = datetime(2026, 11, 7, tzinfo=UTC)
+
+
+def test_official_rubric_accepts_only_legacy_and_exact_pdf_grouping():
+    for rubric in (domain.original_checklist(), domain.sectioned_original_checklist()):
+        check_rubric(rubric, rubric.version_id)
+    grouped = domain.sectioned_original_checklist()
+    changed = grouped.model_copy(
+        update={
+            "criteria": [grouped.criteria[0].model_copy(update={"weight": Decimal(11)})]
+            + grouped.criteria[1:]
+        }
+    )
+    changed = changed.model_copy(
+        update={"scoring_config_hash": domain.checklist_scoring_hash(changed)}
+    )
+    with pytest.raises(PreparationError, match="checklist_is_not_the_official_rubric"):
+        check_rubric(changed, changed.version_id)
+
+
 RAW = [True, None, None, 15, True, 7, True, False]
 RATIONALES = [
     "Оператор поздоровался и представился.",

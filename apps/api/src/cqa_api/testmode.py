@@ -183,6 +183,7 @@ def build_test_domain(base: DomainPort | None = None) -> DomainPort:
             "evaluation_reuse_key", real.evaluation_reuse_key, _reuse_key
         ),
         original_checklist_draft=real.original_checklist_draft,
+        sectioned_original_checklist_draft=real.sectioned_original_checklist_draft,
     )
 
 

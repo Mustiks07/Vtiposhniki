@@ -4,7 +4,6 @@ No arithmetic is asserted here: exact totals belong to A's tests. These prove th
 server calls the real functions and stores what they return.
 """
 
-
 import cqa_domain
 import pytest
 from conftest import (
@@ -86,8 +85,9 @@ def test_original_rubric_is_seeded_once_and_can_be_evaluated(tmp_path):
         version = client.get(
             f"/api/v1/checklist-versions/{listed['items'][0]['latest_version_id']}"
         ).json()
-        expected = cqa_domain.original_checklist_draft()
+        expected = cqa_domain.sectioned_original_checklist_draft()
         assert [c["id"] for c in version["criteria"]] == [c.id for c in expected.criteria]
+        assert version["sections"] == [s.model_dump() for s in expected.sections]
         conversation_id = import_records(client, chat_record())["items"][0]["conversation_id"]
         batch = create_batch(client, [conversation_id], version["version_id"]).json()
         drain(client)
@@ -95,6 +95,29 @@ def test_original_rubric_is_seeded_once_and_can_be_evaluated(tmp_path):
         assert job["state"] == "succeeded", job
     with TestClient(create_app(settings)) as client:
         assert client.get("/api/v1/checklists").json()["total"] == 1
+
+
+def test_legacy_seed_gets_one_new_grouped_version_without_rewriting_history(tmp_path):
+    settings = make_settings(tmp_path)
+    with TestClient(create_app(settings)) as client:
+        old = client.post(
+            "/api/v1/checklists",
+            json=cqa_domain.original_checklist_draft().model_dump(mode="json"),
+        ).json()
+    settings = make_settings(tmp_path, seed_original_checklist=True)
+    for _ in range(2):
+        with TestClient(create_app(settings)) as client:
+            assert client.get(f"/api/v1/checklist-versions/{old['version_id']}").json() == old
+            listed = client.get("/api/v1/checklists").json()
+            assert listed["total"] == 1
+            latest = client.get(
+                f"/api/v1/checklist-versions/{listed['items'][0]['latest_version_id']}"
+            ).json()
+            assert latest["version_id"] != old["version_id"]
+            assert latest["semantic_hash"] == old["semantic_hash"]
+            assert len(latest["sections"]) == 4
+            versions = client.get(f"/api/v1/checklists/{old['checklist_id']}/versions").json()
+            assert versions["total"] == 2
 
 
 def test_artifact_missing_a_criterion_fails_instead_of_becoming_partial(tmp_path):
@@ -185,5 +208,3 @@ def test_weight_only_change_keeps_semantic_hash_under_real_hashing(tmp_path):
         second = create_checklist(client, criterion("c1", weight="25"))
         assert first["semantic_hash"] == second["semantic_hash"]
         assert first["scoring_config_hash"] != second["scoring_config_hash"]
-
-

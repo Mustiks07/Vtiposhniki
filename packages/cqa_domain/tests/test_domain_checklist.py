@@ -46,7 +46,7 @@ INVALID: dict[str, Callable[[dict[str, Any]], None]] = {
     "flag_all_choices_trigger": lambda d: crit(d, "synthetic-flag").update(
         flag_when_choice_ids=["yes", "no"]
     ),
-    "flag_in_section": lambda d: crit(d, "synthetic-flag").update(section_id="synthetic-section"),
+    "flag_unknown_section": lambda d: crit(d, "synthetic-flag").update(section_id="nowhere"),
     "scale_missing_fraction": lambda d: crit(d, "synthetic-scale")["choices"][0].update(
         score_fraction=None
     ),

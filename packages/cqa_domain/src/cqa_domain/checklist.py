@@ -63,8 +63,8 @@ def _check_criterion(index: int, c: Criterion, section_ids: set[str], problems: 
         if set(c.flag_when_choice_ids) >= set(choice_ids):
             # A flag that every answer raises carries no information.
             problems.add(f"{path}.flag_when_choice_ids", "invalid", index)
-        if c.section_id is not None:
-            problems.add(f"{path}.section_id", "unsupported", index)
+        # Sections also group flags for display. Flags remain excluded from
+        # every denominator and percentage by the scorer.
     else:
         if c.flag_when_choice_ids:
             problems.add(f"{path}.flag_when_choice_ids", "unsupported", index)
