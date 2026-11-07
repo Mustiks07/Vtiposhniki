@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { ImportResult, JSONImport } from '../api/types';
 import { ErrorPanel } from './States';
+import { Modal } from './Modal';
+import { Icon } from './Icon';
 
 const dispositionLabel: Record<string, string> = {
   created: 'новый разговор',
@@ -58,6 +60,21 @@ function ImportResultView({ result }: { result: ImportResult }) {
 }
 
 export function ImportPanel() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        <Icon name="upload" />
+        Импорт разговоров
+      </button>
+      <Modal open={open} title="Импорт разговоров" onClose={() => setOpen(false)}>
+        <ImportForm />
+      </Modal>
+    </>
+  );
+}
+
+function ImportForm() {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<'json' | 'organizer'>('json');
   const [jsonText, setJsonText] = useState('');
@@ -106,14 +123,24 @@ export function ImportPanel() {
             (формат JSONImport v1)
           </label>
           <label>
-            <input type="radio" name="import-mode" checked={mode === 'organizer'} onChange={() => setMode('organizer')} />{' '}
+            <input
+              type="radio"
+              name="import-mode"
+              checked={mode === 'organizer'}
+              onChange={() => setMode('organizer')}
+            />{' '}
             API организаторов
           </label>
         </fieldset>
         {mode === 'json' ? (
           <>
             <label htmlFor={ids.file}>Файл JSON</label>
-            <input id={ids.file} type="file" accept="application/json,.json" onChange={(e) => loadFile(e.target.files?.[0])} />
+            <input
+              id={ids.file}
+              type="file"
+              accept="application/json,.json"
+              onChange={(e) => loadFile(e.target.files?.[0])}
+            />
             <label htmlFor={ids.json}>Или вставьте JSON</label>
             <textarea
               id={ids.json}
@@ -124,7 +151,9 @@ export function ImportPanel() {
               spellCheck={false}
             />
             <small id={`${ids.json}-hint`} className="hint">
-              {'{"source":"json","records":[{"external_id":"…","channel":"agent_chat","language":"RU","messages":[{"speaker":"client","text":"…","timestamp_original":"00:01"}]}]}'}
+              {
+                '{"source":"json","records":[{"external_id":"…","channel":"agent_chat","language":"RU","messages":[{"speaker":"client","text":"…","timestamp_original":"00:01"}]}]}'
+              }
             </small>
           </>
         ) : (

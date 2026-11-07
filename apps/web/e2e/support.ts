@@ -212,6 +212,7 @@ export async function launchFromList(page: Page, externalIds: string[], checklis
   for (const id of externalIds) {
     await page.getByRole('checkbox', { name: `Выбрать ${id}` }).check();
   }
+  await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: checklistTitle });
   if (mode === 'reuse_if_compatible') await page.getByLabel(/reuse_if_compatible/).check();
   await page.getByRole('button', { name: 'Запустить пакет' }).click();

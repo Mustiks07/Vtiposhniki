@@ -102,6 +102,7 @@ test('E07: backend restart during a batch — UI recovers server state without c
 
     await page.goto(`${origin}/#/conversations`);
     await page.getByRole('checkbox', { name: `Выбрать ${id}` }).check();
+    await page.getByRole('button', { name: /Оценить выбранные/ }).click();
     await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: title });
     await page.getByRole('button', { name: 'Запустить пакет' }).click();
     await expect(page).toHaveURL(/#\/batches\//);

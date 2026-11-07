@@ -124,7 +124,8 @@ export function AppealsPage() {
   const [lastDecision, setLastDecision] = useState<Decision | null>(null);
   const list = useQuery({
     queryKey: ['appeals', { state, offset }],
-    queryFn: ({ signal }) => api.listAppeals({ state: state === 'all' ? null : state, offset, limit: PAGE_SIZE }, signal),
+    queryFn: ({ signal }) =>
+      api.listAppeals({ state: state === 'all' ? null : state, offset, limit: PAGE_SIZE }, signal),
     placeholderData: keepPreviousData,
   });
   function update(changes: Record<string, string | null>) {
@@ -141,7 +142,13 @@ export function AppealsPage() {
   const toggleAppeal = (id: string | null) => update({ appeal: id });
   return (
     <div className="page">
-      <h1>Апелляции</h1>
+      <header className="page-heading">
+        <div>
+          <p className="eyebrow">ПЕРЕСМОТР РЕШЕНИЙ</p>
+          <h1>Апелляции</h1>
+          <p className="page-intro">Проверьте основания, примите решение и сохраните историю.</p>
+        </div>
+      </header>
       <DecisionSavedNotice decision={lastDecision} onClose={() => setLastDecision(null)} />
       <div className="filters">
         <div>
@@ -192,7 +199,11 @@ export function AppealsPage() {
           <span data-testid="pager-range">
             {offset + 1}–{Math.min(offset + PAGE_SIZE, list.data.total)} из {list.data.total}
           </span>
-          <button type="button" disabled={offset + PAGE_SIZE >= list.data.total} onClick={() => setOffset(offset + PAGE_SIZE)}>
+          <button
+            type="button"
+            disabled={offset + PAGE_SIZE >= list.data.total}
+            onClick={() => setOffset(offset + PAGE_SIZE)}
+          >
             Вперёд →
           </button>
         </nav>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AudioMetadata, Conversation, Message } from '../api/types';
 import { decimalRu } from '../lib/format';
 import { speakerLabel } from '../lib/labels';
@@ -29,32 +29,63 @@ export function Transcript({
   conversation,
   highlighted,
   focusToken,
+  focusReady = true,
   onSeek,
   canSeek,
+  citations,
+  onCriterion,
 }: {
   conversation: Conversation;
   highlighted: string[];
   /** Changes whenever the user activates an evidence link, to re-scroll to it. */
   focusToken: number;
+  /** Wait for the mobile transcript pane to open before moving focus. */
+  focusReady?: boolean;
   onSeek?: (messageId: string) => void;
   canSeek: boolean;
+  citations?: Map<string, { id: string; number: number; title: string }[]>;
+  onCriterion?: (id: string) => void;
 }) {
+  const [onlyEvidence, setOnlyEvidence] = useState(false);
   const listRef = useRef<HTMLOListElement>(null);
+  const handledFocusToken = useRef<number | null>(null);
   const mapping = verifiedMapping(conversation.audio);
   const highlightSet = new Set(highlighted);
 
   useEffect(() => {
-    if (!highlighted.length || !listRef.current) return;
+    if (!focusReady || handledFocusToken.current === focusToken || !highlighted.length || !listRef.current) return;
     const first = listRef.current.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(highlighted[0])}"]`);
     if (first) {
-      first.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      first.scrollIntoView?.({
+        block: 'center',
+        behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      });
       first.focus({ preventScroll: true });
+      handledFocusToken.current = focusToken;
     }
     // focusToken intentionally re-triggers scrolling for repeated clicks on the same evidence.
-  }, [focusToken]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focusToken, focusReady, highlighted]);
 
   return (
     <section className="transcript" aria-label="Оригинал разговора" lang={htmlLang(conversation.language)}>
+      <header className="transcript-head" lang="ru">
+        <div>
+          <h2>Разговор</h2>
+          <span className="hint">
+            {conversation.messages.length} реплик · исходная версия {conversation.revision}
+          </span>
+        </div>
+        {citations ? (
+          <div className="view-switch" role="group" aria-label="Сообщения разговора">
+            <button type="button" aria-pressed={!onlyEvidence} onClick={() => setOnlyEvidence(false)}>
+              Все сообщения
+            </button>
+            <button type="button" aria-pressed={onlyEvidence} onClick={() => setOnlyEvidence(true)}>
+              Доказательства
+            </button>
+          </div>
+        ) : null}
+      </header>
       {(conversation.warnings ?? []).length ? (
         <ul className="annotations" aria-label="Предупреждения источника">
           {(conversation.warnings ?? []).map((w, i) => (
@@ -69,6 +100,8 @@ export function Transcript({
         {conversation.messages.map((m: Message) => {
           const start = mapping?.get(m.id);
           const isHighlighted = highlightSet.has(m.id);
+          const refs = citations?.get(m.id) ?? [];
+          if (onlyEvidence && !refs.length && !isHighlighted) return null;
           return (
             <li
               key={m.id}
@@ -94,10 +127,28 @@ export function Transcript({
                 ) : null}
               </div>
               <MessageText text={m.text} />
+              {refs.length ? (
+                <div className="margin-cites" lang="ru" aria-label="Связанные критерии">
+                  {refs.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      title={c.title}
+                      aria-label={`Критерий ${c.number}: ${c.title}`}
+                      onClick={() => onCriterion?.(c.id)}
+                    >
+                      №{c.number}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </li>
           );
         })}
       </ol>
+      {onlyEvidence && !citations?.size && !highlighted.length ? (
+        <p className="hint">В этой оценке нет ссылок на реплики.</p>
+      ) : null}
     </section>
   );
 }

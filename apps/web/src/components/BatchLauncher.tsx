@@ -5,21 +5,32 @@ import { api, newIdempotencyKey } from '../api/client';
 import type { CreateBatch } from '../api/types';
 import { serverTime, shortId } from '../lib/format';
 import { ErrorPanel, Loading } from './States';
+import { Modal } from './Modal';
+import { Icon } from './Icon';
+
+type LaunchProps = { conversationIds: string[]; initialChecklistId?: string | null; initialVersionId?: string | null };
+
+export function BatchLauncher(props: LaunchProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="primary" disabled={!props.conversationIds.length} onClick={() => setOpen(true)}>
+        <Icon name="play" />
+        Оценить выбранные{props.conversationIds.length ? ` (${props.conversationIds.length})` : ''}
+      </button>
+      <Modal open={open} title="Запуск оценки" onClose={() => setOpen(false)}>
+        <LaunchForm {...props} />
+      </Modal>
+    </>
+  );
+}
 
 /**
  * Launches one evaluation batch. The idempotency key is bound to the exact payload, so a
  * double click or a resubmission after a network error replays the same logical request
  * instead of creating a second batch.
  */
-export function BatchLauncher({
-  conversationIds,
-  initialChecklistId,
-  initialVersionId,
-}: {
-  conversationIds: string[];
-  initialChecklistId?: string | null;
-  initialVersionId?: string | null;
-}) {
+function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: LaunchProps) {
   const navigate = useNavigate();
   const ids = { checklist: useId(), version: useId(), profile: useId() };
   const checklists = useQuery({ queryKey: ['checklists'], queryFn: ({ signal }) => api.listChecklists(signal) });
@@ -54,7 +65,13 @@ export function BatchLauncher({
   const payload: CreateBatch | null = useMemo(
     () =>
       versionId && profileId && conversationIds.length
-        ? { schema_version: '1.0', conversation_ids: conversationIds, checklist_version_id: versionId, profile_id: profileId, mode }
+        ? {
+            schema_version: '1.0',
+            conversation_ids: conversationIds,
+            checklist_version_id: versionId,
+            profile_id: profileId,
+            mode,
+          }
         : null,
     [conversationIds, versionId, profileId, mode],
   );
@@ -98,7 +115,14 @@ export function BatchLauncher({
       ) : null}
       <form onSubmit={submit}>
         <label htmlFor={ids.checklist}>Чек-лист</label>
-        <select id={ids.checklist} value={checklistId} onChange={(e) => { setChecklistId(e.target.value); setVersionId(''); }}>
+        <select
+          id={ids.checklist}
+          value={checklistId}
+          onChange={(e) => {
+            setChecklistId(e.target.value);
+            setVersionId('');
+          }}
+        >
           {checklists.data?.items.map((c) => (
             <option key={c.checklist_id} value={c.checklist_id}>
               {c.title}
@@ -128,8 +152,9 @@ export function BatchLauncher({
         <fieldset className="segmented">
           <legend>Режим</legend>
           <label>
-            <input type="radio" name="batch-mode" checked={mode === 'fresh'} onChange={() => setMode('fresh')} /> fresh —
-            новый вызов оценщика
+            <input type="radio" name="batch-mode" checked={mode === 'fresh'} onChange={() => setMode('fresh')} /> Новый
+            анализ (fresh)
+            <small className="hint">Модель заново оценит разговор. Будет создан отдельный запуск.</small>
           </label>
           <label>
             <input
@@ -138,7 +163,8 @@ export function BatchLauncher({
               checked={mode === 'reuse_if_compatible'}
               onChange={() => setMode('reuse_if_compatible')}
             />{' '}
-            reuse_if_compatible — переиспользовать совместимый результат, если сервер подтвердит
+            Совместимый результат (reuse_if_compatible)
+            <small className="hint">Сервер проверит версии и переиспользует результат, если он совместим.</small>
           </label>
         </fieldset>
         <div className="row">
@@ -148,7 +174,11 @@ export function BatchLauncher({
         </div>
       </form>
       {mutation.isError ? (
-        <ErrorPanel error={mutation.error} onRetry={() => payload && mutation.mutate(payload)} retryLabel="Повторить тот же запрос">
+        <ErrorPanel
+          error={mutation.error}
+          onRetry={() => payload && mutation.mutate(payload)}
+          retryLabel="Повторить тот же запрос"
+        >
           <p className="hint">Повтор использует тот же ключ идемпотентности: второй пакет не будет создан.</p>
         </ErrorPanel>
       ) : null}

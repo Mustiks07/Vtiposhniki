@@ -102,6 +102,7 @@ test('E10: batch stays pinned to the old version; a new run uses the new version
 
   await page.getByRole('link', { name: 'Запустить оценку с этой версией' }).click();
   await page.getByRole('checkbox', { name: `Выбрать ${id}` }).check();
+  await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await expect(page.getByLabel('Версия чек-листа (закрепляется при запуске)')).toHaveValue(v2);
   await page.getByRole('button', { name: 'Запустить пакет' }).click();
   await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии');

@@ -40,8 +40,9 @@ test('U06: definition changed in the UI → new version saved → fresh run appl
   // Fresh run with the new version from the UI.
   await page.getByRole('link', { name: 'Запустить оценку с этой версией' }).click();
   await page.getByRole('checkbox', { name: `Выбрать ${externalId}` }).check();
+  await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await expect(page.getByLabel('Версия чек-листа (закрепляется при запуске)')).toHaveValue(v2);
-  await expect(page.getByRole('radio', { name: /^fresh/ })).toBeChecked();
+  await expect(page.getByRole('radio', { name: /Новый анализ/ })).toBeChecked();
   await page.getByRole('button', { name: 'Запустить пакет' }).click();
   await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии');
   await page.getByRole('link', { name: /карточка/ }).click();

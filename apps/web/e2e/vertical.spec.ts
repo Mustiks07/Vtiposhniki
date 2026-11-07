@@ -37,9 +37,11 @@ test('E01+E02: new IDs/texts via JSON upload, RU/KZ/EN and voice preserved verba
   });
 
   await page.goto('/#/conversations');
+  await page.getByRole('button', { name: 'Импорт разговоров' }).click();
   await page.getByLabel('Файл JSON').setInputFiles(file);
   await page.getByRole('button', { name: 'Импортировать' }).click();
   await expect(page.getByText(/Импорт выполнен атомарно: получено записей — 4/)).toBeVisible();
+  await page.getByRole('button', { name: 'Закрыть окно' }).click();
 
   for (const id of Object.values(ids)) await expect(page.getByRole('link', { name: id, exact: true })).toBeVisible();
 
@@ -65,6 +67,7 @@ test('E01: invalid import shows the server indexed error and saves nothing', asy
     records: [record(good), { external_id: uid('e01-bad'), channel: 'agent_chat', language: 'XX', messages: [] }],
   });
   await page.goto('/#/conversations');
+  await page.getByRole('button', { name: 'Импорт разговоров' }).click();
   await page.getByLabel('Файл JSON').setInputFiles(file);
   await page.getByRole('button', { name: 'Импортировать' }).click();
   await expect(page.getByRole('alert')).toContainText('Данные не прошли проверку');
@@ -76,6 +79,7 @@ test('E01: invalid import shows the server indexed error and saves nothing', asy
 
 test('E01: organizer import sends only group_id and shows the safe server answer', async ({ page }) => {
   await page.goto('/#/conversations');
+  await page.getByRole('button', { name: 'Импорт разговоров' }).click();
   await page.getByLabel('API организаторов').check();
   const requestPromise = page.waitForRequest((r) => r.url().endsWith('/api/v1/imports') && r.method() === 'POST');
   await page.getByLabel('group_id').fill('synthetic-group-42');
@@ -92,6 +96,7 @@ test('E04+E14+E20: double click creates one batch; refresh restores; range evide
   await createChecklist(request, servers.complete, draft(title, [criterion('c-greet', { weight: '40' }), criterion('c-help', { weight: '60' })]));
   const id = uid('e04');
   await page.goto('/#/conversations');
+  await page.getByRole('button', { name: 'Импорт разговоров' }).click();
   await page.getByLabel('Или вставьте JSON').fill(
     JSON.stringify({
       source: 'json',
@@ -108,12 +113,14 @@ test('E04+E14+E20: double click creates one batch; refresh restores; range evide
   );
   await page.getByRole('button', { name: 'Импортировать' }).click();
   await expect(page.getByText(/получено записей — 1/)).toBeVisible();
+  await page.getByRole('button', { name: 'Закрыть окно' }).click();
 
   const posts: string[] = [];
   page.on('request', (r) => {
     if (r.method() === 'POST' && r.url().endsWith('/api/v1/evaluation-batches')) posts.push(r.headers()['idempotency-key']);
   });
   await page.getByRole('checkbox', { name: `Выбрать ${id}` }).check();
+  await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: title });
   await page.getByRole('button', { name: 'Запустить пакет' }).dblclick();
   await expect(page).toHaveURL(/#\/batches\//);
@@ -171,6 +178,7 @@ test('E03: changed text under the same external_id becomes a new revision; old r
     ],
   });
   await page.goto('/#/conversations');
+  await page.getByRole('button', { name: 'Импорт разговоров' }).click();
   await page.getByLabel('Или вставьте JSON').fill(JSON.stringify({ source: 'json', records: [changed] }));
   await page.getByRole('button', { name: 'Импортировать' }).click();
   await expect(page.getByText(/revision 2 · новая revision/)).toBeVisible();
@@ -188,6 +196,7 @@ test('E03: changed text under the same external_id becomes a new revision; old r
 
   // Reuse must not present the old result as an evaluation of the new text.
   await page.getByLabel('Revision').selectOption('2');
+  await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: title });
   await page.getByLabel(/reuse_if_compatible/).check();
   await page.getByRole('button', { name: 'Запустить пакет' }).click();

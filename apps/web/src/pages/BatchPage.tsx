@@ -66,7 +66,7 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
             карточка{evaluation ? ` · ${artifactStatusLabel[evaluation.artifact.status]}` : ''}
           </Link>
         ) : null}
-        {job.state === 'failed' || job.state === 'retry_wait' ? (
+        {job.state === 'failed' ? (
           <button type="button" onClick={() => retry.mutate()} disabled={retry.isPending}>
             {retry.isPending ? 'Повтор…' : 'Повторить задание'}
           </button>
@@ -131,6 +131,7 @@ export function BatchPage() {
         {p.succeeded}, с ошибкой {p.failed}
         {p.cancelled ? `, отменено ${p.cancelled}` : ''}.{active ? ' Обновляется…' : ' Все задания в финальном состоянии.'}
       </p>
+      {active ? <div className="indeterminate" role="progressbar" aria-label="Обработка разговоров продолжается"><span /></div> : null}
       <div className="table-wrap" tabIndex={0} aria-label="Задания пакета">
         <table className="table">
           <thead>

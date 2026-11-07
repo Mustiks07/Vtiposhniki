@@ -5,6 +5,8 @@ import { api } from '../api/client';
 import type { ChecklistDraft } from '../api/types';
 import { Empty, ErrorPanel, Loading } from '../components/States';
 import { serverTime, shortId } from '../lib/format';
+import { Modal } from '../components/Modal';
+import { Icon } from '../components/Icon';
 
 function CreateFromJson() {
   const queryClient = useQueryClient();
@@ -35,8 +37,14 @@ function CreateFromJson() {
     }
     setError(null);
     // Server-assigned fields of a published version are not part of a draft.
-    const { checklist_id: _c, version_id: _v, semantic_hash: _s, scoring_config_hash: _h, created_at: _t, ...draft } =
-      value as Record<string, unknown>;
+    const {
+      checklist_id: _c,
+      version_id: _v,
+      semantic_hash: _s,
+      scoring_config_hash: _h,
+      created_at: _t,
+      ...draft
+    } = value as Record<string, unknown>;
     mutation.mutate({ ...(draft as ChecklistDraft), schema_version: '1.0' });
   }
   async function loadFile(file: File | undefined) {
@@ -45,7 +53,12 @@ function CreateFromJson() {
   return (
     <form onSubmit={submit} noValidate>
       <label htmlFor={`${id}-f`}>Файл ChecklistDraft (JSON)</label>
-      <input id={`${id}-f`} type="file" accept="application/json,.json" onChange={(e) => loadFile(e.target.files?.[0])} />
+      <input
+        id={`${id}-f`}
+        type="file"
+        accept="application/json,.json"
+        onChange={(e) => loadFile(e.target.files?.[0])}
+      />
       <label htmlFor={id}>Или вставьте JSON</label>
       <textarea id={id} rows={5} value={text} onChange={(e) => setText(e.target.value)} spellCheck={false} />
       {error ? (
@@ -64,17 +77,28 @@ function CreateFromJson() {
 }
 
 export function ChecklistsPage() {
+  const [importOpen, setImportOpen] = useState(false);
   const list = useQuery({ queryKey: ['checklists'], queryFn: ({ signal }) => api.listChecklists(signal) });
   return (
-    <div className="page">
-      <h1>Чек-листы</h1>
+    <div className="page checklists-page">
+      <header className="page-heading">
+        <div>
+          <p className="eyebrow">ПРАВИЛА ОЦЕНКИ</p>
+          <h1>Чек-листы</h1>
+          <p className="page-intro">Критерии, шкалы и история неизменяемых версий.</p>
+        </div>
+        <div className="page-actions">
+          <button type="button" onClick={() => setImportOpen(true)}>
+            <Icon name="upload" />
+            Загрузить из JSON
+          </button>
+          <Link className="button primary" to="/checklists/new">
+            Новый чек-лист в редакторе
+          </Link>
+        </div>
+      </header>
       <div className="layout-split">
         <section className="grow" aria-label="Список чек-листов">
-          <p className="row">
-            <Link className="button primary" to="/checklists/new">
-              Новый чек-лист в редакторе
-            </Link>
-          </p>
           {list.isPending ? <Loading /> : null}
           {list.isError ? <ErrorPanel error={list.error} onRetry={() => list.refetch()} /> : null}
           {list.data && list.data.items.length === 0 ? (
@@ -91,10 +115,9 @@ export function ChecklistsPage() {
             ))}
           </ul>
         </section>
-        <aside className="side panel">
-          <h2>Загрузить из JSON</h2>
+        <Modal open={importOpen} title="Загрузить чек-лист из JSON" onClose={() => setImportOpen(false)}>
           <CreateFromJson />
-        </aside>
+        </Modal>
       </div>
     </div>
   );

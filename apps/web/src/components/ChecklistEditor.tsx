@@ -23,6 +23,8 @@ import { rawValueText, shortId } from '../lib/format';
 import { responseTypeLabel } from '../lib/labels';
 import { ErrorPanel, Loading } from './States';
 import { VersionDiff } from './VersionDiff';
+import { UnsavedChanges } from './UnsavedChanges';
+import { ScaleTable } from './CriterionDetail';
 
 function FieldError({ id, error }: { id: string; error?: string }) {
   return error ? (
@@ -129,7 +131,12 @@ function ChoicesEditor({
                     )}
                   </td>
                   <td className="row">
-                    <button type="button" onClick={() => move(j, -1)} disabled={j === 0} aria-label={`Вариант ${n} выше`}>
+                    <button
+                      type="button"
+                      onClick={() => move(j, -1)}
+                      disabled={j === 0}
+                      aria-label={`Вариант ${n} выше`}
+                    >
                       ↑
                     </button>
                     <button
@@ -154,7 +161,13 @@ function ChoicesEditor({
                       ✕
                     </button>
                     <span id={`${base}-ch${j}-err`} className="field-error">
-                      {[errors[`${q}.label`], errors[`${q}.raw`], errors[`${q}.anchor`], errors[`${q}.fraction`], errors[`${q}.id`]]
+                      {[
+                        errors[`${q}.label`],
+                        errors[`${q}.raw`],
+                        errors[`${q}.anchor`],
+                        errors[`${q}.fraction`],
+                        errors[`${q}.id`],
+                      ]
                         .filter(Boolean)
                         .join(' ')}
                     </span>
@@ -173,7 +186,13 @@ function ChoicesEditor({
           onClick={() =>
             onChange({
               ...criterion,
-              choices: [...criterion.choices, blankChoice({ score_fraction: isFlag ? null : '', raw_value: criterion.response_type === 'scale' ? '' : '' })],
+              choices: [
+                ...criterion.choices,
+                blankChoice({
+                  score_fraction: isFlag ? null : '',
+                  raw_value: criterion.response_type === 'scale' ? '' : '',
+                }),
+              ],
             })
           }
         >
@@ -230,16 +249,32 @@ function CriterionEditor({
   }
 
   return (
-    <section className="editor-criterion" aria-labelledby={`${uid}-h`} data-testid="editor-criterion" data-criterion-id={criterion.id}>
+    <section
+      tabIndex={-1}
+      className="editor-criterion"
+      aria-labelledby={`${uid}-h`}
+      data-testid="editor-criterion"
+      data-criterion-id={criterion.id}
+    >
       <header>
         <h3 id={`${uid}-h`}>
           Критерий {n}: {criterion.title || 'без названия'}
         </h3>
         <div className="row">
-          <button type="button" onClick={() => onMove(-1)} disabled={index === 0} aria-label={`Переместить критерий ${n} выше`}>
+          <button
+            type="button"
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+            aria-label={`Переместить критерий ${n} выше`}
+          >
             ↑
           </button>
-          <button type="button" onClick={() => onMove(1)} disabled={index === total - 1} aria-label={`Переместить критерий ${n} ниже`}>
+          <button
+            type="button"
+            onClick={() => onMove(1)}
+            disabled={index === total - 1}
+            aria-label={`Переместить критерий ${n} ниже`}
+          >
             ↓
           </button>
           {existing ? (
@@ -296,7 +331,9 @@ function CriterionEditor({
             aria-describedby={`${uid}-weight-h ${uid}-weight-e`}
           />
           <small id={`${uid}-weight-h`} className="hint">
-            {isFlag ? 'У флага вес всегда 0: флаг не входит в итог.' : 'Неотрицательное число. Сумма весов не обязана быть 100.'}
+            {isFlag
+              ? 'У флага вес всегда 0: флаг не входит в итог.'
+              : 'Неотрицательное число. Сумма весов не обязана быть 100.'}
           </small>
           <FieldError id={`${uid}-weight-e`} error={errors[`${p}.weight`]} />
         </div>
@@ -362,7 +399,13 @@ function CriterionEditor({
             <input
               type="checkbox"
               checked={criterion.allow_na}
-              onChange={(e) => onChange({ ...criterion, allow_na: e.target.checked, na_condition: e.target.checked ? (criterion.na_condition ?? '') : null })}
+              onChange={(e) =>
+                onChange({
+                  ...criterion,
+                  allow_na: e.target.checked,
+                  na_condition: e.target.checked ? (criterion.na_condition ?? '') : null,
+                })
+              }
             />{' '}
             Разрешить N/A (отдельное состояние, не вариант с нулевой долей)
           </label>
@@ -392,7 +435,12 @@ function CriterionEditor({
               id={`${uid}-chat`}
               rows={2}
               value={criterion.channel_instructions.agent_chat ?? ''}
-              onChange={(e) => onChange({ ...criterion, channel_instructions: { ...criterion.channel_instructions, agent_chat: e.target.value } })}
+              onChange={(e) =>
+                onChange({
+                  ...criterion,
+                  channel_instructions: { ...criterion.channel_instructions, agent_chat: e.target.value },
+                })
+              }
             />
           </div>
           <div>
@@ -401,7 +449,12 @@ function CriterionEditor({
               id={`${uid}-voice`}
               rows={2}
               value={criterion.channel_instructions.voice_call ?? ''}
-              onChange={(e) => onChange({ ...criterion, channel_instructions: { ...criterion.channel_instructions, voice_call: e.target.value } })}
+              onChange={(e) =>
+                onChange({
+                  ...criterion,
+                  channel_instructions: { ...criterion.channel_instructions, voice_call: e.target.value },
+                })
+              }
             />
           </div>
         </div>
@@ -409,7 +462,12 @@ function CriterionEditor({
           <input
             type="checkbox"
             checked={criterion.evidence_policy.require_evidence ?? true}
-            onChange={(e) => onChange({ ...criterion, evidence_policy: { ...criterion.evidence_policy, require_evidence: e.target.checked } })}
+            onChange={(e) =>
+              onChange({
+                ...criterion,
+                evidence_policy: { ...criterion.evidence_policy, require_evidence: e.target.checked },
+              })
+            }
           />{' '}
           Требовать доказательства
         </label>
@@ -418,7 +476,10 @@ function CriterionEditor({
             type="checkbox"
             checked={criterion.evidence_policy.missing_action_requires_range ?? true}
             onChange={(e) =>
-              onChange({ ...criterion, evidence_policy: { ...criterion.evidence_policy, missing_action_requires_range: e.target.checked } })
+              onChange({
+                ...criterion,
+                evidence_policy: { ...criterion.evidence_policy, missing_action_requires_range: e.target.checked },
+              })
             }
           />{' '}
           Для пропущенного действия нужен проверенный диапазон
@@ -427,12 +488,21 @@ function CriterionEditor({
           <input
             type="checkbox"
             checked={criterion.evidence_policy.allow_source ?? true}
-            onChange={(e) => onChange({ ...criterion, evidence_policy: { ...criterion.evidence_policy, allow_source: e.target.checked } })}
+            onChange={(e) =>
+              onChange({
+                ...criterion,
+                evidence_policy: { ...criterion.evidence_policy, allow_source: e.target.checked },
+              })
+            }
           />{' '}
           Разрешить ссылки на источники
         </label>
         <label>
-          <input type="checkbox" checked={criterion.requires_reference} onChange={(e) => onChange({ ...criterion, requires_reference: e.target.checked })} />{' '}
+          <input
+            type="checkbox"
+            checked={criterion.requires_reference}
+            onChange={(e) => onChange({ ...criterion, requires_reference: e.target.checked })}
+          />{' '}
           Нужен источник (база знаний)
         </label>
       </details>
@@ -453,7 +523,9 @@ function ConflictResolution({
   expectedVersionId: string;
   onRebase: (latestVersionId: string) => void;
 }) {
-  const [state, setState] = useState<{ from: ChecklistVersion; to: ChecklistVersion } | 'loading' | 'error' | null>(null);
+  const [state, setState] = useState<{ from: ChecklistVersion; to: ChecklistVersion } | 'loading' | 'error' | null>(
+    null,
+  );
   async function load() {
     setState('loading');
     try {
@@ -469,8 +541,8 @@ function ConflictResolution({
     <div className="state state-error" role="alert" data-testid="version-conflict">
       <p className="state-title">⚠ Версия не сохранена: появилась более новая версия чек-листа</p>
       <p>
-        Черновик основан на версии <code>{shortId(expectedVersionId)}</code> и сохранён на этой странице. Сверьте изменения другого
-        автора и перенесите свои, прежде чем сохранять.
+        Черновик основан на версии <code>{shortId(expectedVersionId)}</code> и сохранён на этой странице. Сверьте
+        изменения другого автора и перенесите свои, прежде чем сохранять.
       </p>
       {state === null || state === 'error' ? (
         <button type="button" onClick={load}>
@@ -482,7 +554,10 @@ function ConflictResolution({
       {typeof state === 'object' && state ? (
         <>
           <VersionDiff from={state.from} to={state.to} />
-          <p>Ваш черновик не изменён автоматически: изменения другого автора, которые нужно сохранить, внесите в форму сами.</p>
+          <p>
+            Ваш черновик не изменён автоматически: изменения другого автора, которые нужно сохранить, внесите в форму
+            сами.
+          </p>
           <button type="button" onClick={() => onRebase(state.to.version_id)}>
             Изменения учтены — сохранять поверх версии {shortId(state.to.version_id)}
           </button>
@@ -510,6 +585,7 @@ export function ChecklistEditor({
   const queryClient = useQueryClient();
   const uid = useId();
   const [draft, setDraft] = useState<ChecklistDraft>(initial);
+  const [activeCriterion, setActiveCriterion] = useState(initial.criteria[0]?.id ?? '');
   const [errors, setErrors] = useState<Fields>({});
   // Pinned at draft creation; only an explicit conflict resolution moves it.
   const [expectedLatest, setExpectedLatest] = useState(expectedLatestVersionId);
@@ -525,7 +601,11 @@ export function ChecklistEditor({
   const mutation = useMutation({
     mutationFn: (body: ChecklistDraft) =>
       checklistId && expectedLatest
-        ? api.createChecklistVersion(checklistId, { schema_version: '1.0', expected_latest_version_id: expectedLatest, config: body })
+        ? api.createChecklistVersion(checklistId, {
+            schema_version: '1.0',
+            expected_latest_version_id: expectedLatest,
+            config: body,
+          })
         : api.createChecklist(body),
     onSuccess: async (v) => {
       await queryClient.invalidateQueries({ queryKey: ['checklists'] });
@@ -570,9 +650,15 @@ export function ChecklistEditor({
   const scoringOnly = base ? isScoringOnlyChange(base, draft) : false;
   const conflict = mutation.error instanceof ApiError && mutation.error.status === 409;
   const errorCount = Object.keys(errors).length;
+  const preview = draft.criteria.find((c) => c.id === activeCriterion) ?? draft.criteria[0];
+  function focusCriterion(id: string) {
+    setActiveCriterion(id);
+    document.querySelector<HTMLElement>(`.editor-criterion[data-criterion-id="${CSS.escape(id)}"]`)?.focus();
+  }
 
   return (
     <form onSubmit={submit} noValidate className="checklist-editor" aria-label="Редактор чек-листа">
+      <UnsavedChanges dirty={!mutation.isSuccess && JSON.stringify(draft) !== JSON.stringify(initial)} />
       <p className="hint">
         Сохранение создаёт новую неизменяемую версию. Уже запущенные пакеты и старые карточки остаются на своих версиях.
       </p>
@@ -597,7 +683,12 @@ export function ChecklistEditor({
               id={`${uid}-s${i}`}
               value={s.title}
               placeholder="Название секции"
-              onChange={(e) => setDraft({ ...draft, sections: sections.map((x, k) => (k === i ? { ...x, title: e.target.value } : x)) })}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  sections: sections.map((x, k) => (k === i ? { ...x, title: e.target.value } : x)),
+                })
+              }
               aria-invalid={errors[`section.${i}.title`] ? true : undefined}
             />
             <button
@@ -616,28 +707,73 @@ export function ChecklistEditor({
             <FieldError id={`${uid}-s${i}-e`} error={errors[`section.${i}.title`]} />
           </div>
         ))}
-        <button type="button" onClick={() => setDraft({ ...draft, sections: [...sections, { schema_version: '1.0', id: newSectionId(), title: '' }] })}>
+        <button
+          type="button"
+          onClick={() =>
+            setDraft({ ...draft, sections: [...sections, { schema_version: '1.0', id: newSectionId(), title: '' }] })
+          }
+        >
           + Секция
         </button>
       </fieldset>
 
-      {draft.criteria.map((c, i) => (
-        <CriterionEditor
-          key={c.id}
-          criterion={c}
-          index={i}
-          total={draft.criteria.length}
-          sections={sections}
-          errors={errors}
-          existing={existingIds.has(c.id)}
-          confirmed={isMappingConfirmed(c, confirmed)}
-          onConfirm={(v) => confirm(c, v)}
-          onChange={(next) => setCriterion(i, next)}
-          onMove={(dir) => move(i, dir)}
-          onRemove={() => setDraft((d) => ({ ...d, criteria: d.criteria.filter((_, k) => k !== i) }))}
-          onReplace={() => setCriterion(i, { ...c, id: newCriterionId() })}
-        />
-      ))}
+      <div className="editor-workspace">
+        <nav className="editor-nav" aria-label="Критерии в редакторе">
+          <h2>
+            Критерии <span className="muted">{draft.criteria.length}</span>
+          </h2>
+          {draft.criteria.map((c, i) => (
+            <button type="button" key={c.id} aria-pressed={preview?.id === c.id} onClick={() => focusCriterion(c.id)}>
+              <span>{i + 1}</span>
+              {c.title || 'Новый критерий'}
+              {Object.keys(errors).some((key) => key.startsWith(`criterion.${i}.`)) ? (
+                <b className="field-error"> !</b>
+              ) : null}
+            </button>
+          ))}
+        </nav>
+        <div
+          className="editor-fields"
+          onFocusCapture={(event) => {
+            const id = (event.target as HTMLElement).closest<HTMLElement>('[data-criterion-id]')?.dataset.criterionId;
+            if (id) setActiveCriterion(id);
+          }}
+        >
+          {draft.criteria.map((c, i) => (
+            <CriterionEditor
+              key={c.id}
+              criterion={c}
+              index={i}
+              total={draft.criteria.length}
+              sections={sections}
+              errors={errors}
+              existing={existingIds.has(c.id)}
+              confirmed={isMappingConfirmed(c, confirmed)}
+              onConfirm={(v) => confirm(c, v)}
+              onChange={(next) => setCriterion(i, next)}
+              onMove={(dir) => move(i, dir)}
+              onRemove={() => setDraft((d) => ({ ...d, criteria: d.criteria.filter((_, k) => k !== i) }))}
+              onReplace={() => setCriterion(i, { ...c, id: newCriterionId() })}
+            />
+          ))}
+        </div>
+        <aside className="editor-preview">
+          <p className="eyebrow">ПРЕДПРОСМОТР</p>
+          {preview ? (
+            <>
+              <h2>{preview.title || 'Название критерия'}</h2>
+              <p className="definition">{preview.definition || 'Здесь появится правило оценки.'}</p>
+              <p className="hint">{preview.response_type === 'flag' ? 'Флаг без баллов' : `Вес: ${preview.weight}`}</p>
+              <ScaleTable criterion={preview} selected={undefined} />
+              <p className="hint">
+                {preview.allow_na ? `N/A: ${preview.na_condition || 'Укажите условие'}` : 'N/A не разрешён'}
+              </p>
+            </>
+          ) : (
+            <p>Добавьте первый критерий.</p>
+          )}
+        </aside>
+      </div>
       <FieldError id={`${uid}-crit-e`} error={errors.criteria} />
       <div className="row">
         <button type="button" onClick={() => setDraft((d) => ({ ...d, criteria: [...d.criteria, blankCriterion()] }))}>
@@ -648,8 +784,8 @@ export function ChecklistEditor({
       {scoringOnly ? (
         <p className="notice" data-testid="scoring-only-note">
           Изменены только веса, доли, секции или порядок: смысловой запрос к оценщику не меняется. При запуске в режиме
-          reuse_if_compatible сервер может переиспользовать прежние ответы и пересчитать баллы — источник пересчёта будет
-          указан в карточке. Режим fresh всегда вызывает оценщик заново.
+          reuse_if_compatible сервер может переиспользовать прежние ответы и пересчитать баллы — источник пересчёта
+          будет указан в карточке. Режим fresh всегда вызывает оценщик заново.
         </p>
       ) : null}
       {errorCount ? (
@@ -657,11 +793,15 @@ export function ChecklistEditor({
           Исправьте ошибки в отмеченных полях ({errorCount}).
         </p>
       ) : null}
-      <div className="row">
+      <div className="row editor-save">
         <button type="submit" className="primary" disabled={mutation.isPending}>
           {mutation.isPending ? 'Сохранение…' : base ? 'Сохранить как новую версию' : 'Создать чек-лист'}
         </button>
-        {checklistId ? <Link to={`/checklists/${encodeURIComponent(checklistId)}`}>Отмена</Link> : <Link to="/checklists">Отмена</Link>}
+        {checklistId ? (
+          <Link to={`/checklists/${encodeURIComponent(checklistId)}`}>Отмена</Link>
+        ) : (
+          <Link to="/checklists">Отмена</Link>
+        )}
       </div>
       {rebasedNote ? (
         <p className="notice" role="status" data-testid="rebased-note">
@@ -675,7 +815,9 @@ export function ChecklistEditor({
           onRebase={(latest) => {
             setExpectedLatest(latest);
             mutation.reset();
-            setRebasedNote(`Черновик будет сохранён как следующая версия после ${shortId(latest)}. Нажмите «Сохранить» ещё раз.`);
+            setRebasedNote(
+              `Черновик будет сохранён как следующая версия после ${shortId(latest)}. Нажмите «Сохранить» ещё раз.`,
+            );
           }}
         />
       ) : mutation.isError ? (

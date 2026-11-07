@@ -24,7 +24,8 @@ test('shell shows navigation and the contract health endpoint state', async () =
   expect(await screen.findByRole('link', { name: 'Диалоги' })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Чек-листы' })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Апелляции' })).toBeTruthy();
-  expect(await screen.findByText(/тестовый \(синтетические ответы\)/)).toBeTruthy();
+  expect(await screen.findByText('Тестовый режим')).toBeTruthy();
+  expect(screen.getByText('Синтетические ответы')).toBeTruthy();
   expect(await screen.findByText('Разговоров пока нет')).toBeTruthy();
 });
 

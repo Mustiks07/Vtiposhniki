@@ -11,7 +11,9 @@ import { FILTER_KEYS, PAGE_SIZE, parseConversationQuery, withFilter } from '../l
 import { channelLabel, evaluationListStatusLabel, languageLabel } from '../lib/labels';
 
 function preview(summary: ConversationSummary): string {
-  const first = summary.conversation.messages.find((m) => m.text.trim()) ?? summary.conversation.messages[0];
+  const first =
+    summary.conversation.messages.find((m) => m.speaker === 'client' && m.text.trim()) ??
+    summary.conversation.messages.find((m) => m.text.trim());
   return first ? first.text : '';
 }
 
@@ -36,7 +38,8 @@ export function ConversationsPage() {
 
   function setFilter(key: (typeof FILTER_KEYS)[number], value: string | null, extra?: Record<string, string>) {
     let next = withFilter(params, key, value);
-    for (const [k, v] of Object.entries(extra ?? {})) next = new URLSearchParams(withFilter(next, k as (typeof FILTER_KEYS)[number], v));
+    for (const [k, v] of Object.entries(extra ?? {}))
+      next = new URLSearchParams(withFilter(next, k as (typeof FILTER_KEYS)[number], v));
     setParams(next);
   }
   function setOffset(value: number) {
@@ -55,48 +58,86 @@ export function ConversationsPage() {
   const allOnPage = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
 
   return (
-    <div className="page">
-      <h1>Диалоги</h1>
+    <div className="page conversations-page">
+      <header className="page-heading">
+        <div>
+          <p className="eyebrow">ЖУРНАЛ ДОКАЗАТЕЛЬСТВ</p>
+          <h1>Диалоги</h1>
+          <p className="page-intro">Разговор, оценка и основания для каждого решения.</p>
+        </div>
+        <div className="page-actions">
+          <ImportPanel />
+          <BatchLauncher
+            conversationIds={selected}
+            initialChecklistId={params.get('launch_checklist')}
+            initialVersionId={params.get('launch_version')}
+          />
+        </div>
+      </header>
       <div className="layout-split">
         <section aria-labelledby="list-title" className="grow">
           <h2 id="list-title" className="visually-hidden">
             Список разговоров
           </h2>
-          <div className="filters" role="group" aria-label="Фильтры">
-            <div>
-              <label htmlFor={ids.lang}>Язык</label>
-              <select id={ids.lang} value={language ?? ''} onChange={(e) => setFilter('language', e.target.value || null)}>
-                <option value="">Все</option>
-                {Object.entries(languageLabel).map(([v, l]) => (
-                  <option key={v} value={v}>{`${v} · ${l}`}</option>
-                ))}
-              </select>
+          <div className="filter-panel">
+            <div className="filters" role="group" aria-label="Фильтры">
+              <div>
+                <label htmlFor={ids.lang}>Язык</label>
+                <select
+                  id={ids.lang}
+                  value={language ?? ''}
+                  onChange={(e) => setFilter('language', e.target.value || null)}
+                >
+                  <option value="">Все</option>
+                  {Object.entries(languageLabel).map(([v, l]) => (
+                    <option key={v} value={v}>{`${v} · ${l}`}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor={ids.chan}>Канал</label>
+                <select
+                  id={ids.chan}
+                  value={channel ?? ''}
+                  onChange={(e) => setFilter('channel', e.target.value || null)}
+                >
+                  <option value="">Все</option>
+                  {Object.entries(channelLabel).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor={ids.status}>Статус оценки</label>
+                <select
+                  id={ids.status}
+                  value={status ?? ''}
+                  onChange={(e) => setFilter('status', e.target.value || null)}
+                >
+                  <option value="">Все</option>
+                  {Object.entries(evaluationListStatusLabel).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div>
-              <label htmlFor={ids.chan}>Канал</label>
-              <select id={ids.chan} value={channel ?? ''} onChange={(e) => setFilter('channel', e.target.value || null)}>
-                <option value="">Все</option>
-                {Object.entries(channelLabel).map(([v, l]) => (
-                  <option key={v} value={v}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor={ids.status}>Статус оценки</label>
-              <select id={ids.status} value={status ?? ''} onChange={(e) => setFilter('status', e.target.value || null)}>
-                <option value="">Все</option>
-                {Object.entries(evaluationListStatusLabel).map(([v, l]) => (
-                  <option key={v} value={v}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <FlagFilters parsed={parsed} onChange={setFilter} />
           </div>
-          <FlagFilters parsed={parsed} onChange={setFilter} />
           <SearchScope parsed={parsed} total={list.isError ? undefined : list.data?.total} />
+          {selected.length ? (
+            <div className="bulk-bar" role="status">
+              <span>
+                Выбрано: <strong data-testid="selection-count">{selected.length}</strong>
+              </span>
+              <button type="button" className="link" onClick={() => setSelected([])}>
+                Снять выделение
+              </button>
+            </div>
+          ) : null}
 
           {list.isPending ? <Loading /> : null}
           {list.isError ? <ErrorPanel error={list.error} onRetry={() => list.refetch()} /> : null}
@@ -124,7 +165,7 @@ export function ConversationsPage() {
                     </th>
                     <th scope="col">Разговор</th>
                     <th scope="col">Канал / язык</th>
-                    <th scope="col">Revision</th>
+                    <th scope="col">Версия</th>
                     <th scope="col">Реплик</th>
                     <th scope="col">Статус</th>
                     {parsed.flagCriterionId ? <th scope="col">Флаг</th> : null}
@@ -134,7 +175,11 @@ export function ConversationsPage() {
                   {items.map((summary) => {
                     const c = summary.conversation;
                     return (
-                      <tr key={c.id} data-testid="conversation-row">
+                      <tr
+                        key={c.id}
+                        data-testid="conversation-row"
+                        className={selected.includes(c.id) ? 'row-selected' : undefined}
+                      >
                         <td>
                           <input
                             type="checkbox"
@@ -145,7 +190,10 @@ export function ConversationsPage() {
                         </td>
                         <td className="cell-main">
                           <Link to={`/conversations/${encodeURIComponent(c.id)}`}>{c.external_id}</Link>
-                          <div className="muted clamp" lang={c.language.toLowerCase() === 'kz' ? 'kk' : c.language.toLowerCase()}>
+                          <div
+                            className="muted clamp"
+                            lang={c.language.toLowerCase() === 'kz' ? 'kk' : c.language.toLowerCase()}
+                          >
                             {preview(summary)}
                           </div>
                         </td>
@@ -155,11 +203,15 @@ export function ConversationsPage() {
                         <td>{c.revision}</td>
                         <td>{c.messages.length}</td>
                         <td>
-                          <Badge status={summary.evaluation_status}>{evaluationListStatusLabel[summary.evaluation_status]}</Badge>
+                          <Badge status={summary.evaluation_status}>
+                            {evaluationListStatusLabel[summary.evaluation_status]}
+                          </Badge>
                           {summary.latest_evaluation_id ? (
                             <>
                               {' '}
-                              <Link to={`/evaluations/${encodeURIComponent(summary.latest_evaluation_id)}`}>карточка</Link>
+                              <Link to={`/evaluations/${encodeURIComponent(summary.latest_evaluation_id)}`}>
+                                карточка
+                              </Link>
                             </>
                           ) : null}
                         </td>
@@ -169,7 +221,10 @@ export function ConversationsPage() {
                               <FlagCell
                                 summary={summary.flag_summary}
                                 evaluationId={summary.latest_evaluation_id}
-                                title={flagTitle.get(summary.flag_summary.result.criterion_id) ?? summary.flag_summary.result.criterion_id}
+                                title={
+                                  flagTitle.get(summary.flag_summary.result.criterion_id) ??
+                                  summary.flag_summary.result.criterion_id
+                                }
                               />
                             ) : (
                               <span className="muted">сервер не вернул состояние флага</span>
@@ -203,14 +258,6 @@ export function ConversationsPage() {
             <p className="muted">Всего: {list.data.total}</p>
           ) : null}
         </section>
-        <aside className="side">
-          <BatchLauncher
-            conversationIds={selected}
-            initialChecklistId={params.get('launch_checklist')}
-            initialVersionId={params.get('launch_version')}
-          />
-          <ImportPanel />
-        </aside>
       </div>
     </div>
   );

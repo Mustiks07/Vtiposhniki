@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { audioUrl } from '../api/client';
 import type { Conversation } from '../api/types';
 
@@ -11,6 +11,8 @@ export const AudioPanel = forwardRef<HTMLAudioElement, { conversation: Conversat
   ref,
 ) {
   const audio = conversation.audio;
+  const player = useRef<HTMLAudioElement>(null);
+  useImperativeHandle(ref, () => player.current!, [audio.access_path]);
   const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   if (conversation.channel !== 'voice_call' && audio.availability !== 'available') return null;
 
@@ -25,7 +27,7 @@ export const AudioPanel = forwardRef<HTMLAudioElement, { conversation: Conversat
       {audio.availability === 'available' && audio.access_path ? (
         <>
           <audio
-            ref={ref}
+            ref={player}
             controls
             preload="metadata"
             src={audioUrl(audio.access_path, conversation.revision)}
@@ -36,15 +38,33 @@ export const AudioPanel = forwardRef<HTMLAudioElement, { conversation: Conversat
           >
             Браузер не поддерживает воспроизведение аудио.
           </audio>
+          <label className="audio-speed">
+            Скорость воспроизведения
+            <select
+              defaultValue="1"
+              onChange={(event) => {
+                if (player.current) player.current.playbackRate = Number(event.target.value);
+              }}
+            >
+              <option value="0.75">0,75×</option>
+              <option value="1">1×</option>
+              <option value="1.25">1,25×</option>
+              <option value="1.5">1,5×</option>
+              <option value="2">2×</option>
+            </select>
+          </label>
           <p role="status" aria-live="polite" className="hint">
             {state === 'loading' ? 'Загрузка записи…' : null}
-            {state === 'error' ? 'Не удалось воспроизвести запись: сервер не отдал аудио или доступ истёк. Текстовая оценка доступна.' : null}
+            {state === 'error'
+              ? 'Не удалось воспроизвести запись: сервер не отдал аудио или доступ истёк. Текстовая оценка доступна.'
+              : null}
             {state === 'ready' ? 'Запись готова к воспроизведению.' : null}
           </p>
         </>
       ) : audio.availability === 'unavailable' ? (
         <p className="notice" data-testid="audio-unavailable">
-          Запись недоступна для этой revision. Оценка выполнена по тексту; ограничения анализа звука указаны в критериях.
+          Запись недоступна для этой revision. Оценка выполнена по тексту; ограничения анализа звука указаны в
+          критериях.
         </p>
       ) : (
         <p className="notice" data-testid="audio-unknown">

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import { useEffect, useRef } from 'react';
 import { createHashRouter, Navigate, NavLink, Outlet, RouterProvider, useLocation } from 'react-router-dom';
 import { api } from './api/client';
+import { Icon } from './components/Icon';
 import { AppealsPage } from './pages/AppealsPage';
 import { BatchPage } from './pages/BatchPage';
 import { ChecklistPage, ChecklistVersionRedirect } from './pages/ChecklistPage';
@@ -25,8 +26,8 @@ function HealthLine() {
   return (
     <span className="health" data-testid="health">
       <span aria-hidden="true">● </span>
-      API подключён · режим оценщика:{' '}
-      <strong>{health.data.evaluator_mode === 'test' ? 'тестовый (синтетические ответы)' : 'production'}</strong>
+      <strong>{health.data.evaluator_mode === 'test' ? 'Тестовый режим' : 'API подключён'}</strong>
+      <small>{health.data.evaluator_mode === 'test' ? 'Синтетические ответы' : 'Рабочий режим · production'}</small>
     </span>
   );
 }
@@ -46,21 +47,56 @@ function Shell() {
   }, [location.pathname]);
   return (
     <div className="app">
-      <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus(); }}>
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          mainRef.current?.focus();
+        }}
+      >
         Перейти к содержимому
       </a>
-      <header className="topbar">
-        <span className="brand">CQA</span>
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            c
+          </span>
+          <div>
+            <b>CQA</b>
+            <span>Контроль качества</span>
+          </div>
+        </div>
+        <p className="nav-caption">РАБОЧЕЕ ПРОСТРАНСТВО</p>
         <nav aria-label="Основные разделы">
-          <NavLink to="/conversations">Диалоги</NavLink>
-          <NavLink to="/checklists">Чек-листы</NavLink>
-          <NavLink to="/appeals">Апелляции</NavLink>
+          <NavLink to="/conversations">
+            <Icon name="chat" />
+            Диалоги
+          </NavLink>
+          <NavLink to="/checklists">
+            <Icon name="checklist" />
+            Чек-листы
+          </NavLink>
+          <NavLink to="/appeals">
+            <Icon name="appeal" />
+            Апелляции
+          </NavLink>
         </nav>
-        <HealthLine />
-      </header>
-      <main id="main" ref={mainRef} tabIndex={-1}>
-        <Outlet />
-      </main>
+        <div className="sidebar-foot">
+          <HealthLine />
+          <p>Журнал доказательств</p>
+          <span>От разговора — к обоснованной оценке.</span>
+        </div>
+      </aside>
+      <div className="workspace">
+        <header className="workspace-bar">
+          <span>Conversation Quality Analytics</span>
+          <span className="workspace-label">Локальное рабочее место</span>
+        </header>
+        <main id="main" ref={mainRef} tabIndex={-1}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
