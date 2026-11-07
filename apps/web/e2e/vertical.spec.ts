@@ -150,6 +150,55 @@ test('E04+E14+E20: double click creates one batch; refresh restores; range evide
   expect(evalsAfter.total).toBe(evalsBefore.total);
 });
 
+test('E03: changed text under the same external_id becomes a new revision; old result stays tied to old text', async ({ page, request }) => {
+  const title = uid('E03 чек-лист');
+  const v = await createChecklist(request, servers.complete, draft(title, [criterion('r-1')]));
+  const externalId = uid('e03');
+  const first = await (await request.post(`${servers.complete}/api/v1/imports`, { data: { source: 'json', records: [record(externalId)] } })).json();
+  const conversationId = first.items[0].conversation_id;
+  const res = await request.post(`${servers.complete}/api/v1/evaluation-batches`, {
+    data: { conversation_ids: [conversationId], checklist_version_id: v.version_id, profile_id: 'test-synthetic', mode: 'reuse_if_compatible' },
+    headers: { 'Idempotency-Key': uid('k') },
+  });
+  expect(res.status()).toBe(202);
+  await expect.poll(async () => (await (await request.get(`${servers.complete}/api/v1/evaluations?conversation_id=${conversationId}`)).json()).total).toBe(1);
+
+  // Re-import via the UI with the same external_id and a changed operator text.
+  const changed = record(externalId, {
+    messages: [
+      { speaker: 'client', text: 'Синтетический вопрос клиента.', timestamp_original: '00:01' },
+      { speaker: 'operator', text: 'Изменённый ответ оператора.', timestamp_original: '00:20' },
+    ],
+  });
+  await page.goto('/#/conversations');
+  await page.getByLabel('Или вставьте JSON').fill(JSON.stringify({ source: 'json', records: [changed] }));
+  await page.getByRole('button', { name: 'Импортировать' }).click();
+  await expect(page.getByText(/revision 2 · новая revision/)).toBeVisible();
+
+  await page.goto(`/#/conversations/${conversationId}`);
+  await expect(page.getByText('Изменённый ответ оператора.')).toBeVisible();
+  const item = page.getByTestId('evaluation-item');
+  await expect(item).toHaveCount(1);
+  await expect(item).toHaveAttribute('data-revision', '1');
+  await expect(item).toContainText('не последняя — результат относится к старому тексту');
+
+  await page.getByLabel('Revision').selectOption('1');
+  await expect(page.getByTestId('old-revision')).toBeVisible();
+  await expect(page.getByText('Здравствуйте! Синтетический ответ оператора.')).toBeVisible();
+
+  // Reuse must not present the old result as an evaluation of the new text.
+  await page.getByLabel('Revision').selectOption('2');
+  await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: title });
+  await page.getByLabel(/reuse_if_compatible/).check();
+  await page.getByRole('button', { name: 'Запустить пакет' }).click();
+  await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии');
+  await expect(page.getByTestId('job-row')).toContainText('revision 2');
+  await page.getByRole('link', { name: /карточка/ }).click();
+  await expect(page.locator('.card-meta')).toContainText('revision разговора 2');
+  await page.getByText('Детали запуска: версии, модели, стоимость').click();
+  await expect(page.getByTestId('reuse-provenance')).toContainText('Новый вызов оценщика');
+});
+
 test('E14: list → card shows answer, weight, rationale and limitations per criterion', async ({ page, request }) => {
   const title = uid('E14 чек-лист');
   await createChecklist(request, servers.complete, draft(title, [criterion('c-one', { weight: '25', title: 'Приветствие' })]));

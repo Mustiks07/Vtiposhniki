@@ -2,8 +2,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useId } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Appeal } from '../api/types';
-import { DecisionComparison, DecisionForm } from '../components/Appeals';
+import type { Appeal, Decision } from '../api/types';
+import { DecisionComparison, DecisionForm, DecisionSavedNotice } from '../components/Appeals';
 import { answerText, EvidenceList, ScaleTable } from '../components/CriterionDetail';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { Transcript } from '../components/Transcript';
@@ -13,7 +13,7 @@ import { useState } from 'react';
 
 const PAGE_SIZE = 25;
 
-function AppealReview({ appeal }: { appeal: Appeal }) {
+function AppealReview({ appeal, onDecided }: { appeal: Appeal; onDecided: (d: Decision) => void }) {
   const evaluation = useQuery({
     queryKey: ['evaluation', appeal.evaluation_id],
     queryFn: ({ signal }) => api.getEvaluation(appeal.evaluation_id, signal),
@@ -82,7 +82,14 @@ function AppealReview({ appeal }: { appeal: Appeal }) {
           ) : null}
           <DecisionComparison evaluation={e} criterion={criterion} decisions={decisions} appeals={[appeal]} />
           {appeal.state === 'open' ? (
-            <DecisionForm appeal={appeal} evaluation={e} criterion={criterion} onReload={() => evaluation.refetch()} />
+            <DecisionForm
+              appeal={appeal}
+              evaluation={e}
+              criterion={criterion}
+              messages={messages}
+              onReload={() => evaluation.refetch()}
+              onDecided={onDecided}
+            />
           ) : null}
         </>
       ) : checklist.isPending ? (
@@ -114,6 +121,7 @@ export function AppealsPage() {
   const openId = params.get('appeal');
   const offset = Math.max(0, Number(params.get('offset') ?? 0) || 0);
   const filterId = useId();
+  const [lastDecision, setLastDecision] = useState<Decision | null>(null);
   const list = useQuery({
     queryKey: ['appeals', { state, offset }],
     queryFn: ({ signal }) => api.listAppeals({ state: state === 'all' ? null : state, offset, limit: PAGE_SIZE }, signal),
@@ -129,6 +137,7 @@ export function AppealsPage() {
   return (
     <div className="page">
       <h1>Апелляции</h1>
+      <DecisionSavedNotice decision={lastDecision} onClose={() => setLastDecision(null)} />
       <div className="filters">
         <div>
           <label htmlFor={filterId}>Состояние</label>
@@ -160,7 +169,7 @@ export function AppealsPage() {
               <span className="muted">{serverTime(a.created_at)}</span>
               <span className="clamp">{a.comment}</span>
             </button>
-            {openId === a.id ? <AppealReview appeal={a} /> : null}
+            {openId === a.id ? <AppealReview appeal={a} onDecided={setLastDecision} /> : null}
           </li>
         ))}
       </ul>

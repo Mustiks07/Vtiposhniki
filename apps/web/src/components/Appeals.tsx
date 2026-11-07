@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type FormEvent } from 'react';
 import { ApiError, api } from '../api/client';
-import type { Appeal, Criterion, CriterionProposal, Decision, DecisionRequest, EvaluationView } from '../api/types';
+import type { Appeal, Criterion, CriterionProposal, Decision, DecisionRequest, EvaluationView, Message } from '../api/types';
 import { decimalRu, serverTime, totalRu } from '../lib/format';
 import { reasonCodeLabel } from '../lib/labels';
 import { answerText } from './CriterionDetail';
@@ -80,6 +80,7 @@ export function buildReplacement(
   criterion: Criterion,
   choice: string,
   rationale: string,
+  range: { start: string; end: string } | null,
 ): CriterionProposal {
   const na = choice === '__na__';
   return {
@@ -89,7 +90,19 @@ export function buildReplacement(
     answer_choice_id: na ? null : choice,
     rationale,
     reason_codes: ['human_changed'],
-    evidence: [],
+    // The reviewer's own basis: a whole-message inclusive range picked from the original.
+    evidence: range
+      ? [
+          {
+            schema_version: '1.0',
+            kind: 'range',
+            start_message_id: range.start,
+            end_message_id: range.end,
+            relation: 'support',
+            explanation: rationale,
+          },
+        ]
+      : [],
     limitations: [],
     review_reasons: [],
     origin: 'human',
@@ -100,26 +113,37 @@ export function DecisionForm({
   appeal,
   evaluation,
   criterion,
+  messages,
   onReload,
+  onDecided,
 }: {
   appeal: Appeal;
   evaluation: EvaluationView;
   criterion: Criterion;
+  messages: Message[];
   onReload: () => Promise<unknown>;
+  /** Called after a saved decision; the resolved appeal may leave the list right after. */
+  onDecided?: (decision: Decision) => void;
 }) {
   const queryClient = useQueryClient();
-  const ids = { reason: useId(), choice: useId(), rationale: useId() };
+  const ids = { reason: useId(), choice: useId(), rationale: useId(), start: useId(), end: useId() };
   const [decision, setDecision] = useState<'confirmed' | 'changed'>('confirmed');
   const [reason, setReason] = useState('');
   const [choice, setChoice] = useState('');
   const [rationale, setRationale] = useState('');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const evidenceRequired = criterion.evidence_policy.require_evidence !== false;
   const [errors, setErrors] = useState<Record<string, string>>({});
   // The revision the reviewer saw. A conflict never silently adopts a newer revision.
   const [expectedRevision, setExpectedRevision] = useState(evaluation.revision);
   const [reloaded, setReloaded] = useState(false);
   const mutation = useMutation({
     mutationFn: (body: DecisionRequest) => api.decideAppeal(appeal.id, body),
-    onSuccess: () => invalidateEvaluation(queryClient, evaluation.id),
+    onSuccess: (decision) => {
+      onDecided?.(decision);
+      return invalidateEvaluation(queryClient, evaluation.id);
+    },
   });
   const conflict = mutation.error instanceof ApiError && mutation.error.status === 409;
 
@@ -130,6 +154,9 @@ export function DecisionForm({
       if (!choice) next.choice = 'Выберите новый ответ.';
       if (choice === '__na__' && !rationale.trim()) next.rationale = 'Для N/A укажите причину неприменимости.';
       if (choice && choice !== '__na__' && !rationale.trim()) next.rationale = 'Добавьте обоснование нового ответа.';
+      if ((start || end || evidenceRequired) && !(start && end)) next.range = 'Выберите первую и последнюю реплику основания.';
+      if (start && end && messages.findIndex((m) => m.id === start) > messages.findIndex((m) => m.id === end))
+        next.range = 'Начало диапазона должно быть не позже конца.';
     }
     setErrors(next);
     if (Object.keys(next).length) return null;
@@ -137,7 +164,8 @@ export function DecisionForm({
       schema_version: '1.0',
       expected_revision: expectedRevision,
       decision,
-      replacement: decision === 'changed' ? buildReplacement(criterion, choice, rationale) : null,
+      replacement:
+        decision === 'changed' ? buildReplacement(criterion, choice, rationale, start && end ? { start, end } : null) : null,
       reason,
     };
   }
@@ -159,9 +187,7 @@ export function DecisionForm({
 
   if (mutation.isSuccess) {
     return (
-      <p className="notice notice-ok" role="status" data-testid="decision-saved">
-        Решение сохранено (revision {mutation.data.revision}). Итог effective получен с сервера заново.
-      </p>
+      <p className="notice notice-ok">Решение сохранено (revision {mutation.data.revision}).</p>
     );
   }
 
@@ -216,6 +242,41 @@ export function DecisionForm({
               {errors.rationale}
             </p>
           ) : null}
+          <fieldset aria-describedby={`${ids.start}-h ${errors.range ? `${ids.start}-e` : ''}`}>
+            <legend>Основание в разговоре{evidenceRequired ? ' (обязательно для этого критерия)' : ''}</legend>
+            <small id={`${ids.start}-h`} className="hint">
+              Диапазон целых реплик, границы включительно.
+            </small>
+            <div className="grid-2">
+              <div>
+                <label htmlFor={ids.start}>Первая реплика</label>
+                <select id={ids.start} value={start} onChange={(e) => setStart(e.target.value)} aria-invalid={errors.range ? true : undefined}>
+                  <option value="">— выберите —</option>
+                  {messages.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.id} · {m.timestamp_original} · {m.text.slice(0, 60)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor={ids.end}>Последняя реплика</label>
+                <select id={ids.end} value={end} onChange={(e) => setEnd(e.target.value)} aria-invalid={errors.range ? true : undefined}>
+                  <option value="">— выберите —</option>
+                  {messages.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.id} · {m.timestamp_original} · {m.text.slice(0, 60)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {errors.range ? (
+              <p id={`${ids.start}-e`} className="field-error">
+                {errors.range}
+              </p>
+            ) : null}
+          </fieldset>
         </>
       ) : null}
       <label htmlFor={ids.reason}>Причина решения</label>
@@ -266,6 +327,27 @@ export function DecisionForm({
         </ErrorPanel>
       ) : null}
     </form>
+  );
+}
+
+/** Page-level confirmation that survives the resolved appeal leaving the open queue. */
+export function DecisionSavedNotice({ decision, onClose }: { decision: Decision | null; onClose: () => void }) {
+  if (!decision) return null;
+  return (
+    <div className="notice notice-ok" role="status" data-testid="decision-saved">
+      <p>
+        Решение «{decision.decision === 'confirmed' ? 'подтвердить' : 'изменить'}» по критерию <code>{decision.criterion_id}</code>{' '}
+        сохранено (revision {decision.revision}). Итог effective получен с сервера заново.
+      </p>
+      <div className="row">
+        <a href={`#/evaluations/${encodeURIComponent(decision.evaluation_id)}?criterion=${encodeURIComponent(decision.criterion_id)}`}>
+          Открыть карточку
+        </a>
+        <button type="button" onClick={onClose}>
+          Скрыть
+        </button>
+      </div>
+    </div>
   );
 }
 

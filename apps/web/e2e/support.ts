@@ -98,6 +98,87 @@ export function writeTmpJson(name: string, value: unknown): string {
   return file;
 }
 
+type Version = { checklist_id: string; version_id: string; title: string; criteria: { id: string; choices: { id: string }[] }[]; sections?: unknown[]; rounding?: unknown };
+
+/** The original rubric seeded by the server from A's domain (found by content, not by ID). */
+export async function originalVersion(request: APIRequestContext, baseURL: string): Promise<Version> {
+  const list = await (await request.get(`${baseURL}/api/v1/checklists?limit=200`)).json();
+  // Oldest first: the seeded original precedes any copies created by tests.
+  for (const c of [...list.items].reverse()) {
+    const v = (await (await request.get(`${baseURL}/api/v1/checklist-versions/${c.latest_version_id}`)).json()) as Version;
+    if (v.criteria.some((x) => x.id === 'c6_dialog_management') && v.criteria.some((x) => x.id === 'c8_gross_errors')) return v;
+  }
+  throw new Error('Original rubric is not seeded on this server');
+}
+
+/** Same rubric with chosen answers moved first (display order only; semantics unchanged). */
+export function withFirstChoices(v: Version, title: string, first: Record<string, string>) {
+  return {
+    schema_version: '1.0',
+    title,
+    criteria: v.criteria.map((c) => {
+      const want = first[c.id];
+      if (!want) return c;
+      return { ...c, choices: [...c.choices.filter((x) => x.id === want), ...c.choices.filter((x) => x.id !== want)] };
+    }),
+    sections: v.sections ?? [],
+    rounding: v.rounding,
+  };
+}
+
+export async function runBatchApi(request: APIRequestContext, baseURL: string, conversationIds: string[], versionId: string, mode = 'fresh') {
+  const res = await request.post(`${baseURL}/api/v1/evaluation-batches`, {
+    data: { conversation_ids: conversationIds, checklist_version_id: versionId, profile_id: 'test-synthetic', mode },
+    headers: { 'Idempotency-Key': uid('k') },
+  });
+  expect(res.status(), await res.text()).toBe(202);
+  let batch = await res.json();
+  for (let i = 0; i < 60 && batch.jobs.some((j: { state: string }) => ['queued', 'running', 'retry_wait'].includes(j.state)); i++) {
+    await new Promise((r) => setTimeout(r, 500));
+    batch = await (await request.get(`${baseURL}/api/v1/evaluation-batches/${batch.id}`)).json();
+  }
+  return batch as { id: string; jobs: { id: string; state: string; evaluation_id: string | null }[] };
+}
+
+export async function evaluation(request: APIRequestContext, baseURL: string, id: string) {
+  return (await (await request.get(`${baseURL}/api/v1/evaluations/${id}`)).json()) as {
+    id: string;
+    revision: number;
+    automatic_score: { total_score: string | null; status: string };
+    effective_score: { total_score: string | null; status: string };
+    human_decisions: unknown[];
+  };
+}
+
+/** Human N/A decision through the real appeal workflow (used to reach MASTER N/A examples). */
+export async function decideNa(request: APIRequestContext, baseURL: string, evaluationId: string, criterionId: string) {
+  const ev = await evaluation(request, baseURL, evaluationId);
+  const appeal = await request.post(`${baseURL}/api/v1/evaluations/${evaluationId}/appeals`, {
+    data: { criterion_id: criterionId, comment: 'Синтетическая апелляция: запрос не требовал этого действия.', expected_revision: ev.revision },
+  });
+  expect(appeal.status(), await appeal.text()).toBe(201);
+  const a = await appeal.json();
+  const res = await request.post(`${baseURL}/api/v1/appeals/${a.id}/decision`, {
+    data: {
+      expected_revision: ev.revision,
+      decision: 'changed',
+      reason: 'Синтетическое решение для эталона расчёта.',
+      replacement: {
+        criterion_id: criterionId,
+        applicability: 'not_applicable',
+        answer_choice_id: null,
+        rationale: 'Синтетическая причина неприменимости.',
+        reason_codes: ['human_changed'],
+        evidence: [
+          { kind: 'range', start_message_id: 'm0001', end_message_id: 'm0003', relation: 'support', explanation: 'Синтетическое основание: весь разговор.' },
+        ],
+        origin: 'human',
+      },
+    },
+  });
+  expect(res.status(), await res.text()).toBe(200);
+}
+
 /** Launches a batch through the UI from the conversation list and waits for final states. */
 export async function launchFromList(page: Page, externalIds: string[], checklistTitle: string, mode: 'fresh' | 'reuse_if_compatible' = 'fresh') {
   await page.goto('/#/conversations');

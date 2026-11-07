@@ -31,6 +31,16 @@ test('E08: an unknown criterion created in the editor reaches the real API and t
   await expect(page.getByTestId('criterion-item').filter({ hasText: 'Неизвестный критерий: упомянут номер заявки' })).toBeVisible();
   await page.getByTestId('criterion-item').filter({ hasText: 'Неизвестный критерий' }).click();
   await expect(page.getByTestId('weighted')).toHaveText('70 / 70');
+  // The appeal uses the new criterion too.
+  await page.getByRole('button', { name: 'Оспорить критерий' }).click();
+  const comment = uid('Номер заявки не назван');
+  await page.getByLabel('Комментарий к апелляции').fill(comment);
+  await page.getByRole('button', { name: 'Подать апелляцию' }).click();
+  await expect(page.getByTestId('appeal').filter({ hasText: comment })).toHaveAttribute('data-state', 'open');
+  await page.goto('/#/appeals');
+  const queued = page.getByTestId('queue-appeal').filter({ hasText: comment });
+  await queued.getByRole('button').first().click();
+  await expect(queued.getByRole('heading', { name: 'Неизвестный критерий: упомянут номер заявки' })).toBeVisible();
 });
 
 test('E09: non-zero/reverse scale needs explicit mapping; invalid fraction is rejected, valid one saved', async ({ page }) => {

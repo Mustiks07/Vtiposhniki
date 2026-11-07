@@ -25,7 +25,7 @@ test.describe('partial scenario server', () => {
 test.describe('failed scenario server', () => {
   test.use({ baseURL: servers.failed });
 
-  test('E05: failed job shows reason and attempts; retry is offered only for failed and the server answer is shown', async ({ page, request }) => {
+  test('E05: failed job shows reason and attempts; manual retry re-runs the same job with history, no new batch', async ({ page, request }) => {
     const title = uid('E05 чек-лист');
     await createChecklist(request, servers.failed, draft(title, [criterion('c-a')]));
     const id = uid('e05');
@@ -38,13 +38,16 @@ test.describe('failed scenario server', () => {
     await expect(row).toContainText('correlation_id');
 
     const before = await (await request.get(`${servers.failed}/api/v1/evaluation-batches/${batchId}`)).json();
+    const batchesBefore = before.jobs.map((j: { id: string }) => j.id);
+    await expect(row).toContainText('попытка 1 из');
     await row.getByRole('button', { name: 'Повторить задание' }).click();
-    // Whatever the server answers (202 or a contract error), no new batch is created.
-    await expect(row.getByRole('alert').or(row.locator('[data-state]'))).toBeVisible();
+    // Manual retry re-runs the same job (new attempt, history kept); it never creates a batch.
+    await expect(row).toContainText('попытка 2 из', { timeout: 30_000 });
+    await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии', { timeout: 30_000 });
+    await expect(row).toHaveAttribute('data-state', 'failed');
     const after = await (await request.get(`${servers.failed}/api/v1/evaluation-batches/${batchId}`)).json();
-    expect(after.jobs.length).toBe(before.jobs.length);
-    const list = await (await request.get(`${servers.failed}/api/v1/evaluations?batch_id=${batchId}`)).json();
-    expect(list.items.length).toBeLessThanOrEqual(1);
+    expect(after.jobs.map((j: { id: string }) => j.id)).toEqual(batchesBefore);
+    expect(after.jobs[0].attempts.length).toBe(2);
 
     await page.getByRole('link', { name: /карточка/ }).click();
     await expect(page.getByText('Оценка не получена').first()).toBeVisible();

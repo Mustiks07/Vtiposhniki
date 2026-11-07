@@ -10,6 +10,7 @@ import evaluationSources from '../../../../fixtures/contracts/evaluation-source-
 import scoreNoWeight from '../../../../fixtures/contracts/score-no-applicable-weight.json';
 import scorePartial from '../../../../fixtures/contracts/score-partial.json';
 import type { ChecklistVersion, Conversation, Criterion, EvaluationView, ScoreSummary } from '../api/types';
+import { buildReplacement } from './Appeals';
 import { AudioPanel } from './AudioPanel';
 import { ContributionLine, EvidenceList, rawStepText } from './CriterionDetail';
 import { ScorePanel, TotalValue } from './ScorePanel';
@@ -153,6 +154,15 @@ test('audio: unknown mapping is never presented as exact; unavailable recording 
     <Transcript conversation={voiceUnverified as Conversation} highlighted={[]} focusToken={0} canSeek={false} onSeek={() => undefined} />,
   );
   expect(within(container).queryByText(/запись с/)).toBeNull();
+});
+
+test('human replacement follows the criterion snapshot, carries human_changed and the chosen range', () => {
+  const c = checklist.criteria[1] as Criterion;
+  const changed = buildReplacement(c, 'low', 'Новое обоснование', { start: 'm0001', end: 'm0002' });
+  expect(changed).toMatchObject({ applicability: 'applicable', answer_choice_id: 'low', origin: 'human', reason_codes: ['human_changed'] });
+  expect(changed.evidence[0]).toMatchObject({ kind: 'range', start_message_id: 'm0001', end_message_id: 'm0002' });
+  const na = buildReplacement(c, '__na__', 'Причина N/A', null);
+  expect(na).toMatchObject({ applicability: 'not_applicable', answer_choice_id: null, evidence: [] });
 });
 
 test('audio: verified mapping offers seeking to the mapped message', () => {

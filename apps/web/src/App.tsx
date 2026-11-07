@@ -34,8 +34,14 @@ function HealthLine() {
 function Shell() {
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
-  // Move focus to main content on route change for keyboard and screen-reader users.
+  // Move focus to main content on route changes (not on first load, so the skip link and
+  // navigation stay first in tab order) for keyboard and screen-reader users.
+  const firstRender = useRef(true);
   useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
     mainRef.current?.focus({ preventScroll: true });
   }, [location.pathname]);
   return (

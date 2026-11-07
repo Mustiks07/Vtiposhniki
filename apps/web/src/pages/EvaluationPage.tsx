@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Criterion, EvaluationView } from '../api/types';
-import { AppealForm, DecisionComparison, DecisionForm } from '../components/Appeals';
+import type { Criterion, Decision, EvaluationView } from '../api/types';
+import { AppealForm, DecisionComparison, DecisionForm, DecisionSavedNotice } from '../components/Appeals';
 import { AudioPanel } from '../components/AudioPanel';
 import {
   answerText,
@@ -81,6 +81,7 @@ export function EvaluationPage() {
   const [openSource, setOpenSource] = useState<string | null>(null);
   const [showAppealForm, setShowAppealForm] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [lastDecision, setLastDecision] = useState<Decision | null>(null);
 
   const evaluation = useQuery({ queryKey: ['evaluation', id], queryFn: ({ signal }) => api.getEvaluation(id, signal) });
   const e = evaluation.data;
@@ -256,6 +257,7 @@ export function EvaluationPage() {
 
               <section className="appeals-block" aria-label="Апелляция по критерию">
                 <h3>Апелляция</h3>
+                <DecisionSavedNotice decision={lastDecision} onClose={() => setLastDecision(null)} />
                 {appeals.isError ? <ErrorPanel error={appeals.error} onRetry={() => appeals.refetch()} /> : null}
                 {criterionAppeals.map((a) => (
                   <div key={a.id} className="appeal" data-testid="appeal" data-state={a.state}>
@@ -267,7 +269,14 @@ export function EvaluationPage() {
                     {a.state === 'open' ? (
                       <details>
                         <summary>Принять решение</summary>
-                        <DecisionForm appeal={a} evaluation={ev} criterion={criterion} onReload={() => evaluation.refetch()} />
+                        <DecisionForm
+                          appeal={a}
+                          evaluation={ev}
+                          criterion={criterion}
+                          messages={messages}
+                          onReload={() => evaluation.refetch()}
+                          onDecided={setLastDecision}
+                        />
                       </details>
                     ) : null}
                   </div>

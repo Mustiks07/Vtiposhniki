@@ -66,7 +66,7 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
             карточка{evaluation ? ` · ${artifactStatusLabel[evaluation.artifact.status]}` : ''}
           </Link>
         ) : null}
-        {job.state === 'failed' ? (
+        {job.state === 'failed' || job.state === 'retry_wait' ? (
           <button type="button" onClick={() => retry.mutate()} disabled={retry.isPending}>
             {retry.isPending ? 'Повтор…' : 'Повторить задание'}
           </button>
