@@ -41,6 +41,8 @@ from .errors import ApiFailure, make_error, not_found
 from .registry import latest_profile, pinned_corpus, pinned_profile, profile_configuration_error
 from .services import Clock, Services
 
+MAX_ATTEMPTS_LIMIT = 10  # Job.max_attempts upper bound in the shared contract
+
 
 @dataclass(frozen=True)
 class Claim:
@@ -408,6 +410,7 @@ class JobQueue:
         now = self._clock()
         wire_now = to_wire_time(now)
         with self._db.write() as conn:
+            self._recover_expired(conn, now)
             while True:
                 job = row(
                     conn,
@@ -472,6 +475,162 @@ class JobQueue:
             },
         )
         return Claim(job["id"], attempt_id, lease_id, number)
+
+    def _close_open_calls(self, conn: Connection, attempt_id: str) -> None:
+        """An abandoned call has unknown spend, never zero. A late finish may still fill it."""
+        now = self._clock()
+        for open_call in rows(
+            conn,
+            "SELECT call_id, record_json FROM provider_calls "
+            "WHERE attempt_id = :attempt AND outcome = 'started'",
+            {"attempt": attempt_id},
+        ):
+            record = CallRecord.model_validate_json(open_call["record_json"])
+            closed = record.model_copy(
+                update={"outcome": "unknown", "finished_at": now, "finish_reason": "unknown"}
+            )
+            run(
+                conn,
+                "UPDATE provider_calls SET outcome = 'unknown', record_json = :record "
+                "WHERE call_id = :id",
+                {"record": closed.model_dump_json(), "id": open_call["call_id"]},
+            )
+
+    def _recover_expired(self, conn: Connection, now: datetime) -> None:
+        """Expired leases: the attempt is over. Its job waits for another, if any remains."""
+        wire_now = to_wire_time(now)
+        for job in rows(
+            conn,
+            "SELECT * FROM jobs WHERE state = 'running' AND lease_expires_at <= :now",
+            {"now": wire_now},
+        ):
+            error = make_error(ErrorCode.LEASE_LOST, "Attempt lease expired", retryable=True)
+            run(
+                conn,
+                "UPDATE job_attempts SET state = 'expired', finished_at = :now, error_json = :error"
+                " WHERE attempt_id = :attempt AND state = 'running'",
+                {"now": wire_now, "error": error.model_dump_json(), "attempt": job["attempt_id"]},
+            )
+            self._close_open_calls(conn, job["attempt_id"])
+            count = row(
+                conn,
+                "SELECT COUNT(*) AS n FROM job_attempts WHERE job_id = :id",
+                {"id": job["id"]},
+            )
+            used = int(count["n"]) if count else 0
+            reason = budget_exhaustion(job, call_records(conn, job["id"]), now)
+            can_retry = used < int(job["max_attempts"]) and reason is None
+            run(
+                conn,
+                "UPDATE jobs SET state = :state, stage = 'done', next_attempt_at = :next, "
+                "lease_id = NULL, lease_expires_at = NULL, error_json = :error, updated_at = :now "
+                "WHERE id = :id",
+                {
+                    "state": "retry_wait" if can_retry else "failed",
+                    "next": wire_now if can_retry else None,
+                    "error": error.model_dump_json(),
+                    "now": wire_now,
+                    "id": job["id"],
+                },
+            )
+
+    def recover(self) -> None:
+        with self._db.write() as conn:
+            self._recover_expired(conn, self._clock())
+
+    def extend_lease(self, claim: Claim) -> bool:
+        """Only the current, unexpired owner may extend. False means it must stop."""
+        now = self._clock()
+        with self._db.write() as conn:
+            job = self._current_job(conn, claim.job_id)
+            if not self._holds_lease(job, claim):
+                return False
+            run(
+                conn,
+                "UPDATE jobs SET lease_expires_at = :expires, updated_at = :now WHERE id = :id",
+                {
+                    "expires": to_wire_time(now + self._lease),
+                    "now": to_wire_time(now),
+                    "id": claim.job_id,
+                },
+            )
+            return True
+
+    def release(self, claim: Claim) -> None:
+        """Clean shutdown: the attempt is cancelled and the job resumes after restart."""
+        now = self._clock()
+        wire_now = to_wire_time(now)
+        error = make_error(ErrorCode.CANCELLED, "Attempt stopped by shutdown", retryable=True)
+        with self._db.write() as conn:
+            job = self._current_job(conn, claim.job_id)
+            if not self._holds_lease(job, claim):
+                return
+            run(
+                conn,
+                "UPDATE job_attempts SET state = 'cancelled', finished_at = :now, "
+                "error_json = :error WHERE attempt_id = :attempt",
+                {"now": wire_now, "error": error.model_dump_json(), "attempt": claim.attempt_id},
+            )
+            self._close_open_calls(conn, claim.attempt_id)
+            run(
+                conn,
+                "UPDATE jobs SET state = 'retry_wait', stage = 'done', next_attempt_at = :now, "
+                "lease_id = NULL, lease_expires_at = NULL, error_json = :error, updated_at = :now "
+                "WHERE id = :id",
+                {"now": wire_now, "error": error.model_dump_json(), "id": claim.job_id},
+            )
+
+    def find_reusable(self, keys: Sequence[str]) -> tuple[str, EvaluationArtifact] | None:
+        """Newest compatible automatic artifact. Human decisions are never reuse material."""
+        with self._db.read() as conn:
+            for key in keys:
+                found = row(
+                    conn,
+                    "SELECT id, artifact_json FROM evaluations WHERE reuse_key = :key "
+                    "AND status IN ('complete', 'partial') ORDER BY seq DESC LIMIT 1",
+                    {"key": key},
+                )
+                if found is not None:
+                    artifact = EvaluationArtifact.model_validate_json(found["artifact_json"])
+                    return str(found["id"]), artifact
+        return None
+
+    def retry_manually(self, job_id: str) -> Job:
+        now = self._clock()
+        wire_now = to_wire_time(now)
+        with self._db.write() as conn:
+            job = row(conn, "SELECT * FROM jobs WHERE id = :id", {"id": job_id})
+            if job is None:
+                raise not_found("Job")
+            if job["state"] not in ("failed", "retry_wait"):
+                raise ApiFailure(
+                    make_error(ErrorCode.INVALID_STATE, "Job cannot be retried in its current state")
+                )
+            reason = budget_exhaustion(job, call_records(conn, job_id), now)
+            if reason is not None:
+                raise ApiFailure(make_error(ErrorCode.BUDGET_EXCEEDED, reason))
+            count = row(
+                conn, "SELECT COUNT(*) AS n FROM job_attempts WHERE job_id = :id", {"id": job_id}
+            )
+            needed = (int(count["n"]) if count else 0) + 1
+            if needed > MAX_ATTEMPTS_LIMIT:
+                raise ApiFailure(
+                    make_error(ErrorCode.INVALID_STATE, "Job attempt limit is exhausted")
+                )
+            run(
+                conn,
+                "UPDATE jobs SET state = 'queued', stage = 'queued', next_attempt_at = NULL, "
+                "max_attempts = :attempts, evaluation_id = NULL, error_json = NULL, "
+                "updated_at = :now WHERE id = :id",
+                {
+                    "attempts": max(int(job["max_attempts"]), needed),
+                    "now": wire_now,
+                    "id": job_id,
+                },
+            )
+            updated = row(conn, "SELECT * FROM jobs WHERE id = :id", {"id": job_id})
+            assert updated is not None
+            return _job_dto(conn, updated)
 
     def _current_job(self, conn: Connection, job_id: str) -> RowMapping:
         job = row(conn, "SELECT * FROM jobs WHERE id = :id", {"id": job_id})
@@ -554,7 +713,7 @@ class JobQueue:
             )
             if known is None or known["attempt_id"] != event.attempt_id:
                 raise _persistence_error(claim.job_id, "Finished call was never started")
-            if known["outcome"] == "started":
+            if known["outcome"] in ("started", "unknown"):
                 run(
                     conn,
                     "UPDATE provider_calls SET outcome = :outcome, record_json = :record "
@@ -636,6 +795,7 @@ class JobQueue:
             if not self._holds_lease(job, claim):
                 raise _lease_lost(claim.job_id)
             evaluation_id = self._insert_evaluation(conn, job, artifact, automatic_score, reuse)
+            self._close_open_calls(conn, claim.attempt_id)
             self._mark_succeeded(conn, claim, evaluation_id)
             return evaluation_id
 
@@ -664,6 +824,7 @@ class JobQueue:
         final_artifact: EvaluationArtifact | None = None,
         final_score: ScoreSummary | None = None,
         reuse: ReuseProvenance | None = None,
+        diagnostic: str | None = None,
     ) -> str:
         """Returns the resulting job state. A stale attempt changes nothing but itself."""
         now = self._clock()
@@ -675,16 +836,29 @@ class JobQueue:
                 run(
                     conn,
                     "UPDATE job_attempts SET state = 'expired', finished_at = :now, "
-                    "error_json = :error WHERE attempt_id = :attempt AND state = 'running'",
-                    {"now": wire_now, "error": error_json, "attempt": claim.attempt_id},
+                    "error_json = :error, diagnostic_json = :diagnostic "
+                    "WHERE attempt_id = :attempt AND state = 'running'",
+                    {
+                        "now": wire_now,
+                        "error": error_json,
+                        "diagnostic": diagnostic,
+                        "attempt": claim.attempt_id,
+                    },
                 )
+                self._close_open_calls(conn, claim.attempt_id)
                 return str(job["state"])
             run(
                 conn,
                 "UPDATE job_attempts SET state = 'failed', finished_at = :now, "
-                "error_json = :error WHERE attempt_id = :attempt",
-                {"now": wire_now, "error": error_json, "attempt": claim.attempt_id},
+                "error_json = :error, diagnostic_json = :diagnostic WHERE attempt_id = :attempt",
+                {
+                    "now": wire_now,
+                    "error": error_json,
+                    "diagnostic": diagnostic,
+                    "attempt": claim.attempt_id,
+                },
             )
+            self._close_open_calls(conn, claim.attempt_id)
             reason = budget_exhaustion(job, call_records(conn, claim.job_id), now)
             next_attempt = now + self._retry.delay(claim.number)
             can_retry = (

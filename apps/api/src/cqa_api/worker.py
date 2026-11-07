@@ -98,10 +98,46 @@ class Worker:
             reuse_key=key,
         )
 
+    def _reuse_keys(self, inputs: ExecutionInputs) -> list[str]:
+        """Text-only identity first; audio only when this conversation has a known hash."""
+        domain = self._services.domain
+        text_only = self._identity(inputs, None)
+        keys = [domain.evaluation_reuse_key(text_only)]
+        audio_hash = inputs.conversation.audio.content_hash
+        if audio_hash is not None:
+            with_audio = text_only.model_copy(update={"audio_content_hash": audio_hash})
+            keys.append(domain.evaluation_reuse_key(with_audio))
+        return keys
+
+    async def _try_reuse(self, claim: Claim, inputs: ExecutionInputs) -> bool:
+        """Compatible semantics: no AI call, the new scoring config is applied by domain.score."""
+        domain = self._services.domain
+        found = await self._db(self._queue.find_reusable, self._reuse_keys(inputs))
+        if found is None:
+            return False
+        source_id, artifact = found
+        try:
+            domain.validate_artifact(inputs.conversation, inputs.checklist, inputs.corpus, artifact)
+        except DomainValidationError:
+            return False
+        score = domain.score(inputs.checklist, artifact.automatic_final)
+        provenance = self._provenance(inputs, artifact).model_copy(
+            update={"reused_from_evaluation_id": source_id}
+        )
+        await self._db(self._queue.mark_stage, claim, "persisting")
+        await self._db(self._queue.commit_success, claim, artifact, score, provenance)
+        return True
+
     async def _accept(
         self, claim: Claim, inputs: ExecutionInputs, artifact: EvaluationArtifact
     ) -> None:
         domain = self._services.domain
+        if artifact.evaluator_mode != self._services.settings.mode:
+            raise ConfigurationError(
+                make_error(
+                    ErrorCode.CONFIGURATION_ERROR, "Evaluator mode does not match this server"
+                )
+            )
         provenance = self._provenance(inputs, artifact)
         if artifact.status == "failed":
             assert artifact.error is not None
@@ -113,9 +149,15 @@ class Worker:
                 final_artifact=artifact,
                 final_score=no_score(),
                 reuse=provenance,
+                diagnostic=artifact.model_dump_json(),
             )
             return
-        domain.validate_artifact(inputs.conversation, inputs.checklist, inputs.corpus, artifact)
+        try:
+            domain.validate_artifact(inputs.conversation, inputs.checklist, inputs.corpus, artifact)
+        except DomainValidationError as exc:
+            # Repair already happened in the evaluator. What arrived is diagnostic, not a result.
+            await self._fail(claim, exc.error, False, diagnostic=artifact.model_dump_json())
+            return
         score = domain.score(inputs.checklist, artifact.automatic_final)
         await self._db(self._queue.mark_stage, claim, "persisting")
         await self._db(self._queue.commit_success, claim, artifact, score, provenance)
@@ -134,18 +176,46 @@ class Worker:
             timeout=max(remaining, 0),
         )
 
+    async def _with_heartbeat(
+        self, claim: Claim, inputs: ExecutionInputs
+    ) -> EvaluationArtifact:
+        """Short lease writes while waiting. Losing the lease stops the evaluator."""
+        interval = max(self._services.settings.lease_seconds / 3, 0.01)
+        task = asyncio.ensure_future(self._evaluate(claim, inputs))
+        try:
+            while True:
+                done, _ = await asyncio.wait({task}, timeout=interval)
+                if done:
+                    return task.result()
+                try:
+                    held = await self._db(self._queue.extend_lease, claim)
+                except SQLAlchemyError:
+                    logger.error("Could not extend lease of attempt %s", claim.attempt_id)
+                    held = True  # the expiry time still decides; no ownership was disproved
+                if not held:
+                    raise LeaseLost(
+                        make_error(ErrorCode.LEASE_LOST, "Attempt no longer holds the job lease")
+                    )
+        finally:
+            if not task.done():
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+
     async def execute(self, claim: Claim) -> None:
         try:
             inputs = await self._db(self._queue.load_inputs, claim)
-            artifact = await self._evaluate(claim, inputs)
+            if inputs.mode == "reuse_if_compatible" and await self._try_reuse(claim, inputs):
+                return
+            artifact = await self._with_heartbeat(claim, inputs)
             await self._accept(claim, inputs, artifact)
+        except asyncio.CancelledError:
+            await asyncio.shield(self._db(self._queue.release, claim))
+            raise
         except LeaseLost:
             # A newer attempt may own the job; this one must not touch its state.
             logger.info("Attempt %s lost its lease", claim.attempt_id)
             await self._fail(claim, make_error(ErrorCode.LEASE_LOST, "Lease lost"), False)
-        except BudgetExceeded as exc:
-            await self._fail(claim, exc.error, False)
-        except (ConfigurationError, DomainValidationError) as exc:
+        except (BudgetExceeded, ConfigurationError, DomainValidationError) as exc:
             await self._fail(claim, exc.error, False)
         except TimeoutError:
             error = make_error(ErrorCode.TIMEOUT, "Job deadline was reached")
@@ -163,8 +233,20 @@ class Worker:
             error = make_error(ErrorCode.INTERNAL_ERROR, "Evaluation attempt failed")
             await self._fail(claim, error, True)
 
-    async def _fail(self, claim: Claim, error: APIError, retryable: bool) -> None:
-        await self._db(self._queue.commit_failure, claim, error, retryable=retryable)
+    async def _fail(
+        self, claim: Claim, error: APIError, retryable: bool, diagnostic: str | None = None
+    ) -> None:
+        try:
+            await self._db(
+                self._queue.commit_failure,
+                claim,
+                error,
+                retryable=retryable,
+                diagnostic=diagnostic,
+            )
+        except SQLAlchemyError:
+            # Nothing is claimed as finished; lease expiry recovers the job.
+            logger.error("Could not record failure of attempt %s", claim.attempt_id)
 
     async def drain(self) -> int:
         """Run claimable jobs to exhaustion in this task. Returns the number of attempts."""
@@ -176,6 +258,7 @@ class Worker:
 
     async def run(self, stop: asyncio.Event) -> None:
         """Bounded concurrency over a single loop; provider waits share it, not DB locks."""
+        await self._db(self._queue.recover)
         running: set[asyncio.Task[None]] = set()
         limit = max(self._services.settings.worker_concurrency, 1)
         poll = self._services.settings.worker_poll_seconds

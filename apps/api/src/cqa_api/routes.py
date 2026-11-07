@@ -38,10 +38,9 @@ def _services(request: Request) -> Services:
 @router.get("/health", operation_id="getHealth", response_model=h.Health)
 def health(request: Request) -> h.Health:
     services = _services(request)
-    state = request.app.state
     return h.Health(
         phase="application",
-        business_ready=state.domain_ready and not services.registry_errors,
+        business_ready=request.app.state.domain_ready and registry.has_usable_profile(services),
         evaluator_mode=services.settings.mode,
     )
 
@@ -186,7 +185,7 @@ def get_job(request: Request, id: str) -> Job:
 
 @router.post("/jobs/{id}/retry", operation_id="retryJob", response_model=Job, status_code=202)
 def retry_job(request: Request, id: str) -> Job:
-    raise not_implemented()
+    return jobs.build_queue(_services(request)).retry_manually(id)
 
 
 @router.get("/evaluations", operation_id="listEvaluations", response_model=Page[EvaluationView])

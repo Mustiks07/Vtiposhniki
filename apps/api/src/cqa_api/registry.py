@@ -1,8 +1,9 @@
 """Immutable registry of evaluator profiles and corpus snapshots.
 
-Sources: built-ins in explicit test mode; otherwise JSON files under
-<config_dir>/corpora and <config_dir>/profiles. A registered version never changes;
-a file changing the content of an existing version is refused, not applied.
+Sources: JSON files under <config_dir>/corpora and <config_dir>/profiles, plus the
+built-in synthetic pair in explicit test mode only. A profile's mode must match the
+server's. A registered version never changes; a file changing the content of an
+existing version is refused, not applied.
 """
 
 import logging
@@ -24,7 +25,7 @@ from .testmode import synthetic_corpus, synthetic_profile
 logger = logging.getLogger("cqa_api.registry")
 
 
-def _register_corpus(conn: Connection, services: Services, corpus: CorpusSnapshot) -> None:
+def register_corpus(conn: Connection, services: Services, corpus: CorpusSnapshot) -> None:
     expected = services.domain.corpus_snapshot_hash(corpus)
     if expected != corpus.content_hash:
         raise ValueError("corpus content hash does not match its content")
@@ -48,7 +49,7 @@ def _register_corpus(conn: Connection, services: Services, corpus: CorpusSnapsho
     )
 
 
-def _register_profile(conn: Connection, services: Services, profile: EvaluatorProfile) -> None:
+def register_profile(conn: Connection, services: Services, profile: EvaluatorProfile) -> None:
     if profile.mode != services.settings.mode:
         raise ValueError("profile mode does not match the application mode")
     digest = services.domain.profile_hash(profile)
@@ -90,9 +91,9 @@ def _load_directory(
             text = path.read_text(encoding="utf-8")
             with services.db.write() as conn:
                 if kind == "corpus":
-                    _register_corpus(conn, services, CorpusSnapshot.model_validate_json(text))
+                    register_corpus(conn, services, CorpusSnapshot.model_validate_json(text))
                 else:
-                    _register_profile(conn, services, EvaluatorProfile.model_validate_json(text))
+                    register_profile(conn, services, EvaluatorProfile.model_validate_json(text))
         except (OSError, ValueError, ValidationError, NotImplementedError) as exc:
             # A bad file must not silently become a usable profile. File name and type only.
             message = f"{kind} configuration {path.name} rejected: {type(exc).__name__}"
@@ -103,9 +104,8 @@ def _load_directory(
 def sync_registry(services: Services) -> None:
     if services.settings.mode == "test":
         with services.db.write() as conn:
-            _register_corpus(conn, services, synthetic_corpus(services.domain))
-            _register_profile(conn, services, synthetic_profile())
-        return
+            register_corpus(conn, services, synthetic_corpus(services.domain))
+            register_profile(conn, services, synthetic_profile())
     base = services.settings.effective_config_dir
     _load_directory(services, base / "corpora", "corpus")
     _load_directory(services, base / "profiles", "profile")
@@ -178,6 +178,11 @@ def list_profiles(
             )
         )
     return summaries, len(profiles)
+
+
+def has_usable_profile(services: Services) -> bool:
+    profiles, _ = list_profiles(services, limit=200, offset=0)
+    return any(summary.configured for summary in profiles)
 
 
 def list_sources(
