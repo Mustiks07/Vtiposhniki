@@ -1,4 +1,9 @@
-# Foundation v1 implementation decisions
+# Shared implementation decisions
+
+HTTP contract 1.1.0 adds the scoped flag query and optional `flag_summary` documented
+in [FLAG_FILTER_CONTRACT.md](FLAG_FILTER_CONTRACT.md). Domain DTO schema_version stays
+1.0. The original decisions below continue to apply. The organizer/user clarification
+is preserved in [spec 05](specs/05_ORGANIZER_ADDENDUM.md).
 
 Pydantic models in `cqa_contracts` are the only type definitions. `operations.py`
 is the HTTP operation contract; generated JSON Schema/OpenAPI/TS are checked for
@@ -112,8 +117,14 @@ foundation. Real adapters and live configuration validation remain A/B work.
 
 SyntheticEvaluator requires explicit app_mode=test and profile.mode=test. It emits
 test-origin proposals and simulated callbacks, uses no network, has no score, and
-does not claim known provider cost. Production `cqa_ai.evaluate` checks credentials
-then raises NotImplementedError until A implements it. No implicit test fallback.
+does not claim known provider cost. Production `cqa_ai.evaluate` is now implemented
+by A and checks credentials and pinned profile settings. No implicit test fallback.
+
+B's `CQA_DEADLINE_GRACE_SECONDS` (default 10) allows a valid initial answer to be
+persisted after optional reviewer deadline handling. This is a finalization grace,
+not extra provider-call time: `call_started` still refuses calls after deadline.
+The worker cancels at deadline plus grace; cancellation, lease loss and persistence
+failure cannot be turned into success.
 
 Complete/partial must contain one valid proposal per requested criterion (A checks
 against rubric); partial has undetermined, failed is not repaired by filling gaps.

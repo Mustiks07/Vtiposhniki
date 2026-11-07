@@ -845,6 +845,37 @@ def build() -> None:
     )
     add("health", h.Health, {}, "Foundation health explicitly reports business_ready=false.")
 
+    # Shape examples, not a second flag calculation or a server query implementation.
+    for name, state, flag_status, detected, scope, job_id, evaluation_id in [
+        ("detected-partial", "partial", "detected", True, "automatic", "job-flag", "eval-flag"),
+        ("negative", "complete", "not_detected", False, "automatic", "job-flag", "eval-flag"),
+        ("human-negative", "partial", "not_detected", False, "effective", "job-flag", "eval-flag"),
+        ("pending", "pending", "unknown", None, "automatic", "job-new", None),
+        ("failed", "failed", "unknown", None, "automatic", "job-failed", None),
+        ("unevaluated", "unevaluated", "unknown", None, "automatic", None, None),
+    ]:
+        add(
+            f"conversation-flag-{name}",
+            h.ConversationSummary,
+            dict(
+                conversation=conversation.model_dump(mode="json"),
+                latest_evaluation_id=evaluation_id,
+                evaluation_status=state,
+                flag_summary=dict(
+                    checklist_version_id="synthetic-checklist-v1",
+                    latest_job_id=job_id,
+                    scope=scope,
+                    status=flag_status,
+                    result=dict(
+                        criterion_id="synthetic-flag",
+                        detected=detected,
+                        answer_choice_id=None if detected is None else "yes" if detected else "no",
+                    ),
+                ),
+            ),
+            "Synthetic flag-filter response shape; no database selection is exercised.",
+        )
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)

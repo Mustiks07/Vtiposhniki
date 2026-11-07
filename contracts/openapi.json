@@ -789,6 +789,66 @@
         "title": "Conversation",
         "type": "object"
       },
+      "ConversationFlagSummary": {
+        "additionalProperties": false,
+        "description": "One selected flag; details use latest_evaluation_id and result.criterion_id.",
+        "properties": {
+          "checklist_version_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Checklist Version Id",
+            "type": "string"
+          },
+          "latest_job_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Job Id"
+          },
+          "result": {
+            "$ref": "#/components/schemas/FlagResult"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "automatic",
+              "effective"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "detected",
+              "not_detected",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "checklist_version_id",
+          "latest_job_id",
+          "scope",
+          "status",
+          "result"
+        ],
+        "title": "ConversationFlagSummary",
+        "type": "object"
+      },
       "ConversationSummary": {
         "additionalProperties": false,
         "properties": {
@@ -805,6 +865,16 @@
             ],
             "title": "Evaluation Status",
             "type": "string"
+          },
+          "flag_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConversationFlagSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "latest_evaluation_id": {
             "anyOf": [
@@ -4453,7 +4523,7 @@
   },
   "info": {
     "title": "CQA API",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5551,6 +5621,77 @@
                 }
               ],
               "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "checklist_version_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Checklist Version Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flag_criterion_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flag Criterion Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flag_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "detected",
+                    "not_detected",
+                    "unknown"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flag Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "flag_scope",
+            "required": false,
+            "schema": {
+              "default": "automatic",
+              "enum": [
+                "automatic",
+                "effective"
+              ],
+              "title": "Flag Scope",
+              "type": "string"
             }
           }
         ],

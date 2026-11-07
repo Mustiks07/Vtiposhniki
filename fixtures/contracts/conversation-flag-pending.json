@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "conversation": {
+    "schema_version": "1.0",
+    "id": "synthetic-conversation",
+    "external_id": "synthetic-external",
+    "revision": 1,
+    "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "channel": "agent_chat",
+    "language": "RU",
+    "messages": [
+      {
+        "schema_version": "1.0",
+        "id": "m0001",
+        "ordinal": 1,
+        "speaker": "client",
+        "text": "Учебный вопрос о вымышленном сервисе.",
+        "timestamp_original": "00:01",
+        "parsed_time": null,
+        "source_index": 0
+      },
+      {
+        "schema_version": "1.0",
+        "id": "m0002",
+        "ordinal": 2,
+        "speaker": "operator",
+        "text": "Здравствуйте. Учебный ответ. Бұл синтетикалық мысал. Synthetic example.",
+        "timestamp_original": "00:05",
+        "parsed_time": null,
+        "source_index": 1
+      },
+      {
+        "schema_version": "1.0",
+        "id": "m0003",
+        "ordinal": 3,
+        "speaker": "client",
+        "text": "Спасибо за учебный ответ.",
+        "timestamp_original": "00:09",
+        "parsed_time": null,
+        "source_index": 2
+      }
+    ],
+    "occurred_at": null,
+    "audio": {
+      "schema_version": "1.0",
+      "availability": "unavailable",
+      "access_path": null,
+      "content_hash": null,
+      "alignment_status": "unavailable",
+      "mapping": null,
+      "media_type": null
+    },
+    "warnings": []
+  },
+  "latest_evaluation_id": null,
+  "evaluation_status": "pending",
+  "flag_summary": {
+    "schema_version": "1.0",
+    "checklist_version_id": "synthetic-checklist-v1",
+    "latest_job_id": "job-new",
+    "scope": "automatic",
+    "status": "unknown",
+    "result": {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-flag",
+      "detected": null,
+      "answer_choice_id": null
+    }
+  }
+}

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from cqa_contracts import API_VERSION
 from cqa_contracts.interfaces import Evaluator
 from cqa_contracts.models import AudioMetadata, Conversation, ErrorCode, Message
 from fastapi import FastAPI
@@ -154,7 +155,7 @@ def create_app(
 
     app = FastAPI(
         title="CQA API",
-        version="1.0.0",
+        version=API_VERSION,
         separate_input_output_schemas=False,
         lifespan=lifespan,
     )

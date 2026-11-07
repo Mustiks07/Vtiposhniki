@@ -1,4 +1,4 @@
-"""One foundation acceptance command, with each failed step stopping the run."""
+"""Run the integration checks, stopping on the first failed command."""
 
 import shutil
 import subprocess
@@ -26,7 +26,10 @@ def main() -> None:
     for command in commands:
         print("RUN", " ".join(command), flush=True)
         subprocess.run(command, cwd=ROOT, check=True)
-    print("Foundation checks passed. Business application acceptance has NOT run.")
+    print(
+        "Automated integration checks passed, including browser scenarios in explicit test mode. "
+        "This command does not exercise live providers or measure AI quality."
+    )
 
 
 if __name__ == "__main__":

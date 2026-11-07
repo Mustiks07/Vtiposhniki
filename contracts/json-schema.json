@@ -886,6 +886,134 @@
       "title": "Conversation",
       "type": "object"
     },
+    "ConversationFlagQuery": {
+      "additionalProperties": false,
+      "description": "Validated selection for listConversations; no business filtering here.",
+      "properties": {
+        "checklist_version_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checklist Version Id"
+        },
+        "flag_criterion_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Flag Criterion Id"
+        },
+        "flag_scope": {
+          "default": "automatic",
+          "enum": [
+            "automatic",
+            "effective"
+          ],
+          "title": "Flag Scope",
+          "type": "string"
+        },
+        "flag_status": {
+          "anyOf": [
+            {
+              "enum": [
+                "detected",
+                "not_detected",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Flag Status"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "title": "ConversationFlagQuery",
+      "type": "object"
+    },
+    "ConversationFlagSummary": {
+      "additionalProperties": false,
+      "description": "One selected flag; details use latest_evaluation_id and result.criterion_id.",
+      "properties": {
+        "checklist_version_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Checklist Version Id",
+          "type": "string"
+        },
+        "latest_job_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latest Job Id"
+        },
+        "result": {
+          "$ref": "#/$defs/FlagResult"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "automatic",
+            "effective"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "detected",
+            "not_detected",
+            "unknown"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "checklist_version_id",
+        "latest_job_id",
+        "scope",
+        "status",
+        "result"
+      ],
+      "title": "ConversationFlagSummary",
+      "type": "object"
+    },
     "ConversationHashInput": {
       "additionalProperties": false,
       "properties": {
@@ -957,6 +1085,17 @@
           ],
           "title": "Evaluation Status",
           "type": "string"
+        },
+        "flag_summary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConversationFlagSummary"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "latest_evaluation_id": {
           "anyOf": [
@@ -5011,6 +5150,12 @@
     "Conversation": {
       "$ref": "#/$defs/Conversation"
     },
+    "ConversationFlagQuery": {
+      "$ref": "#/$defs/ConversationFlagQuery"
+    },
+    "ConversationFlagSummary": {
+      "$ref": "#/$defs/ConversationFlagSummary"
+    },
     "ConversationHashInput": {
       "$ref": "#/$defs/ConversationHashInput"
     },
@@ -5222,6 +5367,8 @@
     "Choice",
     "ContentMessage",
     "Conversation",
+    "ConversationFlagQuery",
+    "ConversationFlagSummary",
     "ConversationHashInput",
     "ConversationSummary",
     "CorpusHashInput",

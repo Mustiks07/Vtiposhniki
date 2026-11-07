@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "id": "live-empty-corpus-v1",
+  "content_hash": "706585488df363be5187eabed2e90bc4e3b56cf56e1e8bb20e58d6cad8072f0e",
+  "sources": [],
+  "chunks": [],
+  "applicability_policy": "No knowledge sources; factual checks are limited.",
+  "priority_policy": "No sources."
+}

@@ -12,6 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 from starlette.exceptions import HTTPException
 
+from . import API_VERSION
 from .http_models import (
     ChecklistSummary,
     ConversationSummary,
@@ -19,6 +20,8 @@ from .http_models import (
     CreateBatch,
     CreateChecklistVersion,
     EvaluationBatch,
+    FlagScope,
+    FlagStatus,
     Health,
     ImportRequest,
     ImportResult,
@@ -42,6 +45,7 @@ from .models import (
     Job,
     SafeExport,
 )
+from .queries import conversation_flag_query
 
 ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     status: {"model": APIError, "description": description}
@@ -93,7 +97,12 @@ async def list_conversations(
     language: Literal["RU", "KZ", "EN"] | None = None,
     channel: Literal["agent_chat", "voice_call"] | None = None,
     status: Literal["unevaluated", "pending", "complete", "partial", "failed"] | None = None,
+    checklist_version_id: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
+    flag_criterion_id: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
+    flag_status: FlagStatus | None = None,
+    flag_scope: FlagScope = "automatic",
 ) -> None:
+    conversation_flag_query(checklist_version_id, flag_criterion_id, flag_status, flag_scope)
     unimplemented()
 
 
@@ -282,7 +291,7 @@ async def list_sources(
 
 
 def create_contract_app() -> FastAPI:
-    app = FastAPI(title="CQA API", version="1.0.0", separate_input_output_schemas=False)
+    app = FastAPI(title="CQA API", version=API_VERSION, separate_input_output_schemas=False)
     app.include_router(router)
 
     @app.exception_handler(Exception)
@@ -297,7 +306,10 @@ def create_contract_app() -> FastAPI:
 
     @app.exception_handler(ContractError)
     async def contract_error(request: Request, exc: ContractError) -> JSONResponse:
-        status = 501 if exc.error.code == ErrorCode.NOT_IMPLEMENTED else 503
+        status = {
+            ErrorCode.NOT_IMPLEMENTED: 501,
+            ErrorCode.VALIDATION_ERROR: 422,
+        }.get(exc.error.code, 503)
         return JSONResponse(status_code=status, content=exc.error.model_dump(mode="json"))
 
     @app.exception_handler(RequestValidationError)

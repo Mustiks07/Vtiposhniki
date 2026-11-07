@@ -88,6 +88,36 @@
       "description": "Entirely invented three-message chat; original MM:SS remains undated."
     },
     {
+      "file": "conversation-flag-detected-partial.json",
+      "model": "ConversationSummary",
+      "description": "Synthetic flag-filter response shape; no database selection is exercised."
+    },
+    {
+      "file": "conversation-flag-failed.json",
+      "model": "ConversationSummary",
+      "description": "Synthetic flag-filter response shape; no database selection is exercised."
+    },
+    {
+      "file": "conversation-flag-human-negative.json",
+      "model": "ConversationSummary",
+      "description": "Synthetic flag-filter response shape; no database selection is exercised."
+    },
+    {
+      "file": "conversation-flag-negative.json",
+      "model": "ConversationSummary",
+      "description": "Synthetic flag-filter response shape; no database selection is exercised."
+    },
+    {
+      "file": "conversation-flag-pending.json",
+      "model": "ConversationSummary",
+      "description": "Synthetic flag-filter response shape; no database selection is exercised."
+    },
+    {
+      "file": "conversation-flag-unevaluated.json",
+      "model": "ConversationSummary",
+      "description": "Synthetic flag-filter response shape; no database selection is exercised."
+    },
+    {
       "file": "conversation-missing-action.json",
       "model": "Conversation",
       "description": "Companion input for missing-action: full range contains no operator greeting."

@@ -662,6 +662,33 @@ export interface components {
             /** Warnings */
             warnings?: string[];
         };
+        /**
+         * ConversationFlagSummary
+         * @description One selected flag; details use latest_evaluation_id and result.criterion_id.
+         */
+        ConversationFlagSummary: {
+            /** Checklist Version Id */
+            checklist_version_id: string;
+            /** Latest Job Id */
+            latest_job_id: string | null;
+            result: components["schemas"]["FlagResult"];
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "automatic" | "effective";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "detected" | "not_detected" | "unknown";
+        };
         /** ConversationSummary */
         ConversationSummary: {
             conversation: components["schemas"]["Conversation"];
@@ -670,6 +697,7 @@ export interface components {
              * @enum {string}
              */
             evaluation_status: "unevaluated" | "complete" | "partial" | "failed" | "pending";
+            flag_summary?: components["schemas"]["ConversationFlagSummary"] | null;
             /** Latest Evaluation Id */
             latest_evaluation_id?: string | null;
             /**
@@ -2883,6 +2911,10 @@ export interface operations {
                 language?: ("RU" | "KZ" | "EN") | null;
                 channel?: ("agent_chat" | "voice_call") | null;
                 status?: ("unevaluated" | "pending" | "complete" | "partial" | "failed") | null;
+                checklist_version_id?: string | null;
+                flag_criterion_id?: string | null;
+                flag_status?: ("detected" | "not_detected" | "unknown") | null;
+                flag_scope?: "automatic" | "effective";
             };
             header?: never;
             path?: never;

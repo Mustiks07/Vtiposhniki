@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { Appeal, AppealPage, Decision } from '../src/api/types';
 import { createChecklist, criterion, draft, evaluation, importViaApi, record, runBatchApi, servers, uid } from './support';
 
 const base = servers.complete;
@@ -12,9 +13,21 @@ test('appeals pagination: forward, back and page restored from the URL', async (
   const evaluationId = batch.jobs[0].evaluation_id!;
   const ev = await evaluation(request, base, evaluationId);
   const marker = uid('страница');
+  // Include mixed states even when this spec runs alone: "all" must not be treated
+  // as the first "open" page. A resolved appeal permits a new one on the same criterion.
+  const resolvedResponse = await request.post(`${base}/api/v1/evaluations/${evaluationId}/appeals`, {
+    data: { criterion_id: ids[0], comment: `${marker} resolved`, expected_revision: ev.revision },
+  });
+  expect(resolvedResponse.status(), await resolvedResponse.text()).toBe(201);
+  const resolved = (await resolvedResponse.json()) as Appeal;
+  const decisionResponse = await request.post(`${base}/api/v1/appeals/${resolved.id}/decision`, {
+    data: { decision: 'confirmed', reason: 'Синтетическое подтверждение для проверки фильтра.', expected_revision: ev.revision },
+  });
+  expect(decisionResponse.status(), await decisionResponse.text()).toBe(200);
+  const decision = (await decisionResponse.json()) as Decision;
   for (const id of ids) {
     const res = await request.post(`${base}/api/v1/evaluations/${evaluationId}/appeals`, {
-      data: { criterion_id: id, comment: `${marker} ${id}`, expected_revision: ev.revision },
+      data: { criterion_id: id, comment: `${marker} ${id}`, expected_revision: decision.revision },
     });
     expect(res.status(), await res.text()).toBe(201);
   }
@@ -23,15 +36,20 @@ test('appeals pagination: forward, back and page restored from the URL', async (
 
   await page.goto('/#/appeals');
   const range = page.getByTestId('pager-range');
+  const rows = page.getByTestId('queue-appeal');
+  const headers = rows.locator('.appeal-head');
   await expect(range).toHaveText(`1–25 из ${total}`);
-  const firstPage = await page.getByTestId('queue-appeal').allTextContents();
-  expect(firstPage).toHaveLength(25);
+  await expect(rows).toHaveCount(25);
+  const firstPage = await headers.allTextContents();
 
   await page.getByRole('button', { name: 'Вперёд →' }).click();
   await expect(page).toHaveURL(/offset=25/);
   await expect(range).toHaveText(`26–${Math.min(50, total)} из ${total}`);
-  const secondPage = await page.getByTestId('queue-appeal').allTextContents();
-  expect(secondPage.length).toBe(Math.min(25, total - 25));
+  // The URL/pager changes before keepPreviousData replaces the old rows. Check their
+  // identities too: both pages can contain 25 rows. Headers exclude expanded review content.
+  await expect(rows).toHaveCount(Math.min(25, total - 25));
+  await expect.poll(() => headers.allTextContents()).not.toEqual(firstPage);
+  const secondPage = await headers.allTextContents();
   expect(secondPage.some((t) => firstPage.includes(t))).toBe(false);
 
   // Opening an appeal keeps the page.
@@ -43,18 +61,28 @@ test('appeals pagination: forward, back and page restored from the URL', async (
   await page.reload();
   await expect(range).toHaveText(`26–${Math.min(50, total)} из ${total}`);
   await expect(page).toHaveURL(/offset=25/);
+  await expect(headers).toHaveText(secondPage);
 
   await page.getByRole('button', { name: '← Назад' }).click();
   await expect(page).not.toHaveURL(/offset=/);
   await expect(range).toHaveText(`1–25 из ${total}`);
-  expect(await page.getByTestId('queue-appeal').allTextContents()).toEqual(firstPage);
+  await expect(headers).toHaveText(firstPage);
 
   // A filter change returns to the first page.
   await page.goto('/#/appeals?offset=25');
   await expect(range).toHaveText(`26–${Math.min(50, total)} из ${total}`);
+  await expect(headers).toHaveText(secondPage);
+  const allResponse = await request.get(`${base}/api/v1/appeals?limit=25&offset=0`);
+  expect(allResponse.status(), await allResponse.text()).toBe(200);
+  const allPage = (await allResponse.json()) as AppealPage;
+  expect(allPage.total).toBeGreaterThan(total);
   await page.getByLabel('Состояние').selectOption('all');
   await expect(page).not.toHaveURL(/offset=/);
-  await expect(range).toContainText('1–25 из');
+  await expect(range).toHaveText(`1–${allPage.items.length} из ${allPage.total}`);
+  await expect(rows).toHaveCount(allPage.items.length);
+  await expect(headers.locator('.clamp')).toHaveText(allPage.items.map((appeal) => appeal.comment));
+  await expect.poll(() => rows.evaluateAll((items) => items.map((item) => item.getAttribute('data-state'))))
+    .toEqual(allPage.items.map((appeal) => appeal.state));
 });
 
 test('editor: changing an existing scale into a reverse mapping needs a new confirmation', async ({ page, request }) => {

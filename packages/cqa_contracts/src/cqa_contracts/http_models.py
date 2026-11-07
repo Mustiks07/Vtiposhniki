@@ -1,8 +1,8 @@
 """Wire requests/responses, including the portable JSON import format v1."""
 
-from typing import Annotated, Generic, Literal, TypeVar
+from typing import Annotated, Generic, Literal, Self, TypeVar
 
-from pydantic import AwareDatetime, Field
+from pydantic import AwareDatetime, Field, model_validator
 
 from .models import (
     DTO,
@@ -12,6 +12,7 @@ from .models import (
     ChecklistVersion,
     Conversation,
     EvaluatorProfile,
+    FlagResult,
     Job,
     Nonempty,
     SourceVersion,
@@ -129,10 +130,54 @@ class ProfileSummary(DTO):
     configuration_error: APIError | None = None
 
 
+FlagStatus = Literal["detected", "not_detected", "unknown"]
+FlagScope = Literal["automatic", "effective"]
+
+
+class ConversationFlagQuery(DTO):
+    """Validated selection for listConversations; no business filtering here."""
+
+    checklist_version_id: ID | None = None
+    flag_criterion_id: ID | None = None
+    flag_status: FlagStatus | None = None
+    flag_scope: FlagScope = "automatic"
+
+    @model_validator(mode="after")
+    def explicit_selection(self) -> Self:
+        if self.flag_criterion_id is not None and self.checklist_version_id is None:
+            raise ValueError("Flag selection requires checklist_version_id")
+        if self.flag_criterion_id is None and (
+            self.flag_status is not None or self.flag_scope != "automatic"
+        ):
+            raise ValueError("Flag status/scope requires flag_criterion_id")
+        return self
+
+
+class ConversationFlagSummary(DTO):
+    """One selected flag; details use latest_evaluation_id and result.criterion_id."""
+
+    checklist_version_id: ID
+    latest_job_id: ID | None
+    scope: FlagScope
+    status: FlagStatus
+    result: FlagResult
+
+    @model_validator(mode="after")
+    def consistent_status(self) -> Self:
+        expected = (
+            "unknown" if self.result.detected is None
+            else "detected" if self.result.detected else "not_detected"
+        )
+        if self.status != expected:
+            raise ValueError("Flag status must agree with the tri-state FlagResult")
+        return self
+
+
 class ConversationSummary(DTO):
     conversation: Conversation
     latest_evaluation_id: ID | None = None
     evaluation_status: Literal["unevaluated", "complete", "partial", "failed", "pending"]
+    flag_summary: ConversationFlagSummary | None = None
 
 
 class VersionList(Page[ChecklistVersion]):

@@ -21,6 +21,7 @@ from cqa_contracts.models import (
     SafeExport,
 )
 from cqa_contracts.operations import ERROR_RESPONSES, EXPORT_RESPONSE, Limit, Offset
+from cqa_contracts.queries import conversation_flag_query
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import Response
 
@@ -36,6 +37,7 @@ from . import (
     organizer,
     registry,
 )
+from .errors import not_implemented
 from .services import Services
 
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
@@ -91,7 +93,18 @@ def list_conversations(
     language: Literal["RU", "KZ", "EN"] | None = None,
     channel: Literal["agent_chat", "voice_call"] | None = None,
     status: Literal["unevaluated", "pending", "complete", "partial", "failed"] | None = None,
+    checklist_version_id: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
+    flag_criterion_id: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
+    flag_status: h.FlagStatus | None = None,
+    flag_scope: h.FlagScope = "automatic",
 ) -> Page[h.ConversationSummary]:
+    selection = conversation_flag_query(
+        checklist_version_id, flag_criterion_id, flag_status, flag_scope
+    )
+    if selection.checklist_version_id is not None:
+        # Integration bridge: B replaces this guard with the documented read query.
+        # Never silently ignore a requested filter and return an unfiltered page.
+        raise not_implemented()
     items, total = conversations.list_conversations(
         _services(request), limit, offset, language, channel, status
     )

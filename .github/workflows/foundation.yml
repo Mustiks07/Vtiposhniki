@@ -1,7 +1,8 @@
-name: Foundation contracts and scaffold
+name: Contracts and application integration
 
 on:
   push:
+    branches: ["**"]
   pull_request:
 
 permissions:
@@ -51,5 +52,5 @@ jobs:
       - name: Install Chromium on Windows
         if: runner.os == 'Windows'
         run: npx playwright install chromium
-      - name: Foundation browser smoke on real stub API
+      - name: Browser scenarios on real API with explicit test evaluator
         run: npm run e2e
