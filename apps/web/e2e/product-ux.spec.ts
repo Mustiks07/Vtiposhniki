@@ -120,6 +120,7 @@ test('paste dialog: an existing ID follows the standard revision rules and the n
   await page.goto('/#/conversations');
   await page.getByRole('button', { name: 'Вставить диалог' }).click();
   const dialog = page.getByRole('dialog', { name: 'Импорт разговоров' });
+  await dialog.getByText('Номер источника · заполняется автоматически').click();
   await dialog.getByLabel('Внешний ID разговора').fill(externalId);
   await dialog.getByLabel('Текст диалога').fill('[00:01] client: Вопрос.');
   await noPageOverflow(page);
@@ -130,8 +131,8 @@ test('paste dialog: an existing ID follows the standard revision rules and the n
   await dialog.getByLabel('Текст диалога').fill('[00:01] client: Вопрос изменён.');
   await expect(dialog.getByTestId('paste-edited')).toBeVisible();
   await dialog.getByRole('button', { name: 'Импортировать диалог (1)' }).click();
-  await expect(dialog.getByTestId('paste-result')).toContainText('сохранена новая revision');
-  await expect(dialog.getByTestId('paste-result')).toContainText('revision 2');
+  await expect(dialog.getByTestId('paste-result')).toContainText('сохранена новая версия');
+  await expect(dialog.getByTestId('paste-result')).toContainText('Версия текста 2');
   const list = await (await request.get(`${servers.complete}/api/v1/conversations?q=${encodeURIComponent(externalId)}`)).json();
   expect(list.total).toBe(1);
   expect(list.items[0].conversation.revision).toBe(2);
@@ -289,11 +290,11 @@ test('run summary: new call vs reuse, known cost, tokens and the separate source
   await expect(summary.getByTestId('run-tokens')).toHaveText('вход 20 · выход 10');
   await expect(summary.getByTestId('run-cost')).toHaveText('0,75 USD');
   await expect(summary.getByTestId('run-models')).toContainText('test');
-  // Summary sits right after the score, before the criteria list.
+  // The compact summary follows the explanation and criterion details.
   const order = await page.evaluate(() => {
     const s = document.querySelector('[data-testid="run-summary"]');
     const c = document.querySelector('.criteria-panel');
-    return Boolean(s && c && s.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return Boolean(s && c && c.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
   expect(order).toBe(true);
   await summary.scrollIntoViewIfNeeded();

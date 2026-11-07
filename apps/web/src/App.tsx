@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useRef } from 'react';
 import { createHashRouter, Navigate, NavLink, Outlet, RouterProvider, useLocation } from 'react-router-dom';
 import { api } from './api/client';
 import { Icon } from './components/Icon';
+import { PasteDraftProvider } from './components/ImportPanel';
 import { AppealsPage } from './pages/AppealsPage';
 import { BatchPage } from './pages/BatchPage';
 import { ChecklistPage, ChecklistVersionRedirect } from './pages/ChecklistPage';
@@ -16,6 +17,7 @@ import { NotFound } from './pages/NotFound';
 const ComparisonPage = lazy(() =>
   import('./pages/ComparisonPage').then((module) => ({ default: module.ComparisonPage })),
 );
+const TutorialPage = lazy(() => import('./pages/TutorialPage').then((module) => ({ default: module.TutorialPage })));
 const ChecklistEditorPage = lazy(() =>
   import('./pages/ChecklistEditorPage').then((module) => ({ default: module.ChecklistEditorPage })),
 );
@@ -91,7 +93,7 @@ function Shell() {
       </aside>
       <div className="workspace">
         <main id="main" ref={mainRef} tabIndex={-1}>
-          <Outlet />
+          <PasteDraftProvider><Outlet /></PasteDraftProvider>
         </main>
       </div>
     </div>
@@ -117,6 +119,14 @@ export const routes = [
         ),
       },
       { path: 'evaluations/:id', element: <EvaluationPage /> },
+      {
+        path: 'example/:exampleId',
+        element: (
+          <Suspense fallback={<Loading />}>
+            <TutorialPage />
+          </Suspense>
+        ),
+      },
       { path: 'batches/:id', element: <BatchPage /> },
       { path: 'checklists', element: <ChecklistsPage /> },
       {

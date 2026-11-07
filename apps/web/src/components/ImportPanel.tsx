@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useId, useMemo, useRef, useState, type FormEvent } from 'react';
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Channel, ImportRecord, ImportResult, JSONImport, Language } from '../api/types';
@@ -70,9 +70,25 @@ function ImportResultView({ result }: { result: ImportResult }) {
 
 type ImportMode = 'paste' | 'json' | 'organizer';
 
-export function ImportPanel() {
+export function ImportPanel({ pasteRequest = null }: { pasteRequest?: { exampleId: string | null } | null } = {}) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ImportMode>('json');
+  const [seed, setSeed] = useState<string | null>(null);
+  // Opened from the tutorial: plain-text mode; the example text is offered only on request.
+  useEffect(() => {
+    if (!pasteRequest) return;
+    setMode('paste');
+    setOpen(true);
+    if (!pasteRequest.exampleId) return;
+    let cancelled = false;
+    void import('../tutorial/example').then(({ tutorialExample, exampleAsPlainText }) => {
+      const example = tutorialExample(pasteRequest.exampleId);
+      if (!cancelled && example) setSeed(exampleAsPlainText(example));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pasteRequest]);
   return (
     <>
       <button
@@ -120,7 +136,7 @@ export function ImportPanel() {
           </fieldset>
           {/* Both forms stay mounted, so switching the source never loses typed input. */}
           <div hidden={mode !== 'paste'}>
-            <PasteDialogForm />
+            <PasteDialogForm seed={seed} />
           </div>
           <div hidden={mode === 'paste'}>
             <ImportForm mode={mode === 'organizer' ? 'organizer' : 'json'} />
@@ -244,13 +260,30 @@ interface Imported {
   result: ImportResult;
 }
 
+function usePasteDraftState() {
+  const [text, setText] = useState('');
+  const [language, setLanguage] = useState<Language>('RU');
+  const [channel, setChannel] = useState<Channel>('agent_chat');
+  const [externalId, setExternalId] = useState(() => newPastedExternalId());
+  const [imported, setImported] = useState<Imported | null>(null);
+  return { text, setText, language, setLanguage, channel, setChannel, externalId, setExternalId, imported, setImported };
+}
+
+const PasteDraftContext = createContext<ReturnType<typeof usePasteDraftState> | null>(null);
+
+/** Memory only, above route changes: visiting the tutorial must not discard a draft or its ID. */
+export function PasteDraftProvider({ children }: { children: ReactNode }) {
+  const draft = usePasteDraftState();
+  return <PasteDraftContext.Provider value={draft}>{children}</PasteDraftContext.Provider>;
+}
+
 /**
  * Plain-text dialog → preview → existing JSONImport v1 via the current API. The generated
  * external ID is created once per draft and reused on retry, so a repeated click or a retry
  * after a network error re-sends the same record; the server's revision rules decide whether
  * anything new is stored. Nothing is kept in browser storage.
  */
-function PasteDialogForm() {
+function PasteDialogForm({ seed = null }: { seed?: string | null }) {
   const queryClient = useQueryClient();
   const ids = {
     text: useId(),
@@ -260,11 +293,22 @@ function PasteDialogForm() {
     hint: useId(),
     errors: useId(),
   };
-  const [text, setText] = useState('');
-  const [language, setLanguage] = useState<Language>('RU');
-  const [channel, setChannel] = useState<Channel>('agent_chat');
-  const [externalId, setExternalId] = useState(() => newPastedExternalId());
-  const [imported, setImported] = useState<Imported | null>(null);
+  const draft = useContext(PasteDraftContext);
+  if (!draft) throw new Error('PasteDraftProvider is required');
+  const { text, setText, language, setLanguage, channel, setChannel, externalId, setExternalId, imported, setImported } = draft;
+  const [seedNote, setSeedNote] = useState<string | null>(null);
+  const appliedSeed = useRef<string | null>(null);
+  // A seed never overwrites a draft the user already typed.
+  useEffect(() => {
+    if (!seed || appliedSeed.current === seed) return;
+    appliedSeed.current = seed;
+    if (text.trim()) {
+      setSeedNote('В поле уже есть ваш текст — пример не перенесён.');
+      return;
+    }
+    setSeedNote('Текст учебного примера перенесён для редактирования. Импорт и оценка выполняются только по вашей команде.');
+    setText(seed);
+  }, [seed, text, setText]);
   const [touched, setTouched] = useState(false);
 
   // Preview and validation are derived from the current text on every render: they can
@@ -369,6 +413,11 @@ function PasteDialogForm() {
         </div>
 
         <label htmlFor={ids.text}>Текст диалога</label>
+        {seedNote ? (
+          <p className="hint" data-testid="paste-seed-note">
+            {seedNote}
+          </p>
+        ) : null}
         <textarea
           id={ids.text}
           className="paste-text"
