@@ -93,6 +93,24 @@ export function needsMappingConfirmation(c: Criterion): boolean {
   return false;
 }
 
+/**
+ * Identity of an answer→fraction mapping: the set of choices with their raw values and
+ * fractions. A confirmation is bound to this exact value; weight, title, anchors or section
+ * do not change it, any change of raw_value/score_fraction/choices does.
+ */
+export function mappingSignature(c: Criterion): string {
+  return JSON.stringify(
+    [...c.choices].sort((a, b) => a.id.localeCompare(b.id)).map((x) => [x.id, x.raw_value, x.score_fraction ?? null]),
+  );
+}
+
+/** Confirmations keyed by criterion ID, each holding the signature that was confirmed. */
+export type MappingConfirmations = ReadonlyMap<string, string>;
+
+export function isMappingConfirmed(c: Criterion, confirmations: MappingConfirmations): boolean {
+  return confirmations.get(c.id) === mappingSignature(c);
+}
+
 /** Fixed-point string of n/d with up to `places` decimals, trailing zeros trimmed (no float). */
 export function ratio(n: number, d: number, places = 4): string {
   if (!Number.isInteger(n) || !Number.isInteger(d) || d <= 0) return '';
@@ -114,7 +132,7 @@ export function suggestRawOverMax(c: Criterion): Choice[] | null {
   return c.choices.map((x) => ({ ...x, score_fraction: ratio(x.raw_value as number, max) }));
 }
 
-export function validateDraft(d: ChecklistDraft, confirmed: Set<string>): Fields {
+export function validateDraft(d: ChecklistDraft, confirmed: MappingConfirmations): Fields {
   const e: Fields = {};
   if (!d.title.trim()) e.title = 'Укажите название чек-листа.';
   if (!d.criteria.length) e.criteria = 'Нужен хотя бы один критерий.';
@@ -151,7 +169,7 @@ export function validateDraft(d: ChecklistDraft, confirmed: Set<string>): Fields
       }
     });
     if (c.response_type === 'flag' && !(c.flag_when_choice_ids ?? []).length) e[`${p}.flag`] = 'Отметьте ответ, означающий нарушение.';
-    if (needsMappingConfirmation(c) && !confirmed.has(c.id))
+    if (needsMappingConfirmation(c) && !isMappingConfirmed(c, confirmed))
       e[`${p}.mapping`] = 'Шкала с ненулевой нижней ступенью или обратная: подтвердите отображение ответов в доли.';
   });
   return e;

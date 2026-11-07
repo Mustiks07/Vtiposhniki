@@ -5,7 +5,9 @@ import {
   blankCriterion,
   diffVersions,
   draftFromVersion,
+  isMappingConfirmed,
   isScoringOnlyChange,
+  mappingSignature,
   needsMappingConfirmation,
   ratio,
   suggestRawOverMax,
@@ -40,8 +42,20 @@ test('non-zero lowest step and reverse scales require explicit mapping confirmat
   expect(needsMappingConfirmation(scale([0, 5, 10], ['1', '0.5', '0']))).toBe(true);
   const c = scale([1, 2, 3], ['0', '0.5', '1']);
   const d = { schema_version: '1.0' as const, title: 'x', criteria: [c], sections: [] };
-  expect(validateDraft(d, new Set())['criterion.0.mapping']).toBeTruthy();
-  expect(validateDraft(d, new Set([c.id]))['criterion.0.mapping']).toBeUndefined();
+  expect(validateDraft(d, new Map())['criterion.0.mapping']).toBeTruthy();
+  expect(validateDraft(d, new Map([[c.id, mappingSignature(c)]]))['criterion.0.mapping']).toBeUndefined();
+});
+
+test('confirmation is bound to the exact mapping: mapping changes invalidate it, weight does not', () => {
+  const c = scale([0, 1, 2], ['1', '0.5', '0']); // reverse scale
+  const confirmed = new Map([[c.id, mappingSignature(c)]]);
+  expect(isMappingConfirmed(c, confirmed)).toBe(true);
+  expect(isMappingConfirmed({ ...c, weight: '99', title: 'другое' }, confirmed)).toBe(true);
+  const changedFraction = { ...c, choices: c.choices.map((x, i) => (i === 1 ? { ...x, score_fraction: '0.4' } : x)) };
+  expect(isMappingConfirmed(changedFraction, confirmed)).toBe(false);
+  const changedRaw = { ...c, choices: c.choices.map((x, i) => (i === 0 ? { ...x, raw_value: 5 } : x)) };
+  expect(isMappingConfirmed(changedRaw, confirmed)).toBe(false);
+  expect(isMappingConfirmed({ ...c, choices: c.choices.slice(0, 2) }, confirmed)).toBe(false);
 });
 
 test('field validation: fraction range, weight, N/A condition, flag rules', () => {
@@ -55,7 +69,7 @@ test('field validation: fraction range, weight, N/A condition, flag rules', () =
     ],
     sections: [],
   };
-  const e = validateDraft(d, new Set());
+  const e = validateDraft(d, new Map());
   expect(e.title).toBeTruthy();
   expect(e['criterion.0.choice.1.fraction']).toMatch(/больше 1/);
   expect(e['criterion.0.weight']).toBeTruthy();

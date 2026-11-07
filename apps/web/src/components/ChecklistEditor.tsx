@@ -6,7 +6,9 @@ import type { ChecklistDraft, ChecklistVersion, Choice, Criterion } from '../api
 import {
   blankChoice,
   blankCriterion,
+  isMappingConfirmed,
   isScoringOnlyChange,
+  mappingSignature,
   needsMappingConfirmation,
   newCriterionId,
   newSectionId,
@@ -17,9 +19,10 @@ import {
   withTypeDefaults,
   type Fields,
 } from '../lib/checklistDraft';
-import { rawValueText } from '../lib/format';
+import { rawValueText, shortId } from '../lib/format';
 import { responseTypeLabel } from '../lib/labels';
-import { ErrorPanel } from './States';
+import { ErrorPanel, Loading } from './States';
+import { VersionDiff } from './VersionDiff';
 
 function FieldError({ id, error }: { id: string; error?: string }) {
   return error ? (
@@ -437,15 +440,70 @@ function CriterionEditor({
   );
 }
 
+/**
+ * After a 409 the user compares the version they edited against the newer latest version
+ * and explicitly moves the draft onto it. Only this action changes the expected version.
+ */
+function ConflictResolution({
+  checklistId,
+  expectedVersionId,
+  onRebase,
+}: {
+  checklistId: string;
+  expectedVersionId: string;
+  onRebase: (latestVersionId: string) => void;
+}) {
+  const [state, setState] = useState<{ from: ChecklistVersion; to: ChecklistVersion } | 'loading' | 'error' | null>(null);
+  async function load() {
+    setState('loading');
+    try {
+      const { items } = await api.listChecklistVersions(checklistId);
+      const latest = items.reduce((a, b) => (a.created_at >= b.created_at ? a : b));
+      const from = items.find((v) => v.version_id === expectedVersionId) ?? latest;
+      setState({ from, to: latest });
+    } catch {
+      setState('error');
+    }
+  }
+  return (
+    <div className="state state-error" role="alert" data-testid="version-conflict">
+      <p className="state-title">⚠ Версия не сохранена: появилась более новая версия чек-листа</p>
+      <p>
+        Черновик основан на версии <code>{shortId(expectedVersionId)}</code> и сохранён на этой странице. Сверьте изменения другого
+        автора и перенесите свои, прежде чем сохранять.
+      </p>
+      {state === null || state === 'error' ? (
+        <button type="button" onClick={load}>
+          Сверить с последней версией
+        </button>
+      ) : null}
+      {state === 'loading' ? <Loading /> : null}
+      {state === 'error' ? <p>Не удалось загрузить версии. Повторите.</p> : null}
+      {typeof state === 'object' && state ? (
+        <>
+          <VersionDiff from={state.from} to={state.to} />
+          <p>Ваш черновик не изменён автоматически: изменения другого автора, которые нужно сохранить, внесите в форму сами.</p>
+          <button type="button" onClick={() => onRebase(state.to.version_id)}>
+            Изменения учтены — сохранять поверх версии {shortId(state.to.version_id)}
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function ChecklistEditor({
   initial,
   base,
+  expectedLatestVersionId,
   checklistId,
   onSaved,
 }: {
   initial: ChecklistDraft;
   /** Version the draft was created from; null for a new checklist. */
   base: ChecklistVersion | null;
+  /** Latest version known when the draft was opened. Pinned: later refetches never change it. */
+  expectedLatestVersionId: string | null;
   checklistId: string | null;
   onSaved: (v: ChecklistVersion) => void;
 }) {
@@ -453,14 +511,21 @@ export function ChecklistEditor({
   const uid = useId();
   const [draft, setDraft] = useState<ChecklistDraft>(initial);
   const [errors, setErrors] = useState<Fields>({});
-  const [confirmed, setConfirmed] = useState<Set<string>>(() => new Set(base ? base.criteria.map((c) => c.id) : []));
+  // Pinned at draft creation; only an explicit conflict resolution moves it.
+  const [expectedLatest, setExpectedLatest] = useState(expectedLatestVersionId);
+  const [rebasedNote, setRebasedNote] = useState<string | null>(null);
+  // Mapping confirmations bound to the exact mapping. Unchanged scales of the base version
+  // count as already confirmed; any change of their mapping invalidates that.
+  const [confirmed, setConfirmed] = useState<Map<string, string>>(
+    () => new Map((base?.criteria ?? []).map((c) => [c.id, mappingSignature(c)])),
+  );
   const existingIds = useMemo(() => new Set(base?.criteria.map((c) => c.id) ?? []), [base]);
   const sections = draft.sections ?? [];
 
   const mutation = useMutation({
     mutationFn: (body: ChecklistDraft) =>
-      checklistId && base
-        ? api.createChecklistVersion(checklistId, { schema_version: '1.0', expected_latest_version_id: base.version_id, config: body })
+      checklistId && expectedLatest
+        ? api.createChecklistVersion(checklistId, { schema_version: '1.0', expected_latest_version_id: expectedLatest, config: body })
         : api.createChecklist(body),
     onSuccess: async (v) => {
       await queryClient.invalidateQueries({ queryKey: ['checklists'] });
@@ -481,11 +546,11 @@ export function ChecklistEditor({
       return { ...d, criteria: next };
     });
   }
-  function confirm(id: string, v: boolean) {
+  function confirm(c: Criterion, v: boolean) {
     setConfirmed((s) => {
-      const n = new Set(s);
-      if (v) n.add(id);
-      else n.delete(id);
+      const n = new Map(s);
+      if (v) n.set(c.id, mappingSignature(c));
+      else n.delete(c.id);
       return n;
     });
   }
@@ -565,8 +630,8 @@ export function ChecklistEditor({
           sections={sections}
           errors={errors}
           existing={existingIds.has(c.id)}
-          confirmed={confirmed.has(c.id)}
-          onConfirm={(v) => confirm(c.id, v)}
+          confirmed={isMappingConfirmed(c, confirmed)}
+          onConfirm={(v) => confirm(c, v)}
           onChange={(next) => setCriterion(i, next)}
           onMove={(dir) => move(i, dir)}
           onRemove={() => setDraft((d) => ({ ...d, criteria: d.criteria.filter((_, k) => k !== i) }))}
@@ -598,11 +663,21 @@ export function ChecklistEditor({
         </button>
         {checklistId ? <Link to={`/checklists/${encodeURIComponent(checklistId)}`}>Отмена</Link> : <Link to="/checklists">Отмена</Link>}
       </div>
-      {conflict ? (
-        <div className="state state-error" role="alert">
-          <p className="state-title">⚠ Версия не сохранена: появилась более новая версия чек-листа</p>
-          <p>Ваш черновик сохранён на этой странице. Откройте последнюю версию в другой вкладке, сравните и перенесите изменения.</p>
-        </div>
+      {rebasedNote ? (
+        <p className="notice" role="status" data-testid="rebased-note">
+          {rebasedNote}
+        </p>
+      ) : null}
+      {conflict && checklistId && expectedLatest ? (
+        <ConflictResolution
+          checklistId={checklistId}
+          expectedVersionId={expectedLatest}
+          onRebase={(latest) => {
+            setExpectedLatest(latest);
+            mutation.reset();
+            setRebasedNote(`Черновик будет сохранён как следующая версия после ${shortId(latest)}. Нажмите «Сохранить» ещё раз.`);
+          }}
+        />
       ) : mutation.isError ? (
         <ErrorPanel error={mutation.error}>
           <p className="hint">Черновик сохранён в форме; сервер отклонил версию по причине выше.</p>

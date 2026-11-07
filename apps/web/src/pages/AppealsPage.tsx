@@ -127,13 +127,18 @@ export function AppealsPage() {
     queryFn: ({ signal }) => api.listAppeals({ state: state === 'all' ? null : state, offset, limit: PAGE_SIZE }, signal),
     placeholderData: keepPreviousData,
   });
-  function set(key: string, value: string | null) {
+  function update(changes: Record<string, string | null>) {
     const next = new URLSearchParams(params);
-    if (value) next.set(key, value);
-    else next.delete(key);
-    if (key !== 'appeal') next.delete('offset');
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
     setParams(next);
   }
+  // Only a filter change returns to the first page; paging and opening an appeal keep the offset.
+  const setFilter = (value: string) => update({ state: value, offset: null, appeal: null });
+  const setOffset = (value: number) => update({ offset: value > 0 ? String(value) : null, appeal: null });
+  const toggleAppeal = (id: string | null) => update({ appeal: id });
   return (
     <div className="page">
       <h1>Апелляции</h1>
@@ -141,7 +146,7 @@ export function AppealsPage() {
       <div className="filters">
         <div>
           <label htmlFor={filterId}>Состояние</label>
-          <select id={filterId} value={state} onChange={(e) => set('state', e.target.value)}>
+          <select id={filterId} value={state} onChange={(e) => setFilter(e.target.value)}>
             <option value="open">Открытые</option>
             <option value="resolved">Рассмотренные</option>
             <option value="all">Все</option>
@@ -150,7 +155,13 @@ export function AppealsPage() {
       </div>
       {list.isPending ? <Loading /> : null}
       {list.isError ? <ErrorPanel error={list.error} onRetry={() => list.refetch()} /> : null}
-      {list.data && list.data.items.length === 0 ? (
+      {list.data && list.data.items.length === 0 && offset > 0 && list.data.total > 0 ? (
+        <Empty title="На этой странице апелляций нет">
+          <button type="button" onClick={() => setOffset(0)}>
+            К первой странице
+          </button>
+        </Empty>
+      ) : list.data && list.data.items.length === 0 ? (
         <Empty title={state === 'open' ? 'Открытых апелляций нет' : 'Апелляций нет'}>
           Апелляция подаётся из карточки оценки по конкретному критерию.
         </Empty>
@@ -162,7 +173,7 @@ export function AppealsPage() {
               type="button"
               className="appeal-head"
               aria-expanded={openId === a.id}
-              onClick={() => set('appeal', openId === a.id ? null : a.id)}
+              onClick={() => toggleAppeal(openId === a.id ? null : a.id)}
             >
               <Badge status={a.state}>{a.state === 'open' ? 'Открыта' : 'Рассмотрена'}</Badge>{' '}
               <span>критерий {a.criterion_id}</span> · <span>оценка {shortId(a.evaluation_id)}</span> ·{' '}
@@ -175,13 +186,13 @@ export function AppealsPage() {
       </ul>
       {list.data && list.data.total > PAGE_SIZE ? (
         <nav className="pager" aria-label="Страницы">
-          <button type="button" disabled={offset === 0} onClick={() => set('offset', String(Math.max(0, offset - PAGE_SIZE)) || null)}>
+          <button type="button" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>
             ← Назад
           </button>
-          <span>
+          <span data-testid="pager-range">
             {offset + 1}–{Math.min(offset + PAGE_SIZE, list.data.total)} из {list.data.total}
           </span>
-          <button type="button" disabled={offset + PAGE_SIZE >= list.data.total} onClick={() => set('offset', String(offset + PAGE_SIZE))}>
+          <button type="button" disabled={offset + PAGE_SIZE >= list.data.total} onClick={() => setOffset(offset + PAGE_SIZE)}>
             Вперёд →
           </button>
         </nav>

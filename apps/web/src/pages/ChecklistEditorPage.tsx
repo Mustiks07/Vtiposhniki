@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { ChecklistVersion } from '../api/types';
@@ -41,6 +41,17 @@ export function ChecklistEditorPage() {
     queryFn: ({ signal }) => api.listChecklistVersions(id!, signal),
     enabled: Boolean(id),
   });
+  // Pinned once, when the draft is created. Later refetches of the version list (another
+  // author saving v2, cache invalidation) must not silently move the draft onto v2.
+  const [pinned, setPinned] = useState<{ from: ChecklistVersion; expected: string; latestTitle: string } | null>(null);
+  const fromParam = params.get('from');
+  useEffect(() => {
+    if (pinned || !versions.data?.items.length) return;
+    const items = versions.data.items;
+    const latest = items.reduce((a, b) => (a.created_at >= b.created_at ? a : b));
+    const from = items.find((v) => v.version_id === fromParam) ?? latest;
+    setPinned({ from, expected: latest.version_id, latestTitle: latest.title });
+  }, [versions.data, pinned, fromParam]);
   if (!id) {
     if (saved) return <Saved version={saved} base={null} />;
     return (
@@ -49,29 +60,33 @@ export function ChecklistEditorPage() {
           <Link to="/checklists">Чек-листы</Link> / Новый
         </p>
         <h1>Новый чек-лист</h1>
-        <ChecklistEditor initial={blankDraft()} base={null} checklistId={null} onSaved={setSaved} />
+        <ChecklistEditor initial={blankDraft()} base={null} expectedLatestVersionId={null} checklistId={null} onSaved={setSaved} />
       </div>
     );
   }
-  if (versions.isPending) return <Loading />;
-  if (versions.isError) return <ErrorPanel error={versions.error} onRetry={() => versions.refetch()} />;
-  const items = versions.data.items;
-  const latest = items.reduce((a, b) => (a.created_at >= b.created_at ? a : b));
-  const from = items.find((v) => v.version_id === params.get('from')) ?? latest;
+  if (versions.isError && !pinned) return <ErrorPanel error={versions.error} onRetry={() => versions.refetch()} />;
+  if (!pinned) return <Loading />;
+  const { from, expected, latestTitle } = pinned;
   if (saved) return <Saved version={saved} base={from} />;
   return (
     <div className="page">
       <p className="crumbs">
-        <Link to="/checklists">Чек-листы</Link> / <Link to={`/checklists/${encodeURIComponent(id)}`}>{latest.title}</Link> / Новая
+        <Link to="/checklists">Чек-листы</Link> / <Link to={`/checklists/${encodeURIComponent(id)}`}>{latestTitle}</Link> / Новая
         версия
       </p>
       <h1>Новая версия чек-листа</h1>
-      <p className="muted">
+      <p className="muted" data-testid="draft-base">
         Черновик создан из версии <code>{shortId(from.version_id)}</code>
-        {from.version_id !== latest.version_id ? ' (не последней: сохранение будет сверено с последней версией)' : ''}.
+        {from.version_id !== expected ? ` (не последней; сохранение сверяется с ${shortId(expected)})` : ''}.
       </p>
-      {/* expected_latest_version_id is always the latest known version; the server rejects stale drafts. */}
-      <ChecklistEditor initial={draftFromVersion(from)} base={{ ...from, version_id: latest.version_id }} checklistId={id} onSaved={setSaved} />
+      <ChecklistEditor
+        key={`${from.version_id}:${expected}`}
+        initial={draftFromVersion(from)}
+        base={from}
+        expectedLatestVersionId={expected}
+        checklistId={id}
+        onSaved={setSaved}
+      />
     </div>
   );
 }

@@ -59,31 +59,32 @@ function startApi(data: string, worker: boolean): ChildProcess {
   });
 }
 
+async function healthy(): Promise<boolean> {
+  try {
+    return (await fetch(`${origin}/api/v1/health`, { signal: AbortSignal.timeout(1000) })).ok;
+  } catch {
+    return false;
+  }
+}
+
 async function waitUp() {
   for (let i = 0; i < 120; i++) {
-    try {
-      if ((await fetch(`${origin}/api/v1/health`)).ok) return;
-    } catch {
-      /* not yet */
-    }
+    if (await healthy()) return;
     await new Promise((r) => setTimeout(r, 250));
   }
   throw new Error('API did not start');
 }
 
+/** Stops the whole process tree (the venv launcher may own a child interpreter on Windows). */
 async function stop(proc: ChildProcess) {
-  if (proc.exitCode !== null) return;
-  const done = new Promise((r) => proc.once('exit', r));
-  proc.kill();
-  await done;
-  for (let i = 0; i < 40; i++) {
-    try {
-      await fetch(`${origin}/api/v1/health`);
-      await new Promise((r) => setTimeout(r, 250));
-    } catch {
-      return;
-    }
+  if (proc.exitCode === null && proc.pid) {
+    const exited = new Promise((r) => proc.once('exit', r));
+    if (process.platform === 'win32') spawn('taskkill', ['/PID', String(proc.pid), '/T', '/F'], { stdio: 'ignore' });
+    else proc.kill('SIGTERM');
+    await Promise.race([exited, new Promise((r) => setTimeout(r, 10_000))]);
   }
+  for (let i = 0; i < 40 && (await healthy()); i++) await new Promise((r) => setTimeout(r, 250));
+  if (await healthy()) throw new Error(`API on port ${port} is still running after stop`);
 }
 
 test('E07: backend restart during a batch — UI recovers server state without creating a new batch', async ({ page }) => {
@@ -113,8 +114,9 @@ test('E07: backend restart during a batch — UI recovers server state without c
 
     api = startApi(data, true);
     await waitUp();
-    await page.getByRole('button', { name: 'Повторить чтение' }).first().click();
+    // Bounded polling keeps reading the existing batch: no click is needed to recover.
     await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии', { timeout: 60_000 });
+    await expect(page.getByRole('alert')).toHaveCount(0);
     await expect(page.getByTestId('job-row')).toHaveAttribute('data-state', 'succeeded');
     expect(page.url()).toBe(batchUrl);
 
