@@ -23,7 +23,15 @@ from .transport import ChatMessage
 # v2: known conversation date and per-source date applicability are part of the request.
 PROMPT_VERSION = "cqa-eval-v7"
 SUPPORTED_PROMPT_VERSIONS = frozenset(
-    {"cqa-eval-v2", "cqa-eval-v3", "cqa-eval-v4", "cqa-eval-v5", "cqa-eval-v6", PROMPT_VERSION}
+    {
+        "cqa-eval-v2",
+        "cqa-eval-v3",
+        "cqa-eval-v4",
+        "cqa-eval-v5",
+        "cqa-eval-v6",
+        PROMPT_VERSION,
+        "cqa-eval-v8",
+    }
 )
 PREPROCESSING_VERSION = "identity-v1"
 SUPPORTED_PREPROCESSING_VERSIONS = frozenset({PREPROCESSING_VERSION})
@@ -227,6 +235,37 @@ help) AND farewell, establish one of those two alternatives as well as the farew
 They may occupy separate turns in the actual closing sequence.
 """
 
+NEED_AND_CLOSING_PHASES_V8 = """When the rubric assesses discovery of the customer's need,
+decide applicability from the information available BEFORE each relevant answer.
+Name the concrete missing fact that was necessary to choose that answer, if any.
+Known client/bot context counts as already known; explaining a menu, selecting dates,
+or giving instructions TO the customer does not itself obtain a fact FROM them.
+Several successive clear questions need not require discovery. An incomplete or
+incorrect answer to an already clear request belongs to consultation, not automatically
+to discovery. Conversely, asking which document/situation the customer actually has
+can obtain a necessary fact even when the broad topic was already clear. Where the
+rubric allows N/A for sufficient initial information, use that condition first. If a
+necessary fact was missing, judge whether it was appropriately elicited before the
+dependent answer. An appropriate opening question remains observable conduct even
+if the customer leaves before responding; do not require an invented response.
+In the discovery rationale identify the missing fact and its timing, or explain why
+no necessary fact was missing. Do not invent a missing fact to justify applicability.
+
+When the rubric assesses closing, first check whether the operator had a real chance
+to close. An explicit interruption immediately after an unresolved exchange can make
+the permitted interruption N/A apply; a routine session-end marker does not erase an
+already completed closing. Then inspect the actual closing sequence, distinguishing
+the main consultation, customer acknowledgement, and operator's closing acts. For
+(summary OR further-help offer) AND farewell, require both parts. A main instruction
+followed by the customer's thanks and only politeness/farewell is not automatically
+a summary. An explicit transfer/follow-up next step given as the closing outcome can
+be a summary; do not invent a compulsory deadline or extra detail absent from the
+rubric. Closing can span turns. State which closing act is present or missing and
+cite the relevant sequence. Keep consultation quality and critical flags separate.
+These instructions clarify only criteria with these meanings; follow the supplied
+rubric for every custom criterion. Do not infer answers from external conversation IDs.
+"""
+
 OUTPUT_SHAPE: dict[str, Any] = {
     "criteria": [
         {
@@ -345,12 +384,14 @@ def build_messages(
         system += "\n" + DECISION_DISCIPLINE_V3
     if prompt_version == "cqa-eval-v4":
         system += "\n" + CONSISTENCY_V4
-    if prompt_version in {"cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7"}:
+    if prompt_version in {"cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7", "cqa-eval-v8"}:
         system += "\n" + BOUNDARIES_V5
-    if prompt_version in {"cqa-eval-v6", "cqa-eval-v7"}:
+    if prompt_version in {"cqa-eval-v6", "cqa-eval-v7", "cqa-eval-v8"}:
         system += "\n" + OBSERVABLE_CONDUCT_V6
-    if prompt_version == "cqa-eval-v7":
+    if prompt_version in {"cqa-eval-v7", "cqa-eval-v8"}:
         system += "\n" + AUTHORIZATION_AND_CLOSURE_V7
+    if prompt_version == "cqa-eval-v8":
+        system += "\n" + NEED_AND_CLOSING_PHASES_V8
     user = json.dumps(payload, ensure_ascii=False, indent=1)
     return (ChatMessage("system", system), ChatMessage("user", user))
 

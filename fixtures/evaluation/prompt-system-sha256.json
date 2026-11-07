@@ -1,0 +1,26 @@
+{
+  "cqa-eval-v2": {
+    "primary": "883bb102e5cc94adb51311ecee7e59b471452d067c9fec80ad0bd71e3096ed43",
+    "review": "6ba822ab259a93a58343610a0608d815fc1c193a90b48da4f54aa03b4f9a5da4"
+  },
+  "cqa-eval-v3": {
+    "primary": "27e6d2bd682e681b1ab3371806c3becaa44b4c3055af3a51f7a109bde458b78b",
+    "review": "6c6ddfb5710f0bc00027dbea04b063559ae4dd2571f8e84b9913ec0f1ceac8d9"
+  },
+  "cqa-eval-v4": {
+    "primary": "b40b0b7d703b5048978465fd8a8f88428b214db27c296a9f32619ceacb88809e",
+    "review": "4f8e465679a86b5c8e1366f3c06617d43b6586af856ac81986b769dcf957e418"
+  },
+  "cqa-eval-v5": {
+    "primary": "5b7a643c5dccc60a0b800b52f34f0723124bf4b01dbbea876b39ed3d3bd2df03",
+    "review": "a7502236cda8fbe5717f57f617fd26766672e2504ca67a954a655ac1ff052063"
+  },
+  "cqa-eval-v6": {
+    "primary": "394a15ce909f601635c8fe315b59cd840010a1ab326680e74ca747a8fed5631d",
+    "review": "3adb7842d714c2c5b192c5066836e3199d7eba16b2d9a2072c64c85211e58bcc"
+  },
+  "cqa-eval-v7": {
+    "primary": "4478db4a3377dbda404bba19fa7d5f07039793aa6a268b4e15de806c60978b6f",
+    "review": "a866da52efbd9dca0f461cbe06a45989e0440aa2bb182a4a299fc2f342534969"
+  }
+}
