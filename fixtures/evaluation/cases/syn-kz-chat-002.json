@@ -1,0 +1,96 @@
+{
+  "case_id": "syn-kz-chat-002",
+  "group_id": "g-withdraw",
+  "synthetic": true,
+  "conversation": {
+    "channel": "agent_chat",
+    "language": "KZ",
+    "messages": [
+      {
+        "speaker": "client",
+        "timestamp_original": "00:01",
+        "text": "Сәлеметсіз бе! Оқу шотынан ақшаны қалай шығаруға болады?"
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "00:20",
+        "text": "Сәлеметсіз бе! Шарт нөмірін және туған күніңізді жазыңызшы."
+      },
+      {
+        "speaker": "client",
+        "timestamp_original": "00:40",
+        "text": "Шарт 000, 01.01.2000."
+      },
+      {
+        "speaker": "system",
+        "timestamp_original": "00:41",
+        "text": "Клиент идентификациядан өтті."
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "01:10",
+        "text": "Рахмет. Шығару өтінімін «Шығару» бөлімінде толтырыңыз, ақша бір жұмыс күні ішінде түседі."
+      },
+      {
+        "speaker": "client",
+        "timestamp_original": "01:30",
+        "text": "Түсінікті, рахмет."
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "01:35",
+        "text": "Тағы сұрақтарыңыз бар ма? Сау болыңыз!"
+      }
+    ]
+  },
+  "labels": {
+    "provenance": "rule_synthetic",
+    "rubric_version": "cqa-original-v1",
+    "author": "claude-a (synthetic construction, not an expert label)",
+    "labelled_before_model_output": true,
+    "coverage": [
+      "c1_contact",
+      "c2_needs",
+      "c3_identification",
+      "c4_consultation",
+      "c5_empathy",
+      "c6_dialog_management",
+      "c7_closing",
+      "c8_gross_errors"
+    ],
+    "answers": {
+      "c1_contact": {
+        "applicability": "applicable",
+        "answer_choice_id": "no"
+      },
+      "c2_needs": {
+        "applicability": "not_applicable",
+        "answer_choice_id": null
+      },
+      "c3_identification": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c4_consultation": {
+        "applicability": "applicable",
+        "answer_choice_id": "p20"
+      },
+      "c5_empathy": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c6_dialog_management": {
+        "applicability": "applicable",
+        "answer_choice_id": "p10"
+      },
+      "c7_closing": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c8_gross_errors": {
+        "applicability": "applicable",
+        "answer_choice_id": "no"
+      }
+    }
+  }
+}

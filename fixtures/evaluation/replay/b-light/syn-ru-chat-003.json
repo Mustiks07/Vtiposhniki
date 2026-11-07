@@ -1,0 +1,194 @@
+{
+  "responses": [
+    {
+      "criteria": [
+        {
+          "criterion_id": "c1_contact",
+          "applicability": "applicable",
+          "answer_choice_id": "yes",
+          "reason_codes": [
+            "criteria_met"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": []
+        },
+        {
+          "criterion_id": "c2_needs",
+          "applicability": "applicable",
+          "answer_choice_id": "yes",
+          "reason_codes": [
+            "criteria_met"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": []
+        },
+        {
+          "criterion_id": "c3_identification",
+          "applicability": "applicable",
+          "answer_choice_id": "yes",
+          "reason_codes": [
+            "criteria_met"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": []
+        },
+        {
+          "criterion_id": "c4_consultation",
+          "applicability": "applicable",
+          "answer_choice_id": "p5",
+          "reason_codes": [
+            "criteria_partially_met"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": []
+        },
+        {
+          "criterion_id": "c5_empathy",
+          "applicability": "applicable",
+          "answer_choice_id": "yes",
+          "reason_codes": [
+            "criteria_met"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": []
+        },
+        {
+          "criterion_id": "c6_dialog_management",
+          "applicability": "applicable",
+          "answer_choice_id": "p7",
+          "reason_codes": [
+            "criteria_partially_met"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": []
+        },
+        {
+          "criterion_id": "c7_closing",
+          "applicability": "applicable",
+          "answer_choice_id": "no",
+          "reason_codes": [
+            "criteria_not_met"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": []
+        },
+        {
+          "criterion_id": "c8_gross_errors",
+          "applicability": "applicable",
+          "answer_choice_id": "no",
+          "reason_codes": [
+            "no_violation_detected"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": [
+            "potential_violation"
+          ]
+        }
+      ]
+    },
+    {
+      "criteria": [
+        {
+          "criterion_id": "c8_gross_errors",
+          "applicability": "applicable",
+          "answer_choice_id": "yes",
+          "reason_codes": [
+            "violation_detected"
+          ],
+          "rationale": "Synthetic replay answer (not a model output).",
+          "evidence": [
+            {
+              "kind": "range",
+              "start_message_id": "m0001",
+              "end_message_id": "m0007",
+              "relation": "context",
+              "explanation": "Whole synthetic dialog checked."
+            }
+          ],
+          "limitations": [],
+          "review_flags": []
+        }
+      ]
+    }
+  ]
+}

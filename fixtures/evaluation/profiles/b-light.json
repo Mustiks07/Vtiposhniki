@@ -1,0 +1,27 @@
+{
+  "id": "b-light",
+  "version": "v1",
+  "mode": "test",
+  "primary": {
+    "provider": "test",
+    "model": "replay",
+    "configuration_ref": "offline"
+  },
+  "generation": {},
+  "prompt_version": "cqa-eval-v1",
+  "preprocessing_version": "identity-v1",
+  "retries": {
+    "max_format_repairs": 0,
+    "max_total_tokens": null
+  },
+  "corpus_snapshot_id": "synthetic-eval-corpus-v1",
+  "reviewer": {
+    "provider": "test",
+    "model": "replay-reviewer",
+    "configuration_ref": "offline"
+  },
+  "reviewer_policy": {
+    "enabled": true,
+    "max_criteria": 2
+  }
+}

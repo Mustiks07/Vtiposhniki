@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "version": "synthetic-split-v1",
+  "frozen_at": "2026-11-07",
+  "rule": "Related language variants of one scenario share a group and a split (e.g. DEV p1-kz-013 and p1-en-013 form one family).",
+  "dev_family_constraints": [
+    {
+      "members": [
+        "p1-kz-013",
+        "p1-en-013"
+      ],
+      "note": "public IDs only; texts stay private"
+    }
+  ],
+  "groups": [
+    {
+      "group_id": "g-topup",
+      "split": "tune",
+      "members": [
+        "syn-ru-chat-001"
+      ]
+    },
+    {
+      "group_id": "g-withdraw",
+      "split": "check",
+      "members": [
+        "syn-kz-chat-002",
+        "syn-en-chat-002"
+      ]
+    },
+    {
+      "group_id": "g-injection",
+      "split": "check",
+      "members": [
+        "syn-ru-chat-003"
+      ]
+    },
+    {
+      "group_id": "g-call",
+      "split": "tune",
+      "members": [
+        "syn-ru-call-004"
+      ]
+    },
+    {
+      "group_id": "g-early-end",
+      "split": "check",
+      "members": [
+        "syn-ru-chat-005"
+      ]
+    }
+  ]
+}
