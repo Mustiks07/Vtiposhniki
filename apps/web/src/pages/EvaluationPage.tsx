@@ -369,6 +369,7 @@ export function EvaluationPage() {
             }}
             onCriterion={selectCriterion}
           />
+          <RunDetails evaluation={ev} />
           {checklist.isError ? <ErrorPanel error={checklist.error} onRetry={() => checklist.refetch()} /> : null}
           {checklist.isPending ? <Loading label="Загрузка чек-листа…" /> : null}
           {criteria.length ? (
@@ -475,7 +476,6 @@ export function EvaluationPage() {
             </Empty>
           ) : null}
 
-          <RunDetails evaluation={ev} />
           <ExportLinks kind="evaluation" id={ev.id} />
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import checklistFixture from '../../../../fixtures/contracts/checklist-custom.json';
 import conversationFixture from '../../../../fixtures/contracts/conversation-chat.json';
 import voiceUnverified from '../../../../fixtures/contracts/conversation-voice-unverified.json';
@@ -223,7 +224,9 @@ test('audio: a failed load has a retry action without a fabricated available sta
 test('legacy evaluation without a job ledger never substitutes artifact costs for current spend', () => {
   const legacy = { ...evaluationComplete } as EvaluationView;
   delete legacy.run;
-  render(<MemoryRouter><RunDetails evaluation={legacy} /></MemoryRouter>);
+  // RunDetails reads the source evaluation/profile descriptions through react-query.
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(<QueryClientProvider client={client}><MemoryRouter><RunDetails evaluation={legacy} /></MemoryRouter></QueryClientProvider>);
   expect(screen.getByTestId('total-cost').textContent).toContain('неизвестна');
   expect(screen.getByText(/История текущего задания недоступна/)).toBeTruthy();
 });

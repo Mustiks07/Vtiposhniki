@@ -1,6 +1,9 @@
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { api } from '../api/client';
 import type { CallRecord, EvaluationView, Job } from '../api/types';
-import { decimalRu, durationText, serverTime } from '../lib/format';
+import { decimalRu, durationText, serverTime, shortId } from '../lib/format';
+import { costText, durations, modelPairs, tokenText, tokenTotals } from '../lib/runSummary';
 import { callOutcomeLabel, callPurposeLabel, errorCodeLabel, jobStateLabel } from '../lib/labels';
 
 function CallTable({ calls, attempts }: { calls: CallRecord[]; attempts?: Job['attempts'] }) {
@@ -47,13 +50,120 @@ function CallTable({ calls, attempts }: { calls: CallRecord[]; attempts?: Job['a
   );
 }
 
+/**
+ * Compact answer to "where did this result come from and was there a new model call?".
+ * Every fact is read from the saved evaluation and its job ledger, not from the current
+ * application configuration. For a reused result the original run is read from the source
+ * evaluation's own server summary and shown separately: it is not part of this run's spend.
+ */
+export function RunSummary({ evaluation }: { evaluation: EvaluationView }) {
+  const run = evaluation.run;
+  const reusedFrom = evaluation.reuse.reused_from_evaluation_id;
+  const source = useQuery({
+    queryKey: ['evaluation', reusedFrom],
+    queryFn: ({ signal }) => api.getEvaluation(reusedFrom!, signal),
+    enabled: Boolean(reusedFrom),
+    staleTime: 60_000,
+  });
+  const time = durations(run);
+  const models = modelPairs(run?.calls ?? []);
+  const sourceRun = source.data?.run;
+  const sourceModels = modelPairs(sourceRun?.calls ?? []);
+  const test = evaluation.artifact.evaluator_mode === 'test';
+  return (
+    <section className="panel run-summary" aria-labelledby="run-summary-title" data-testid="run-summary">
+      <h2 id="run-summary-title">Откуда этот результат</h2>
+      <p className={`run-origin ${reusedFrom ? 'run-origin-reuse' : 'run-origin-fresh'}`} data-testid="run-origin">
+        {reusedFrom ? (
+          <>
+            <strong>Переиспользован сохранённый результат</strong> — новых вызовов модели не было. Ответы взяты из
+            оценки{' '}
+            <Link to={`/evaluations/${encodeURIComponent(reusedFrom)}`}>
+              <code>{shortId(reusedFrom)}</code>
+            </Link>
+            , баллы пересчитаны сервером по версии этой карточки.
+          </>
+        ) : (
+          <>
+            <strong>Новый вызов оценщика</strong> в этом запуске (режим {evaluation.reuse.mode}).
+          </>
+        )}
+        {test ? <span className="run-test"> Тестовый оценщик — синтетический ответ, не настоящий AI.</span> : null}
+      </p>
+      <dl className="run-facts">
+        <div>
+          <dt>Получена</dt>
+          <dd>{serverTime(evaluation.created_at)}</dd>
+        </div>
+        <div>
+          <dt>Версия правил</dt>
+          <dd>
+            <Link to={`/checklists/version/${encodeURIComponent(evaluation.checklist_version_id)}`}>
+              <code>{shortId(evaluation.checklist_version_id)}</code>
+            </Link>
+          </dd>
+        </div>
+        <div>
+          <dt>Профиль</dt>
+          <dd>
+            {evaluation.profile_id} · {evaluation.profile_version}
+          </dd>
+        </div>
+        <div>
+          <dt>Модель</dt>
+          <dd data-testid="run-models">
+            {models.length ? models.join('; ') : reusedFrom ? 'не вызывалась' : run ? 'вызовов нет' : 'неизвестна'}
+          </dd>
+        </div>
+        <div>
+          <dt>Длительность задания</dt>
+          <dd data-testid="run-duration">
+            {time.job}
+            {run?.calls.length ? <small className="muted"> · сумма вызовов {time.calls}</small> : null}
+          </dd>
+        </div>
+        <div>
+          <dt>Вызовы модели</dt>
+          <dd data-testid="run-calls">
+            {run ? `${run.calls.length} · попыток задания ${run.job.attempts.length}` : 'неизвестно: нет истории запуска'}
+          </dd>
+        </div>
+        <div>
+          <dt>Токены (по данным API)</dt>
+          <dd data-testid="run-tokens">{run ? tokenText(tokenTotals(run.calls)) : 'неизвестны'}</dd>
+        </div>
+        <div>
+          <dt>Стоимость запуска</dt>
+          <dd data-testid="run-cost">{costText(run)}</dd>
+        </div>
+      </dl>
+      {reusedFrom ? (
+        <p className="run-source" data-testid="run-source">
+          Исходный результат:{' '}
+          {source.isPending
+            ? 'загрузка…'
+            : source.isError
+              ? 'не удалось прочитать исходную оценку.'
+              : sourceRun
+                ? `${serverTime(source.data.created_at)} · вызовов ${sourceRun.calls.length}${sourceModels.length ? ` · ${sourceModels.join('; ')}` : ''} · токены: ${tokenText(tokenTotals(sourceRun.calls))} · стоимость: ${costText(sourceRun)}. Эти расходы уже были и к текущему запуску не прибавляются.`
+                : 'история исходного запуска недоступна; расходы неизвестны.'}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 export function RunDetails({ evaluation }: { evaluation: EvaluationView }) {
   const a = evaluation.artifact;
   const run = evaluation.run;
   const reuse = evaluation.reuse;
+  const id = a.identity;
   return (
+    <>
+    <RunSummary evaluation={evaluation} />
     <details className="panel run-details" data-testid="run-details">
       <summary>Детали запуска: версии, модели, стоимость</summary>
+      <p className="hint">Технические подробности: идентификаторы, хеши, попытки и журнал вызовов.</p>
       <dl className="meta">
         <dt>Создана</dt>
         <dd>{serverTime(evaluation.created_at)}</dd>
@@ -90,7 +200,48 @@ export function RunDetails({ evaluation }: { evaluation: EvaluationView }) {
         </dd>
         <dt>Revision карточки</dt>
         <dd>{evaluation.revision}</dd>
+        <dt>ID оценки</dt>
+        <dd>
+          <code>{evaluation.id}</code>
+        </dd>
+        <dt>Ключ переиспользования</dt>
+        <dd>
+          <code>{reuse.reuse_key}</code>
+        </dd>
+        <dt>Хеши входа</dt>
+        <dd className="hashes">
+          текст <code>{id.conversation_content_hash}</code>
+          <br />
+          правила (смысл) <code>{id.checklist_semantic_hash}</code>
+          <br />
+          профиль <code>{id.profile_hash}</code>
+          <br />
+          корпус <code>{id.corpus_snapshot_hash}</code>
+          {id.audio_content_hash ? (
+            <>
+              <br />
+              аудио <code>{id.audio_content_hash}</code>
+            </>
+          ) : null}
+        </dd>
+        {run ? (
+          <>
+            <dt>Задание</dt>
+            <dd>
+              <code>{run.job.id}</code>
+              {run.job.batch_id ? (
+                <>
+                  {' · пакет '}
+                  <Link to={`/batches/${encodeURIComponent(run.job.batch_id)}`}>
+                    <code>{run.job.batch_id}</code>
+                  </Link>
+                </>
+              ) : null}
+            </dd>
+          </>
+        ) : null}
       </dl>
+      <ProfileVersions evaluation={evaluation} />
       {run ? (
         <section aria-label="История текущего запуска" data-testid="current-run">
           <h3>Текущий запуск</h3>
@@ -157,5 +308,37 @@ export function RunDetails({ evaluation }: { evaluation: EvaluationView }) {
         </>
       ) : null}
     </details>
+    </>
+  );
+}
+
+/**
+ * Prompt/preprocessing versions belong to the pinned profile id+version. They are shown only
+ * when the server still describes exactly that version; otherwise nothing is substituted.
+ */
+function ProfileVersions({ evaluation }: { evaluation: EvaluationView }) {
+  const profiles = useQuery({
+    queryKey: ['profiles'],
+    queryFn: ({ signal }) => api.listProfiles(signal),
+    staleTime: 60_000,
+  });
+  const p = profiles.data?.items.find(
+    (x) => x.profile.id === evaluation.profile_id && x.profile.version === evaluation.profile_version,
+  )?.profile;
+  if (profiles.isPending) return null;
+  if (!p)
+    return (
+      <p className="muted" data-testid="profile-versions">
+        Описание профиля {evaluation.profile_id} · {evaluation.profile_version} на сервере не найдено; сохранён
+        только hash профиля выше.
+      </p>
+    );
+  return (
+    <p className="muted" data-testid="profile-versions">
+      Профиль {p.id} · {p.version} (закреплённая версия): промпт {p.prompt_version}, обработка текста{' '}
+      {p.preprocessing_version}, схема ответа {p.output_schema_version}, основная модель {p.primary.provider} /{' '}
+      {p.primary.model}
+      {p.reviewer ? `, reviewer ${p.reviewer.provider} / ${p.reviewer.model}` : ', reviewer выключен'}.
+    </p>
   );
 }
