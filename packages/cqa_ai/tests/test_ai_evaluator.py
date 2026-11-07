@@ -537,3 +537,13 @@ async def test_undated_source_is_marked_effective_period_unknown() -> None:
     await run(evaluator, conv=_dated("2026-06-01T10:00:00Z"))  # helper corpus has no dates
     sources = json.loads(transport.requests[0].messages[1].content)["sources"]
     assert sources and {s["date_applicability"] for s in sources} == {"effective_period_unknown"}
+
+
+async def test_partial_artifact_keeps_detected_flag_for_flag_filter() -> None:
+    answer = full(choices={"c8_gross_errors": "yes"}, undetermined=("c4_consultation",))
+    evaluator, _, _ = make([ok(answer)])
+    artifact, _ = await run(evaluator)
+    assert artifact.status == "partial"
+    summary = score(CHECKLIST, artifact.automatic_final)
+    assert summary.status == "incomplete_evaluation"
+    assert [(f.criterion_id, f.detected) for f in summary.flags] == [("c8_gross_errors", True)]
