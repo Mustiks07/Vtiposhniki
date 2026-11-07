@@ -53,6 +53,12 @@ Model.name собирается из CallRecord.actual в сохранённом
 
 ## Подготовка и выполнение
 
+Для **контрольных десяти чатов** использовать [CONTROL_RUN](CONTROL_RUN.md):
+основной `boundary-xerosharc-v7-1` / `1`, ручной резерв `boundary-gemini-v7-1` / `1`,
+отдельные receipt и проверка происхождения при смешанном запуске. Это не меняет
+default приложения v4 или опубликованный DEV Gemini/v2. Пример ниже описывает
+исходный путь DEV; сейчас новый полный DEV не требуется.
+
 Из корня установленного проекта выполнить `uv sync --locked --all-packages --dev`.
 Подготовить production-профиль и ключ по [README](../README.md) и
 [проверенному примеру](../examples/live-config/README.md), затем запустить API:
@@ -127,9 +133,9 @@ uv run cqa-submit validate --file results/dev/results.json --manifest data/priva
 replace; ошибка оставляет предыдущий корректный результат целым. Этот CLI не
 выполняет commit/push и не подтверждает, что файл уже опубликован.
 
-Для PROD после фактической выдачи данных повторить те же команды с `--dataset prod`,
-приватными `prod.source.json`, `prod.manifest.json`, `prod-official.run.json` и
-`results/prod/results.json`. Проверяются ровно **заданные 10 ID**, а не любые десять.
+Для PROD после фактической выдачи данных следовать [CONTROL_RUN](CONTROL_RUN.md)
+с выбранным чатовым v7 и отдельным закреплённым config. Проверяются ровно
+**заданные 10 ID**, а не любые десять. Путь сдачи — `results/prod/results.json`.
 
 ## Публикация и удалённая проверка
 

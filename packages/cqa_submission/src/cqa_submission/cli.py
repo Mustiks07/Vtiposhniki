@@ -185,8 +185,14 @@ def import_dataset(args: argparse.Namespace) -> None:
 
 
 def evaluate(
-    args: argparse.Namespace, manifest: SubmissionManifest, config: SubmissionConfig
+    args: argparse.Namespace,
+    manifest: SubmissionManifest,
+    config: SubmissionConfig,
+    *,
+    only_ids: set[str] | None = None,
 ) -> None:
+    if only_ids is not None and not only_ids <= {e.external_id for e in manifest.entries}:
+        raise PreparationError("selection_contains_unknown_original_ids")
     if args.run.exists():
         receipt = SubmissionRun.model_validate(load_json(args.run))
         check_run(receipt, manifest, config)
@@ -226,6 +232,8 @@ def evaluate(
         for index, (entry, attempt) in enumerate(
             zip(manifest.entries, receipt.attempts, strict=True)
         ):
+            if only_ids is not None and entry.external_id not in only_ids:
+                continue
             if time.monotonic() >= deadline:
                 raise PreparationError("evaluation_wait_deadline_reached_resume_same_run")
             conversation = Conversation.model_validate(

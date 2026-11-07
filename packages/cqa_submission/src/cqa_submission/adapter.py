@@ -291,9 +291,17 @@ def build_results(
     manifest: SubmissionManifest,
     *,
     allow_unfinished: bool = False,
+    item_configs: list[SubmissionConfig] | None = None,
 ) -> OfficialResults:
     if [i.entry for i in items] != manifest.entries:
         raise PreparationError("saved_items_do_not_match_manifest_order")
+    configs = item_configs if item_configs is not None else [config] * len(items)
+    if len(configs) != len(items) or any(
+        (c.team_name, c.submission_branch, c.checklist_version_id)
+        != (config.team_name, config.submission_branch, config.checklist_version_id)
+        for c in configs
+    ):
+        raise PreparationError("mixed_execution_configs_do_not_match_submission")
     names = set()
     for item in items:
         for call in item.calls:
@@ -311,7 +319,10 @@ def build_results(
             "schema_version": "1.0",
             "team_name": config.team_name,
             "model": {"mode": "external_api", "name": "; ".join(sorted(names))},
-            "results": [convert(i, config, allow_unfinished=allow_unfinished) for i in items],
+            "results": [
+                convert(i, c, allow_unfinished=allow_unfinished)
+                for i, c in zip(items, configs, strict=True)
+            ],
         }
     )
     validate_results(result, manifest)

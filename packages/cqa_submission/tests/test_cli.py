@@ -108,3 +108,11 @@ def test_resume_skips_old_batches_and_stops_after_three_new_failures(tmp_path, m
     with pytest.raises(PreparationError, match="consecutive_provider_failures"):
         evaluate(args, manifest, CONFIG)
     assert posted == ["key-6", "key-7", "key-8"]
+    # Explicit recovery submits only the selected remaining ID. A rerun resumes
+    # the same receipt and never posts a duplicate or a protected successful ID.
+    posted.clear()
+    evaluate(args, manifest, CONFIG, only_ids={manifest.entries[9].external_id})
+    assert posted == ["key-9"]
+    posted.clear()
+    evaluate(args, manifest, CONFIG, only_ids={manifest.entries[9].external_id})
+    assert posted == []

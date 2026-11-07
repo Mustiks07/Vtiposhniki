@@ -1,0 +1,20 @@
+# Закреплённые профили контрольных чатов
+
+`boundary-xerosharc-v7-1` / `1` — основной для десяти контрольных чатов;
+`boundary-gemini-v7-1` / `1` — ручной резерв при технической недоступности.
+Это точные копии профилей ранее выполненного эксперимента, prompt `cqa-eval-v7`.
+Reviewer и fallbacks выключены; голосования нет. Общий default приложения v4
+этим решением не меняется. [Основание выбора](../../docs/CONTROL_CHAT_PROFILE.md).
+
+Скопировать `profiles/*.json` в `CQA_CONFIG_DIR/profiles`. Оба используют пустой
+корпус `live-xerosharc-empty-v1` из
+[`../xerosharc-config/corpora`](../xerosharc-config/corpora), который тоже должен
+быть установлен. Ключи `XEROSHARC_API_KEY` и `GEMINI_API_KEY` хранятся только
+локально. Перезапустить API, когда нет активных заданий; проверить configured
+через `/api/v1/evaluator-profiles`. Наличие ключа не подтверждает остаток квоты.
+
+Не менять зарегистрированный ID/version, retries, prompt или корпус на месте.
+Не переключать `CQA_DEFAULT_EVALUATOR_PROFILE` ради контрольного CLI: он получает
+отдельный config с явно указанным профилем.
+
+[Команды запуска и безопасного ручного переключения](../../docs/CONTROL_RUN.md).
