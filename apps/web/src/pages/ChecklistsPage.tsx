@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import type { ChecklistDraft } from '../api/types';
+import type { ChecklistDraft, ChecklistSummary } from '../api/types';
 import { Empty, ErrorPanel, Loading } from '../components/States';
-import { serverTime, shortId } from '../lib/format';
+import { serverTime } from '../lib/format';
+import { checklistVersionLabel } from '../components/ChecklistView';
 import { Modal } from '../components/Modal';
 import { Icon } from '../components/Icon';
 
@@ -76,16 +77,82 @@ function CreateFromJson() {
   );
 }
 
+function ChecklistCard({ checklist, index }: { checklist: ChecklistSummary; index: number }) {
+  const versions = useQuery({
+    queryKey: ['checklist-versions', checklist.checklist_id],
+    queryFn: ({ signal }) => api.listChecklistVersions(checklist.checklist_id, signal),
+    staleTime: 60_000,
+  });
+  const latest = versions.data?.items.find((v) => v.version_id === checklist.latest_version_id);
+  return (
+    <li className="checklist-library-card" data-testid="checklist-item">
+      <span className="checklist-library-number" aria-hidden="true">
+        {String(index + 1).padStart(2, '0')}
+      </span>
+      <div className="checklist-library-content">
+        <h2>
+          <Link to={`/checklists/${encodeURIComponent(checklist.checklist_id)}`}>{checklist.title}</Link>
+        </h2>
+        <p className="muted">
+          {latest ? checklistVersionLabel(latest, versions.data) : `Создан ${serverTime(checklist.created_at)}`}
+        </p>
+        {latest ? (
+          <>
+            <p className="checklist-library-counts">
+              Критериев: {latest.criteria.length} · Разделов: {(latest.sections ?? []).length}
+            </p>
+            {(latest.sections ?? []).length ? (
+              <div className="checklist-section-tags">
+                {latest.sections?.map((s) => (
+                  <span key={s.id}>{s.title}</span>
+                ))}
+              </div>
+            ) : null}
+          </>
+        ) : null}
+        {versions.isError ? (
+          <p className="hint">
+            Сведения о версии не загрузились.{' '}
+            <button type="button" className="link" onClick={() => versions.refetch()}>
+              Повторить
+            </button>
+          </p>
+        ) : null}
+        <details className="checklist-technical">
+          <summary>Технические сведения</summary>
+          <dl className="meta">
+            <dt>ID чек-листа</dt>
+            <dd>
+              <code>{checklist.checklist_id}</code>
+            </dd>
+            <dt>ID последней версии</dt>
+            <dd>
+              <code>{checklist.latest_version_id}</code>
+            </dd>
+          </dl>
+        </details>
+      </div>
+      <Link
+        className="button checklist-open"
+        to={`/checklists/${encodeURIComponent(checklist.checklist_id)}`}
+        aria-label={`Открыть чек-лист «${checklist.title}»`}
+      >
+        Открыть <span aria-hidden="true">→</span>
+      </Link>
+    </li>
+  );
+}
+
 export function ChecklistsPage() {
   const [importOpen, setImportOpen] = useState(false);
   const list = useQuery({ queryKey: ['checklists'], queryFn: ({ signal }) => api.listChecklists(signal) });
   return (
-    <div className="page checklists-page">
+    <div className="page checklists-page checklist-design">
       <header className="page-heading">
         <div>
           <p className="eyebrow">ПРАВИЛА ОЦЕНКИ</p>
           <h1>Чек-листы</h1>
-          <p className="page-intro">Критерии, шкалы и история неизменяемых версий.</p>
+          <p className="page-intro">Правила меняются. История сохраняется.</p>
         </div>
         <div className="page-actions">
           <button type="button" onClick={() => setImportOpen(true)}>
@@ -93,25 +160,20 @@ export function ChecklistsPage() {
             Загрузить из JSON
           </button>
           <Link className="button primary" to="/checklists/new">
-            Новый чек-лист в редакторе
+            <span aria-hidden="true">＋</span> Новый чек-лист
           </Link>
         </div>
       </header>
-      <div className="layout-split">
-        <section className="grow" aria-label="Список чек-листов">
+      <div className="checklist-library">
+        <section aria-label="Список чек-листов">
           {list.isPending ? <Loading /> : null}
           {list.isError ? <ErrorPanel error={list.error} onRetry={() => list.refetch()} /> : null}
           {list.data && list.data.items.length === 0 ? (
             <Empty title="Чек-листов пока нет">Создайте чек-лист в редакторе или загрузите JSON.</Empty>
           ) : null}
-          <ul className="card-list">
-            {list.data?.items.map((c) => (
-              <li key={c.checklist_id} data-testid="checklist-item">
-                <Link to={`/checklists/${encodeURIComponent(c.checklist_id)}`}>{c.title}</Link>
-                <div className="muted">
-                  последняя версия {shortId(c.latest_version_id)} · создан {serverTime(c.created_at)}
-                </div>
-              </li>
+          <ul className="checklist-library-list">
+            {list.data?.items.map((c, i) => (
+              <ChecklistCard key={c.checklist_id} checklist={c} index={i} />
             ))}
           </ul>
         </section>
@@ -119,6 +181,10 @@ export function ChecklistsPage() {
           <CreateFromJson />
         </Modal>
       </div>
+      <p className="checklist-history-note">
+        <span aria-hidden="true">ⓘ</span> Каждая сохранённая версия неизменяема. Новые правила не переписывают старые
+        оценки.
+      </p>
     </div>
   );
 }
