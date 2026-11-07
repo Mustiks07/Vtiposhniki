@@ -67,6 +67,7 @@ function FlagList({
                 ? 'нарушение не обнаружено'
                 : 'не определено'}
           </strong>
+          <small className="hint"> · Флаг не меняет итог</small>
           <span className="visually-hidden"> · {scope === 'automatic' ? 'оценка AI' : 'после пересмотра'}</span>
         </li>
       ))}

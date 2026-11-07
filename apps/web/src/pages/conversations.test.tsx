@@ -8,6 +8,7 @@ import failed from '../../../../fixtures/contracts/conversation-flag-failed.json
 import negative from '../../../../fixtures/contracts/conversation-flag-negative.json';
 import pending from '../../../../fixtures/contracts/conversation-flag-pending.json';
 import { api } from '../api/client';
+import { PasteDraftProvider } from '../components/ImportPanel';
 import type { ChecklistVersion, ConversationPage, ConversationSummary } from '../api/types';
 import { parseConversationQuery, withFilter } from '../lib/conversationQuery';
 import { ConversationsPage } from './ConversationsPage';
@@ -70,10 +71,10 @@ function renderAt(url: string, conversationItems: ConversationSummary[], total: 
           <Route
             path="/conversations"
             element={
-              <>
+              <PasteDraftProvider>
                 <ConversationsPage />
                 <Probe />
-              </>
+              </PasteDraftProvider>
             }
           />
         </Routes>
@@ -202,7 +203,7 @@ test('server error for the flag query is shown, never replaced by a local filter
         ]}
       >
         <Routes>
-          <Route path="/conversations" element={<ConversationsPage />} />
+          <Route path="/conversations" element={<PasteDraftProvider><ConversationsPage /></PasteDraftProvider>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

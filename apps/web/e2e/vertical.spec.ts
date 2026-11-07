@@ -1,3 +1,4 @@
+import { conversationRow, selectConversation } from './support';
 import { expect, test } from '@playwright/test';
 import { createChecklist, criterion, draft, launchFromList, record, servers, uid, writeTmpJson } from './support';
 
@@ -39,25 +40,30 @@ test('E01+E02: new IDs/texts via JSON upload, RU/KZ/EN and voice preserved verba
   await page.goto('/#/conversations');
   await page.getByRole('button', { name: 'Импорт разговоров' }).click();
   await page.getByLabel('Файл JSON').setInputFiles(file);
+  const importResponse = page.waitForResponse((r) => r.url().endsWith('/api/v1/imports') && r.request().method() === 'POST');
   await page.getByRole('button', { name: 'Импортировать' }).click();
-  await expect(page.getByText(/Импорт выполнен атомарно: получено записей — 4/)).toBeVisible();
+  const imported = await (await importResponse).json();
+  const importedIds: Record<string, string> = Object.fromEntries(imported.items.flatMap(
+    (item: { conversation_id: string; source_indices: number[] }) => item.source_indices.map((i) => [Object.values(ids)[i], item.conversation_id]),
+  ));
+  await expect(page.getByText(/Импорт завершён: получено записей — 4/)).toBeVisible();
   await page.getByRole('button', { name: 'Закрыть окно' }).click();
 
-  for (const id of Object.values(ids)) await expect(page.getByRole('link', { name: id, exact: true })).toBeVisible();
+  for (const id of Object.values(ids)) await expect(conversationRow(page, importedIds[id])).toBeVisible();
 
-  await page.getByRole('link', { name: ids.kz, exact: true }).click();
+  await page.locator(`a[href="#/conversations/${importedIds[ids.kz]}"]`).click();
   await expect(page.getByText(kzText.trim(), { exact: false }).first()).toBeVisible();
   await expect(page.locator('.msg-time').first()).toHaveText('00:03');
 
   await page.goto('/#/conversations');
-  await page.getByRole('link', { name: ids.voice, exact: true }).click();
+  await page.locator(`a[href="#/conversations/${importedIds[ids.voice]}"]`).click();
   await expect(page.locator('.msg-time').first()).toHaveText('2026-11-01T09:00:03Z');
-  await expect(page.getByText('Добрый день, меня зовут [ИМЯ].')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Оригинал разговора' }).getByText('Добрый день, меня зовут [ИМЯ].')).toBeVisible();
   await expect(page.getByTestId('audio-alignment')).toContainText('не подтверждена');
 
   await page.goto('/#/conversations?language=EN');
-  await expect(page.getByRole('link', { name: ids.en, exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: ids.ru, exact: true })).toHaveCount(0);
+  await expect(conversationRow(page, importedIds[ids.en])).toBeVisible();
+  await expect(conversationRow(page, importedIds[ids.ru])).toHaveCount(0);
 });
 
 test('E01: invalid import shows the server indexed error and saves nothing', async ({ page, request }) => {
@@ -82,7 +88,7 @@ test('E01: organizer import sends only group_id and shows the safe server answer
   await page.getByRole('button', { name: 'Импорт разговоров' }).click();
   await page.getByLabel('API организаторов').check();
   const requestPromise = page.waitForRequest((r) => r.url().endsWith('/api/v1/imports') && r.method() === 'POST');
-  await page.getByLabel('group_id').fill('synthetic-group-42');
+  await page.getByLabel('Номер группы организаторов').fill('synthetic-group-42');
   await page.getByRole('button', { name: 'Импортировать' }).click();
   const req = await requestPromise;
   expect(req.postDataJSON()).toEqual({ schema_version: '1.0', source: 'organizer_api', group_id: 'synthetic-group-42' });
@@ -119,7 +125,7 @@ test('E04+E14+E20: double click creates one batch; refresh restores; range evide
   page.on('request', (r) => {
     if (r.method() === 'POST' && r.url().endsWith('/api/v1/evaluation-batches')) posts.push(r.headers()['idempotency-key']);
   });
-  await page.getByRole('checkbox', { name: `Выбрать ${id}` }).check();
+  await selectConversation(page, id);
   await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: title });
   await page.getByRole('button', { name: 'Запустить пакет' }).dblclick();
@@ -134,7 +140,7 @@ test('E04+E14+E20: double click creates one batch; refresh restores; range evide
   await expect(page.getByTestId('job-row')).toHaveAttribute('data-state', 'succeeded');
 
   const evalsBefore = await (await request.get(`${servers.complete}/api/v1/evaluations?limit=200`)).json();
-  await page.getByRole('link', { name: /карточка/ }).click();
+  await page.getByRole('link', { name: /^Открыть оценку/ }).click();
   await expect(page.getByTestId('test-banner')).toBeVisible();
   await page.getByTestId('criterion-item').first().click();
   await page.getByRole('button', { name: /включительно/ }).first().click();
@@ -144,7 +150,7 @@ test('E04+E14+E20: double click creates one batch; refresh restores; range evide
   await expect(highlighted.last()).toHaveAttribute('data-message-id', 'm0003');
 
   // Transcript content is inert text.
-  await expect(page.getByText('<img src=x onerror="window.__pwned=1"><script>window.__pwned=2</script>Привет')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Оригинал разговора' }).getByText('<img src=x onerror="window.__pwned=1"><script>window.__pwned=2</script>Привет')).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __pwned?: number }).__pwned)).toBeUndefined();
   await expect(page.locator('.transcript a')).toHaveCount(0);
 
@@ -181,7 +187,7 @@ test('E03: changed text under the same external_id becomes a new revision; old r
   await page.getByRole('button', { name: 'Импорт разговоров' }).click();
   await page.getByLabel('Или вставьте JSON').fill(JSON.stringify({ source: 'json', records: [changed] }));
   await page.getByRole('button', { name: 'Импортировать' }).click();
-  await expect(page.getByText(/revision 2 · новая revision/)).toBeVisible();
+  await expect(page.getByText(/версия текста 2 · новая версия текста/)).toBeVisible();
 
   await page.goto(`/#/conversations/${conversationId}`);
   await expect(page.getByText('Изменённый ответ оператора.')).toBeVisible();
@@ -190,20 +196,20 @@ test('E03: changed text under the same external_id becomes a new revision; old r
   await expect(item).toHaveAttribute('data-revision', '1');
   await expect(item).toContainText('не последняя — результат относится к старому тексту');
 
-  await page.getByLabel('Revision').selectOption('1');
+  await page.getByLabel('Версия текста').selectOption('1');
   await expect(page.getByTestId('old-revision')).toBeVisible();
   await expect(page.getByText('Здравствуйте! Синтетический ответ оператора.')).toBeVisible();
 
   // Reuse must not present the old result as an evaluation of the new text.
-  await page.getByLabel('Revision').selectOption('2');
+  await page.getByLabel('Версия текста').selectOption('2');
   await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: title });
-  await page.getByLabel(/reuse_if_compatible/).check();
+  await page.getByLabel(/Использовать совместимую оценку/).check();
   await page.getByRole('button', { name: 'Запустить пакет' }).click();
   await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии');
-  await expect(page.getByTestId('job-row')).toContainText('revision 2');
-  await page.getByRole('link', { name: /карточка/ }).click();
-  await expect(page.locator('.card-meta')).toContainText('revision разговора 2');
+  await expect(page.getByTestId('job-row')).toContainText('Версия текста 2');
+  await page.getByRole('link', { name: /^Открыть оценку/ }).click();
+  await expect(page.locator('.card-meta')).toContainText('Версия текста 2');
   await page.getByText('Детали запуска: версии, модели, стоимость').click();
   await expect(page.getByTestId('reuse-provenance')).toContainText('Результат получен в этом запуске');
 });
@@ -214,11 +220,11 @@ test('E14: list → card shows answer, weight, rationale and limitations per cri
   const id = uid('e14');
   await page.request.post(`${servers.complete}/api/v1/imports`, { data: { source: 'json', records: [record(id)] } });
   await launchFromList(page, [id], title);
-  await page.getByRole('link', { name: /карточка/ }).click();
+  await page.getByRole('link', { name: /^Открыть оценку/ }).click();
   await page.getByTestId('criterion-item').first().click();
   const detail = page.getByTestId('criterion-detail');
   await expect(detail.getByRole('heading', { name: 'Приветствие' })).toBeVisible();
   await expect(detail.getByTestId('weighted')).toHaveText('25 / 25');
   await expect(detail.getByText('Обоснование')).toBeVisible();
-  await expect(detail.getByText('test_evaluator').first()).toBeVisible();
+  await expect(page.getByTestId('test-banner')).toContainText('синтетический результат');
 });

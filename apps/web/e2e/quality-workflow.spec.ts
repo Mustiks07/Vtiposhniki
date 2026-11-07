@@ -1,3 +1,4 @@
+import { conversationRow, savedVersionId } from './support';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -130,13 +131,13 @@ test('worklist, focused editor and comparison keep server results and evidence c
   await current.getByLabel('Вес').fill('25');
   await page.getByRole('button', { name: 'Сохранить как новую версию' }).click();
   await expect(page.getByTestId('version-saved')).toBeVisible();
-  const v2 = (await page.getByTestId('version-saved').locator('code').textContent())!;
+  const v2 = await savedVersionId(page);
   const after = await runBatchApi(request, servers.complete, [ids[0]], v2, 'reuse_if_compatible');
 
   await page.goto('/#/conversations?q=' + encodeURIComponent('ДЕМО-'));
   await page.getByRole('button', { name: 'Без оценки', exact: true }).click();
   await expect(page.getByTestId('conversation-row')).toHaveCount(1);
-  await expect(page.getByTestId('conversation-row')).toContainText('ДЕМО-003');
+  await expect(conversationRow(page, ids[2])).toHaveCount(1);
   await page.getByRole('button', { name: 'Нужна проверка', exact: true }).click();
   await expect(page.getByTestId('conversation-row')).toHaveCount(1);
   await expect(page.getByTestId('conversation-row')).toContainText('Открытая апелляция');
@@ -150,7 +151,7 @@ test('worklist, focused editor and comparison keep server results and evidence c
   await page.getByRole('button', { name: 'Сбросить', exact: true }).click();
   await page.goto('/#/conversations?q=' + encodeURIComponent('ДЕМО-'));
   await page.getByRole('combobox', { name: 'Порядок', exact: true }).selectOption('score_asc');
-  await expect(page.getByTestId('conversation-row').first()).toContainText('ДЕМО-002');
+  await expect(page.getByTestId('conversation-row').first().locator(`a[href="#/conversations/${ids[1]}"]`)).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
   fs.mkdirSync(pictures, { recursive: true });
   await page.screenshot({

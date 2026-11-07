@@ -207,14 +207,35 @@ export async function decideNa(request: APIRequestContext, baseURL: string, eval
 }
 
 /** Launches a batch through the UI from the conversation list and waits for final states. */
+export async function selectConversation(page: Page, externalId: string) {
+  await page.getByRole('searchbox', { name: 'Поиск по ID или тексту' }).fill(externalId);
+  await page.getByRole('button', { name: 'Найти', exact: true }).click();
+  const row = page.getByTestId('conversation-row').filter({ hasText: `номер источника ${externalId}` });
+  await expect(row).toHaveCount(1);
+  await row.getByRole('checkbox').check();
+}
+
+export async function savedVersionId(page: Page) {
+  const href = await page.getByRole('link', { name: 'Запустить оценку с этой версией', exact: true }).getAttribute('href');
+  const versionId = new URLSearchParams(href!.split('?')[1]).get('launch_version');
+  expect(versionId).toBeTruthy();
+  return versionId!;
+}
+
+export function conversationRow(page: Page, conversationId: string) {
+  return page.getByTestId('conversation-row').filter({
+    has: page.locator(`a[href="#/conversations/${conversationId}"]`),
+  });
+}
+
 export async function launchFromList(page: Page, externalIds: string[], checklistTitle: string, mode: 'fresh' | 'reuse_if_compatible' = 'fresh') {
   await page.goto('/#/conversations');
   for (const id of externalIds) {
-    await page.getByRole('checkbox', { name: `Выбрать ${id}` }).check();
+    await selectConversation(page, id);
   }
   await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: checklistTitle });
-  if (mode === 'reuse_if_compatible') await page.getByLabel(/reuse_if_compatible/).check();
+  if (mode === 'reuse_if_compatible') await page.getByLabel(/Использовать совместимую оценку/).check();
   await page.getByRole('button', { name: 'Запустить пакет' }).click();
   await expect(page).toHaveURL(/#\/batches\//);
   await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии', { timeout: 30_000 });

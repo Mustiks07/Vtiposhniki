@@ -1,3 +1,4 @@
+import { savedVersionId, selectConversation } from './support';
 import { expect, test } from '@playwright/test';
 import {
   createChecklist,
@@ -35,7 +36,7 @@ test('U06: definition changed in the UI → new version saved → fresh run appl
 
   // Editor: change the definition and the weight, add a new criterion whose first answer is «Нет».
   await page.goto(`/#/checklists/${v1.checklist_id}`);
-  await page.getByRole('link', { name: 'Редактировать (новая версия)' }).click();
+  await page.getByRole('link', { name: 'Создать новую версию' }).click();
   const greet = page.getByTestId('editor-criterion').first();
   await greet.getByLabel('Определение').fill('Новое определение: оператор поздоровался и представился по имени.');
   await greet.getByLabel('Вес').fill('30');
@@ -57,17 +58,17 @@ test('U06: definition changed in the UI → new version saved → fresh run appl
     'data-kind',
     'added',
   );
-  const v2 = (await page.getByTestId('version-saved').locator('code').textContent())!;
+  const v2 = await savedVersionId(page);
 
   // Fresh run with the new version from the UI.
   await page.getByRole('link', { name: 'Запустить оценку с этой версией' }).click();
-  await page.getByRole('checkbox', { name: `Выбрать ${externalId}` }).check();
+  await selectConversation(page, externalId);
   await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await expect(page.getByLabel('Версия чек-листа (закрепляется при запуске)')).toHaveValue(v2);
   await expect(page.getByRole('radio', { name: /Новый анализ/ })).toBeChecked();
   await page.getByRole('button', { name: 'Запустить пакет' }).click();
   await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии');
-  await page.getByRole('link', { name: /карточка/ }).click();
+  await page.getByRole('link', { name: /^Открыть оценку/ }).click();
 
   // New rules applied: new definition, new criterion, server arithmetic 30·1 + 70·0 over 100 = 30,00.
   await page.getByTestId('criterion-item').filter({ hasText: 'Приветствие' }).click();

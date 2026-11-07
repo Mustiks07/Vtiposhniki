@@ -1,5 +1,6 @@
 """Pinned prompt versions must not silently change older evaluation profiles."""
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from cqa_ai.prompts import (
     BOUNDARIES_V5,
     CONSISTENCY_V4,
     DECISION_DISCIPLINE_V3,
+    NEED_AND_CLOSING_PHASES_V8,
     OBSERVABLE_CONDUCT_V6,
     SYSTEM_PRIMARY,
     SYSTEM_REVIEW,
@@ -22,7 +24,15 @@ from cqa_domain import original_checklist, profile_hash
 
 @pytest.mark.parametrize(
     "version",
-    ["cqa-eval-v2", "cqa-eval-v3", "cqa-eval-v4", "cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7"],
+    [
+        "cqa-eval-v2",
+        "cqa-eval-v3",
+        "cqa-eval-v4",
+        "cqa-eval-v5",
+        "cqa-eval-v6",
+        "cqa-eval-v7",
+        "cqa-eval-v8",
+    ],
 )
 async def test_primary_and_blind_review_use_pinned_prompt(version: str) -> None:
     checklist, conv = original_checklist(), conversation()
@@ -40,14 +50,35 @@ async def test_primary_and_blind_review_use_pinned_prompt(version: str) -> None:
         expected = legacy if version == "cqa-eval-v2" else legacy + "\n" + DECISION_DISCIPLINE_V3
         if version == "cqa-eval-v4":
             expected += "\n" + CONSISTENCY_V4
-        if version in {"cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7"}:
+        if version in {"cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7", "cqa-eval-v8"}:
             expected += "\n" + BOUNDARIES_V5
-        if version in {"cqa-eval-v6", "cqa-eval-v7"}:
+        if version in {"cqa-eval-v6", "cqa-eval-v7", "cqa-eval-v8"}:
             expected += "\n" + OBSERVABLE_CONDUCT_V6
-        if version == "cqa-eval-v7":
+        if version in {"cqa-eval-v7", "cqa-eval-v8"}:
             expected += "\n" + AUTHORIZATION_AND_CLOSURE_V7
+        if version == "cqa-eval-v8":
+            expected += "\n" + NEED_AND_CLOSING_PHASES_V8
         assert request.messages[0].content == expected
     assert "INITIAL-ONLY-SENTINEL" not in transport.requests[1].messages[1].content
+
+
+def test_existing_profile_prompts_keep_pre_experiment_bytes() -> None:
+    path = Path(__file__).resolve().parents[3] / "fixtures/evaluation/prompt-system-sha256.json"
+    for version, modes in json.loads(path.read_text()).items():
+        for mode, digest in modes.items():
+            messages = build_messages(
+                mode, conversation(), original_checklist(), [], prompt_version=version
+            )
+            assert hashlib.sha256(messages[0].content.encode()).hexdigest() == digest
+
+
+def test_v8_diagnostic_keeps_the_same_rubric_and_input() -> None:
+    args = ("primary", conversation(), original_checklist(), [])
+    old = build_messages(*args, prompt_version="cqa-eval-v7")
+    new = build_messages(*args, prompt_version="cqa-eval-v8")
+    assert old[1] == new[1]
+    assert new[0].content.startswith(old[0].content)
+    assert "p1-" not in new[0].content and "p4-" not in new[0].content
 
 
 def test_v3_changes_instructions_without_changing_rubric_or_conversation() -> None:

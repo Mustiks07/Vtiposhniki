@@ -1,3 +1,4 @@
+import { conversationRow, savedVersionId } from './support';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import {
   createChecklist,
@@ -90,7 +91,7 @@ test('U01+U03: the only detected record beyond the first page is found; total an
   // Unfiltered list: the target is not on the first page.
   await page.goto('/#/conversations');
   await expect(page.getByTestId('conversation-row')).toHaveCount(25);
-  await expect(page.getByRole('link', { name: records[0].external_id, exact: true })).toHaveCount(0);
+  await expect(conversationRow(page, convIds[0])).toHaveCount(0);
 
   // Automatic: nothing detected (the AI said «Нет» everywhere).
   await search(page, { checklistTitle, versionId: v.version_id, flagTitle, status: 'обнаружен' });
@@ -102,7 +103,7 @@ test('U01+U03: the only detected record beyond the first page is found; total an
   await expect(page.getByTestId('search-scope')).toContainText('Найдено: 1');
   const row = page.getByTestId('conversation-row');
   await expect(row).toHaveCount(1);
-  await expect(row).toContainText(records[0].external_id);
+  await expect(conversationRow(page, convIds[0])).toHaveCount(1);
   await expect(row.getByTestId('flag-cell')).toContainText(`${flagTitle}: обнаружен`);
   await expect(row.getByTestId('flag-cell')).not.toContainText(/груб/i);
 
@@ -120,11 +121,11 @@ test('U01+U03: the only detected record beyond the first page is found; total an
   await page.getByLabel('Состояние флага').selectOption({ label: 'обнаружен' });
   await page.getByTestId('flag-explain').click();
   await expect(page).toHaveURL(/criterion=u-flag-7Q/);
-  await expect(page.getByTestId('opened-scope')).toContainText('effective');
+  await expect(page.getByTestId('opened-scope')).toContainText('После пересмотра');
   const detail = page.getByTestId('criterion-detail');
-  await expect(detail.getByRole('heading', { name: flagTitle })).toBeVisible();
+  await expect(detail.getByRole('heading', { name: new RegExp(flagTitle) })).toBeVisible();
   await expect(detail).toContainText('Действующий ответ (решение проверяющего)');
-  await expect(detail).toContainText('Ответ оценщика (automatic)');
+  await expect(detail.getByRole('heading', { name: 'Ответ AI', exact: true })).toBeVisible();
   await detail
     .getByRole('button', { name: /включительно/ })
     .first()
@@ -165,7 +166,7 @@ test.describe('partial scenario server', () => {
     await search(page, { checklistTitle, versionId: v.version_id, flagTitle, status: 'обнаружен', scope: 'effective' });
     await expect(page.getByTestId('search-scope')).toContainText('Найдено: 1');
     const row = page.getByTestId('conversation-row');
-    await expect(row).toContainText(ext[0]);
+    await expect(conversationRow(page, flagged)).toHaveCount(1);
     await expect(row).toContainText('Оценка неполная');
 
     await page.getByLabel('Состояние флага').selectOption({ label: 'не обнаружен' });
@@ -173,8 +174,7 @@ test.describe('partial scenario server', () => {
 
     await page.getByLabel('Состояние флага').selectOption({ label: 'неизвестно' });
     await expect(page.getByTestId('search-scope')).toContainText('это не «нарушений нет»');
-    const unknownRows = page.getByTestId('conversation-row');
-    for (const e of [ext[1], ext[2]]) await expect(unknownRows.filter({ hasText: e })).toHaveCount(1);
+    for (const i of imp.items.slice(1)) await expect(conversationRow(page, i.conversation_id)).toHaveCount(1);
     await expect(page.getByTestId('flag-cell').filter({ hasText: 'не обнаружен' })).toHaveCount(0);
 
     // Automatic scope: the AI left the flag undetermined → the record is unknown, not detected.
@@ -200,12 +200,12 @@ test.describe('failed scenario server', () => {
     const imp = await importViaApi(request, base, [record(ext)]);
     await runBatchApi(request, base, [imp.items[0].conversation_id], v.version_id);
     await search(page, { checklistTitle, versionId: v.version_id, flagTitle, status: 'неизвестно' });
-    const row = page.getByTestId('conversation-row').filter({ hasText: ext });
+    const row = conversationRow(page, imp.items[0].conversation_id);
     await expect(row).toHaveCount(1);
     await expect(row).toContainText('Ошибка оценки');
     await expect(row.getByTestId('flag-cell')).toHaveAttribute('data-flag-status', 'unknown');
     await page.getByLabel('Состояние флага').selectOption({ label: 'не обнаружен' });
-    await expect(page.getByTestId('conversation-row').filter({ hasText: ext })).toHaveCount(0);
+    await expect(conversationRow(page, imp.items[0].conversation_id)).toHaveCount(0);
   });
 });
 
@@ -233,7 +233,7 @@ test('U04: new arbitrary flag ID from the editor works; re-evaluation and a new 
   await second.getByLabel('Смысл ступени варианта 2').fill('Нет');
   await page.getByRole('button', { name: 'Создать чек-лист' }).click();
   await expect(page.getByTestId('version-saved')).toBeVisible();
-  const versionId = (await page.getByTestId('version-saved').locator('code').textContent())!;
+  const versionId = await savedVersionId(page);
   const saved = await (await request.get(`${base}/api/v1/checklist-versions/${versionId}`)).json();
   const flagId = saved.criteria.find((c: { response_type: string }) => c.response_type === 'flag').id as string;
   expect(flagId).toMatch(/^crit_/);
@@ -246,12 +246,12 @@ test('U04: new arbitrary flag ID from the editor works; re-evaluation and a new 
   await runBatchApi(request, base, [conversationId], versionId); // re-evaluation
 
   await search(page, { checklistTitle, versionId, flagTitle, status: 'обнаружен' });
-  await expect(page.getByTestId('conversation-row').filter({ hasText: externalId })).toHaveCount(1);
+  await expect(conversationRow(page, conversationId)).toHaveCount(1);
   const latest = (
     await (await request.get(`${base}/api/v1/evaluations?conversation_id=${conversationId}&limit=1`)).json()
   ).items[0].id;
   await expect(
-    page.getByTestId('conversation-row').filter({ hasText: externalId }).getByTestId('flag-explain'),
+    conversationRow(page, conversationId).getByTestId('flag-explain'),
   ).toHaveAttribute('href', new RegExp(`#/evaluations/${latest}\\?`));
 
   // New revision (changed text) without a new run: the old true is not carried over.
@@ -259,9 +259,9 @@ test('U04: new arbitrary flag ID from the editor works; re-evaluation and a new 
     record(externalId, { messages: [{ speaker: 'client', text: 'Изменённый текст.', timestamp_original: '00:02' }] }),
   ]);
   await page.reload();
-  await expect(page.getByTestId('conversation-row').filter({ hasText: externalId })).toHaveCount(0);
+  await expect(conversationRow(page, conversationId)).toHaveCount(0);
   await page.getByLabel('Состояние флага').selectOption({ label: 'неизвестно' });
-  const row = page.getByTestId('conversation-row').filter({ hasText: externalId });
+  const row = conversationRow(page, conversationId);
   await expect(row).toHaveCount(1);
   await expect(row).toContainText('Не оценён');
 });

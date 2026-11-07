@@ -13,7 +13,7 @@ test.describe('partial scenario server', () => {
     const row = page.getByTestId('job-row');
     await expect(row).toHaveAttribute('data-state', 'succeeded');
     await expect(row.getByTestId('partial-note')).toContainText('Обработка завершена, оценка неполная');
-    await row.getByRole('link', { name: /карточка/ }).click();
+    await row.getByRole('link', { name: /^Открыть оценку/ }).click();
     await expect(page.getByTestId('automatic-total')).toHaveText('нет итога');
     await expect(page.getByTestId('automatic-total')).toHaveAttribute('data-status', 'incomplete_evaluation');
     await expect(page.getByTestId('automatic-total-block')).toContainText('Это не 0 баллов');
@@ -35,7 +35,8 @@ test.describe('failed scenario server', () => {
     await expect(row).toHaveAttribute('data-state', 'failed');
     await expect(row).toContainText('Ошибка провайдера модели');
     await expect(row).toContainText(/попытка \d+ из \d+/);
-    await expect(row).toContainText('correlation_id');
+    await row.getByText('Код для поддержки', { exact: true }).click();
+    await expect(row.locator('code')).toHaveText(/\S+/);
 
     const before = await (await request.get(`${servers.failed}/api/v1/evaluation-batches/${batchId}`)).json();
     const batchesBefore = before.jobs.map((j: { id: string }) => j.id);
@@ -49,7 +50,7 @@ test.describe('failed scenario server', () => {
     expect(after.jobs.map((j: { id: string }) => j.id)).toEqual(batchesBefore);
     expect(after.jobs[0].attempts.length).toBe(2);
 
-    await page.getByRole('link', { name: /карточка/ }).click();
+    await page.getByRole('link', { name: /^Открыть оценку/ }).click();
     await expect(page.getByText('Оценка не получена').first()).toBeVisible();
   });
 });

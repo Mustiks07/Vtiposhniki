@@ -96,10 +96,10 @@ test('E20: 200% zoom equivalent and narrow phone width keep data readable withou
 
 test('E20: unknown IDs and unreachable data show a next step instead of a blank or zero', async ({ page }) => {
   await page.goto('/#/evaluations/eval_does_not_exist');
-  await expect(page.getByRole('alert')).toContainText('Объект не найден');
+  await expect(page.getByRole('alert')).toContainText('Не удалось найти запись');
   await expect(page.getByRole('button', { name: 'Повторить чтение' })).toBeVisible();
   await page.goto('/#/batches/batch_does_not_exist');
-  await expect(page.getByRole('alert')).toContainText('Объект не найден');
+  await expect(page.getByRole('alert')).toContainText('Не удалось найти запись');
   await page.goto('/#/nowhere');
-  await expect(page.getByText('Страница не найдена')).toBeVisible();
+  await expect(page.getByText(/Страница не найдена/)).toBeVisible();
 });
