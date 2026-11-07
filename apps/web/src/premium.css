@@ -1489,10 +1489,3 @@ small {
     transition: none !important;
   }
 }
-
-.embedded-status {
-  padding: 12px 28px;
-  border-bottom: 1px solid var(--line);
-  background: var(--panel);
-}
-.embedded-status .health { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

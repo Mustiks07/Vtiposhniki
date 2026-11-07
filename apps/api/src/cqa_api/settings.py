@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from typing import Literal
-from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 from pydantic import SecretStr, field_validator
@@ -30,7 +29,6 @@ class Settings(BaseSettings):
     audio_allowed_hosts: str = ""
     audio_max_bytes: int = 209_715_200
     audio_timeout_seconds: float = 30.0
-    cors_origins: str = ""
 
     sqlite_busy_timeout_ms: int = 5000
     sqlite_synchronous: Literal["FULL", "NORMAL"] = "FULL"
@@ -47,29 +45,6 @@ class Settings(BaseSettings):
     @classmethod
     def empty_is_absent(cls, value: object) -> object:
         return None if value == "" else value
-
-    @field_validator("cors_origins")
-    @classmethod
-    def explicit_cors_origins(cls, value: str) -> str:
-        origins = [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()]
-        for origin in origins:
-            parsed = urlsplit(origin)
-            if (
-                parsed.scheme not in ("http", "https")
-                or not parsed.hostname
-                or parsed.username is not None
-                or parsed.password is not None
-                or parsed.path
-                or parsed.query
-                or parsed.fragment
-                or "*" in origin
-            ):
-                raise ValueError("CORS requires exact http(s) origins without paths or wildcards")
-        return ",".join(origins)
-
-    @property
-    def allowed_origins(self) -> list[str]:
-        return self.cors_origins.split(",") if self.cors_origins else []
 
     @property
     def effective_config_dir(self) -> Path:

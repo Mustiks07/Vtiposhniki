@@ -1,7 +1,6 @@
 // Thin typed client over the v1 HTTP contract. No business logic, no caching of results
 // outside react-query memory, no localStorage. Every read accepts an AbortSignal so a stale
 // response cannot leak into a newly selected card.
-import { apiBase } from '../runtimeConfig';
 import type {
   Appeal,
   AppealPage,
@@ -29,7 +28,7 @@ import type {
   VersionList,
 } from './types';
 
-export const API_BASE = apiBase();
+export const API_BASE = '/api/v1';
 
 /** Error carrying the contract APIError body (when the server sent one). */
 export class ApiError extends Error {
@@ -199,7 +198,7 @@ export function batchExportUrl(id: string, scope: 'automatic' | 'effective', for
 
 /** Audio for a pinned revision: access_path + ?revision=<pinned> per CONTRACTS.md. */
 export function audioUrl(accessPath: string, revision: number): string {
-  return buildUrl(accessPath.replace(/^\/api\/v1/, ''), { revision });
+  return `${accessPath}?revision=${revision}`;
 }
 
 export function newIdempotencyKey(): string {

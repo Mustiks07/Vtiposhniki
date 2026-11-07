@@ -13,7 +13,6 @@ import { Loading } from './components/States';
 import { ConversationsPage } from './pages/ConversationsPage';
 import { EvaluationPage } from './pages/EvaluationPage';
 import { NotFound } from './pages/NotFound';
-import { embedding } from './runtimeConfig';
 
 const ComparisonPage = lazy(() =>
   import('./pages/ComparisonPage').then((module) => ({
@@ -56,7 +55,6 @@ function HealthLine() {
 
 function Shell() {
   const location = useLocation();
-  const { embedded } = embedding();
   const mainRef = useRef<HTMLElement>(null);
   // Move focus to main content on route changes (not on first load, so the skip link and
   // navigation stay first in tab order) for keyboard and screen-reader users.
@@ -69,7 +67,7 @@ function Shell() {
     mainRef.current?.focus({ preventScroll: true });
   }, [location.pathname]);
   return (
-    <div className={embedded ? 'app app-embedded' : 'app'}>
+    <div className="app">
       <a
         className="skip-link"
         href="#main"
@@ -80,7 +78,7 @@ function Shell() {
       >
         Перейти к содержимому
       </a>
-      {!embedded ? <aside className="sidebar">
+      <aside className="sidebar">
         <div className="brand">
           <div>
             <b>CQA</b>
@@ -109,9 +107,8 @@ function Shell() {
         <div className="sidebar-foot">
           <HealthLine />
         </div>
-      </aside> : null}
+      </aside>
       <div className="workspace">
-        {embedded ? <div className="embedded-status"><HealthLine /></div> : null}
         <main id="main" ref={mainRef} tabIndex={-1}>
           <PasteDraftProvider>
             <Outlet />
@@ -124,17 +121,12 @@ function Shell() {
 
 // Hash routing keeps deep links working on refresh with any static host (the API serves
 // the build through StaticFiles without an SPA fallback).
-function StartPage() {
-  const { conversation } = embedding();
-  return <Navigate to={conversation ? `/conversations/${encodeURIComponent(conversation)}` : '/conversations'} replace />;
-}
-
 export const routes = [
   {
     path: '/',
     element: <Shell />,
     children: [
-      { index: true, element: <StartPage /> },
+      { index: true, element: <Navigate to="/conversations" replace /> },
       { path: 'conversations', element: <ConversationsPage /> },
       { path: 'conversations/:id', element: <ConversationPage /> },
       {

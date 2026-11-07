@@ -1,4 +1,4 @@
-"""CQA API application. Database and provider startup happens in the lifespan."""
+"""CQA API application. Importing this module opens nothing: startup is in the lifespan."""
 
 import asyncio
 import logging
@@ -13,7 +13,6 @@ from cqa_contracts import API_VERSION
 from cqa_contracts.interfaces import Evaluator
 from cqa_contracts.models import AudioMetadata, Conversation, ErrorCode, Message
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -122,14 +121,12 @@ def create_app(
     audio_transport: httpx.AsyncBaseTransport | None = None,
     host_resolver: Callable[[str], list[str]] | None = None,
 ) -> FastAPI:
-    configured = settings if settings is not None else load_settings()
-
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # httpx logs full request URLs at INFO, which would expose the secret dataset URL.
         logging.getLogger("httpx").setLevel(logging.WARNING)
         services = build_services(
-            configured,
+            settings if settings is not None else load_settings(),
             domain=domain,
             evaluator=evaluator,
             clock=clock,
@@ -145,7 +142,9 @@ def create_app(
         app.state.worker = worker
         app.state.domain_ready = _domain_ready()
         stop = asyncio.Event()
-        task = asyncio.create_task(worker.run(stop)) if services.settings.worker_enabled else None
+        task = (
+            asyncio.create_task(worker.run(stop)) if services.settings.worker_enabled else None
+        )
         try:
             yield
         finally:
@@ -161,14 +160,6 @@ def create_app(
         lifespan=lifespan,
     )
     app.add_middleware(BodyLimitMiddleware)
-    if configured.allowed_origins:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=configured.allowed_origins,
-            allow_methods=["GET", "POST"],
-            allow_headers=["Content-Type", "Idempotency-Key", "Range"],
-            expose_headers=["Content-Disposition", "Content-Range", "Accept-Ranges"],
-        )
     install_error_handlers(app)
     app.include_router(router)
     web_dist = Path(os.environ.get("CQA_WEB_DIST", "apps/web/dist"))
