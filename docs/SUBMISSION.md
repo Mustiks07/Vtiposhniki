@@ -1,5 +1,17 @@
 # Официальная сдача результатов JSON 1.0
 
+**Текущий опубликованный DEV** проверен 8 ноября с итоговым составным журналом
+`data/private/submission/dev-final.run.json` (не с журналом первого прохода
+`dev-official.run.json`). Результат: 65 ok, 0 error,
+`saved_provenance_checked=true`, SHA-256
+`679bc7182a2b89d82a78896199a2304ce01a548f29231e8fa88767943cb4b788`.
+Исторический профиль — Gemini/v2. Команды первого прохода ниже сохранены
+для объяснения workflow; они не означают, что финальный файл получен одним запуском.
+
+```sh
+uv run cqa-submit validate --file results/dev/results.json --manifest data/private/submission/dev.manifest.json --config data/private/submission/config-pinned.json --run data/private/submission/dev-final.run.json --database data/private/live/cqa.sqlite3
+```
+
 Источник: локальный `CQA_Student_Guide_Appendix_Results (2).pdf`, 3 страницы,
 SHA-256 `cf9e282fee6ee6fdc9ac0b857a513e21ff3010ef99db8e4d61df64f8c079f741`.
 Текст поручения: [дополнение](specs/06_OFFICIAL_SUBMISSION_ADDENDUM.md).
