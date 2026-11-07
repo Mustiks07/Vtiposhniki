@@ -70,6 +70,11 @@ export function ChecklistsPage() {
       <h1>Чек-листы</h1>
       <div className="layout-split">
         <section className="grow" aria-label="Список чек-листов">
+          <p className="row">
+            <Link className="button primary" to="/checklists/new">
+              Новый чек-лист в редакторе
+            </Link>
+          </p>
           {list.isPending ? <Loading /> : null}
           {list.isError ? <ErrorPanel error={list.error} onRetry={() => list.refetch()} /> : null}
           {list.data && list.data.items.length === 0 ? (

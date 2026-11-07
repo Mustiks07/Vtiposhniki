@@ -5,6 +5,7 @@ import { api } from './api/client';
 import { AppealsPage } from './pages/AppealsPage';
 import { BatchPage } from './pages/BatchPage';
 import { ChecklistPage, ChecklistVersionRedirect } from './pages/ChecklistPage';
+import { ChecklistEditorPage } from './pages/ChecklistEditorPage';
 import { ChecklistsPage } from './pages/ChecklistsPage';
 import { ConversationPage } from './pages/ConversationPage';
 import { ConversationsPage } from './pages/ConversationsPage';
@@ -71,6 +72,8 @@ export const routes = [
       { path: 'evaluations/:id', element: <EvaluationPage /> },
       { path: 'batches/:id', element: <BatchPage /> },
       { path: 'checklists', element: <ChecklistsPage /> },
+      { path: 'checklists/new', element: <ChecklistEditorPage /> },
+      { path: 'checklists/:id/edit', element: <ChecklistEditorPage /> },
       { path: 'checklists/version/:versionId', element: <ChecklistVersionRedirect /> },
       { path: 'checklists/:id', element: <ChecklistPage /> },
       { path: 'appeals', element: <AppealsPage /> },

@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { ChecklistView } from '../components/ChecklistView';
 import { Empty, ErrorPanel, Loading } from '../components/States';
+import { VersionDiff } from '../components/VersionDiff';
 import { serverTime, shortId } from '../lib/format';
 
 export function ChecklistPage() {
@@ -19,6 +20,8 @@ export function ChecklistPage() {
   const latest = items.reduce((a, b) => (a.created_at >= b.created_at ? a : b));
   const selectedId = params.get('version') ?? latest.version_id;
   const selected = items.find((v) => v.version_id === selectedId) ?? latest;
+  const compareId = params.get('compare');
+  const compare = items.find((v) => v.version_id === compareId && v.version_id !== selected.version_id);
 
   function set(key: string, value: string | null) {
     const next = new URLSearchParams(params);
@@ -57,14 +60,40 @@ export function ChecklistPage() {
                 </li>
               ))}
           </ol>
-          <Link
-            className="button primary"
-            to={`/conversations?checklist=${encodeURIComponent(id)}&version=${encodeURIComponent(selected.version_id)}`}
-          >
-            Запустить оценку с этой версией
-          </Link>
+          <div className="row">
+            <Link
+              className="button primary"
+              to={`/conversations?checklist=${encodeURIComponent(id)}&version=${encodeURIComponent(selected.version_id)}`}
+            >
+              Запустить оценку с этой версией
+            </Link>
+            <Link className="button" to={`/checklists/${encodeURIComponent(id)}/edit?from=${encodeURIComponent(selected.version_id)}`}>
+              Редактировать (новая версия)
+            </Link>
+          </div>
+          {items.length > 1 ? (
+            <>
+              <label htmlFor="compare-with">Сравнить выбранную версию с</label>
+              <select id="compare-with" value={compareId ?? ''} onChange={(e) => set('compare', e.target.value || null)}>
+                <option value="">— не сравнивать —</option>
+                {items
+                  .filter((v) => v.version_id !== selected.version_id)
+                  .map((v) => (
+                    <option key={v.version_id} value={v.version_id}>
+                      {shortId(v.version_id)} · {serverTime(v.created_at)}
+                    </option>
+                  ))}
+              </select>
+            </>
+          ) : null}
         </aside>
         <section className="grow">
+          {compare ? (
+            <VersionDiff
+              from={compare.created_at <= selected.created_at ? compare : selected}
+              to={compare.created_at <= selected.created_at ? selected : compare}
+            />
+          ) : null}
           <ChecklistView version={selected} />
         </section>
       </div>
