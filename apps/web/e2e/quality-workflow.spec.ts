@@ -58,7 +58,7 @@ test('worklist, focused editor and comparison keep server results and evidence c
       messages: [
         {
           speaker: 'client',
-          text: 'Как отключить рекламные уведомления?',
+          text: 'Как отключить рекламные уведомления в учебном кабинете «Клевер»?',
           timestamp_original: '00:01',
         },
         {
@@ -143,7 +143,7 @@ test('worklist, focused editor and comparison keep server results and evidence c
   await page.getByRole('link', { name: 'Апелляций: 1' }).click();
   await expect(page.getByTestId('queue-appeal')).toHaveCount(1);
   await page.goto('/#/conversations');
-  await page.getByLabel('Поиск по ID или тексту').fill('УВЕДОМЛЕНИЯ');
+  await page.getByLabel('Поиск по ID или тексту').fill('УВЕДОМЛЕНИЯ В УЧЕБНОМ КАБИНЕТЕ');
   await page.getByRole('button', { name: 'Найти', exact: true }).click();
   await expect(page.getByTestId('conversation-row')).toHaveCount(1);
   await expect(page.getByTestId('row-score')).toHaveText('75,00');

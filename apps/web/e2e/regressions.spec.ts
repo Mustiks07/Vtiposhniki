@@ -100,6 +100,7 @@ test('editor: changing an existing scale into a reverse mapping needs a new conf
   await page.goto(`/#/checklists/${v.checklist_id}/edit`);
   const block = page.getByTestId('editor-criterion').first();
   await expect(block.getByLabel(/Подтверждаю отображение/)).toHaveCount(0);
+  await block.getByRole('button', { name: 'Настроить значения и доли' }).click();
   await block.getByLabel('Доля варианта 1').fill('0');
   await block.getByLabel('Доля варианта 3').fill('1');
   const box = block.getByLabel(/Подтверждаю отображение ответов в доли/);
