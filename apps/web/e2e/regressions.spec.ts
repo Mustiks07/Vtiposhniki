@@ -98,14 +98,20 @@ test('editor: changing an existing scale into a reverse mapping needs a new conf
   });
   const v = await createChecklist(request, base, draft(uid('Шкала'), [scale]));
   await page.goto(`/#/checklists/${v.checklist_id}/edit`);
-  const block = page.getByTestId('editor-criterion').first();
+  const editor = page.getByRole('form', { name: 'Редактор чек-листа' });
+  // The editor shows the selected criterion; the read-only version has separate accordions.
+  await editor.getByRole('navigation', { name: 'Критерии в редакторе' })
+    .getByRole('button', { name: /Прямая шкала/ }).click();
+  const block = editor.locator('[data-testid="editor-criterion"][data-criterion-id="sc-1"]');
+  await expect(block).toBeVisible();
+  const save = editor.getByRole('button', { name: 'Сохранить как новую версию', exact: true });
   await expect(block.getByLabel(/Подтверждаю отображение/)).toHaveCount(0);
-  await block.getByRole('button', { name: 'Настроить значения и доли' }).click();
+  await block.getByRole('button', { name: 'Настроить значения и доли', exact: true }).click();
   await block.getByLabel('Доля варианта 1').fill('0');
   await block.getByLabel('Доля варианта 3').fill('1');
   const box = block.getByLabel(/Подтверждаю отображение ответов в доли/);
   await expect(box).not.toBeChecked();
-  await page.getByRole('button', { name: 'Сохранить как новую версию' }).click();
+  await save.click();
   await expect(block.getByText(/подтвердите отображение ответов в доли/)).toBeVisible();
   await expect(page.getByTestId('version-saved')).toHaveCount(0);
 
@@ -115,7 +121,7 @@ test('editor: changing an existing scale into a reverse mapping needs a new conf
   await block.getByLabel(/Подтверждаю отображение/).check();
   await block.getByLabel('Вес').fill('12');
   await expect(block.getByLabel(/Подтверждаю отображение/)).toBeChecked();
-  await page.getByRole('button', { name: 'Сохранить как новую версию' }).click();
+  await save.click();
   await expect(page.getByTestId('version-saved')).toBeVisible();
 });
 
@@ -123,7 +129,12 @@ test('editor: another author saves v2 while a v1 draft is open → 409, draft ke
   const title = uid('Конкурентная правка');
   const v1 = await createChecklist(request, base, draft(title, [criterion('k-1', { title: 'Исходный критерий' })]));
   await page.goto(`/#/checklists/${v1.checklist_id}/edit`);
-  const block = page.getByTestId('editor-criterion').first();
+  const editor = page.getByRole('form', { name: 'Редактор чек-листа' });
+  await editor.getByRole('navigation', { name: 'Критерии в редакторе' })
+    .getByRole('button', { name: /Исходный критерий/ }).click();
+  const block = editor.locator('[data-testid="editor-criterion"][data-criterion-id="k-1"]');
+  await expect(block).toBeVisible();
+  const save = editor.getByRole('button', { name: 'Сохранить как новую версию', exact: true });
   await block.getByLabel('Название', { exact: true }).fill('Моя правка');
 
   // Another author creates v2 through the real API.
@@ -134,8 +145,8 @@ test('editor: another author saves v2 while a v1 draft is open → 409, draft ke
   const v2 = (await other.json()).version_id as string;
 
   // Navigating away and back inside the app would refetch; here the stale draft is saved directly.
-  await page.getByRole('button', { name: 'Сохранить как новую версию' }).click();
-  const conflict = page.getByTestId('version-conflict');
+  await save.click();
+  const conflict = editor.getByTestId('version-conflict');
   await expect(conflict).toBeVisible();
   await expect(block.getByLabel('Название', { exact: true })).toHaveValue('Моя правка');
   const versions = (await (await request.get(`${base}/api/v1/checklists/${v1.checklist_id}/versions`)).json()).items;
@@ -143,8 +154,10 @@ test('editor: another author saves v2 while a v1 draft is open → 409, draft ke
 
   await conflict.getByRole('button', { name: 'Сверить с последней версией' }).click();
   await expect(conflict.getByTestId('diff-item')).toContainText('Правка другого автора');
-  await conflict.getByRole('button', { name: /Изменения учтены/ }).click();
-  await page.getByRole('button', { name: 'Сохранить как новую версию' }).click();
+  await conflict.getByRole('button', { name: 'Изменения учтены — создать следующую версию', exact: true }).click();
+  await expect(editor.getByTestId('rebased-note')).toBeVisible();
+  await expect(conflict).toHaveCount(0);
+  await save.click();
   await expect(page.getByTestId('version-saved')).toBeVisible();
   const after = (await (await request.get(`${base}/api/v1/checklists/${v1.checklist_id}/versions`)).json()).items;
   expect(after).toHaveLength(3);
