@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "status": "failed",
+  "initial": [],
+  "reviews": [],
+  "automatic_final": [],
+  "calls": [
+    {
+      "schema_version": "1.0",
+      "call_id": "synthetic-call",
+      "attempt_id": "synthetic-attempt-1",
+      "purpose": "primary",
+      "requested": {
+        "schema_version": "1.0",
+        "provider": "test",
+        "model": "synthetic-contract-v1",
+        "configuration_ref": "synthetic-only"
+      },
+      "actual": {
+        "schema_version": "1.0",
+        "provider": "test",
+        "model": "synthetic-contract-v1",
+        "configuration_ref": "synthetic-only"
+      },
+      "started_at": "2026-11-07T00:00:00Z",
+      "finished_at": "2026-11-07T00:00:01Z",
+      "outcome": "failed",
+      "finish_reason": "error",
+      "usage": null,
+      "cost": null,
+      "currency": "USD",
+      "price_version": null,
+      "safe_error": {
+        "schema_version": "1.0",
+        "code": "provider_error",
+        "message": "Synthetic provider unavailable.",
+        "details": [],
+        "retryable": true,
+        "correlation_id": "synthetic-correlation"
+      }
+    }
+  ],
+  "identity": {
+    "schema_version": "1.0",
+    "conversation_content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "checklist_semantic_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "profile_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "corpus_snapshot_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "audio_content_hash": null
+  },
+  "source_fragments": [],
+  "limitations": [
+    "test_evaluator"
+  ],
+  "error": {
+    "schema_version": "1.0",
+    "code": "provider_error",
+    "message": "Synthetic provider unavailable.",
+    "details": [],
+    "retryable": true,
+    "correlation_id": "synthetic-correlation"
+  },
+  "evaluator_mode": "test"
+}

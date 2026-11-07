@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "id": "synthetic-profile",
+  "version": "v1",
+  "mode": "test",
+  "primary": {
+    "schema_version": "1.0",
+    "provider": "test",
+    "model": "synthetic-contract-v1",
+    "configuration_ref": "synthetic-only"
+  },
+  "reviewer": null,
+  "fallbacks": [],
+  "generation": {
+    "schema_version": "1.0",
+    "temperature": "0",
+    "max_output_tokens": 4096,
+    "seed": null
+  },
+  "prompt_version": "synthetic-v1",
+  "output_schema_version": "1.0",
+  "preprocessing_version": "identity-v1",
+  "reviewer_policy": {
+    "schema_version": "1.0",
+    "enabled": false,
+    "version": "keep_valid_initial_v1",
+    "max_criteria": 2,
+    "blind": true
+  },
+  "retries": {
+    "schema_version": "1.0",
+    "max_job_attempts": 3,
+    "max_format_repairs": 1,
+    "max_transport_retries": 1,
+    "call_timeout_seconds": 60,
+    "job_deadline_seconds": 300,
+    "max_provider_calls": 8,
+    "max_total_tokens": 65536,
+    "max_cost": null,
+    "currency": "USD"
+  },
+  "corpus_snapshot_id": "synthetic-corpus"
+}

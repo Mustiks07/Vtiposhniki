@@ -1,0 +1,239 @@
+{
+  "schema_version": "1.0",
+  "synthetic": true,
+  "fixtures": [
+    {
+      "file": "api-error.json",
+      "model": "APIError",
+      "description": "Fixed safe error; no provider response or secrets."
+    },
+    {
+      "file": "appeal-changed.json",
+      "model": "Appeal",
+      "description": "Synthetic free text remains local, never in safe export."
+    },
+    {
+      "file": "appeal-confirmed.json",
+      "model": "Appeal",
+      "description": "Synthetic free text remains local, never in safe export."
+    },
+    {
+      "file": "artifact-all-undetermined.json",
+      "model": "EvaluationArtifact",
+      "description": "Synthetic artifact shape; no semantic evaluation or domain arithmetic has run."
+    },
+    {
+      "file": "artifact-complete.json",
+      "model": "EvaluationArtifact",
+      "description": "Synthetic artifact shape; no semantic evaluation or domain arithmetic has run."
+    },
+    {
+      "file": "artifact-failed.json",
+      "model": "EvaluationArtifact",
+      "description": "Synthetic artifact shape; no semantic evaluation or domain arithmetic has run."
+    },
+    {
+      "file": "artifact-missing-action.json",
+      "model": "EvaluationArtifact",
+      "description": "Synthetic artifact shape; no semantic evaluation or domain arithmetic has run."
+    },
+    {
+      "file": "artifact-na.json",
+      "model": "EvaluationArtifact",
+      "description": "Synthetic artifact shape; no semantic evaluation or domain arithmetic has run."
+    },
+    {
+      "file": "artifact-partial.json",
+      "model": "EvaluationArtifact",
+      "description": "Synthetic artifact shape; no semantic evaluation or domain arithmetic has run."
+    },
+    {
+      "file": "artifact-review-budget.json",
+      "model": "EvaluationArtifact",
+      "description": "Synthetic artifact shape; no semantic evaluation or domain arithmetic has run."
+    },
+    {
+      "file": "artifact-source-evidence.json",
+      "model": "EvaluationArtifact",
+      "description": "Synthetic artifact shape; no semantic evaluation or domain arithmetic has run."
+    },
+    {
+      "file": "call-finished.json",
+      "model": "CallEvent",
+      "description": "Awaitable observer event contract."
+    },
+    {
+      "file": "call-record.json",
+      "model": "CallRecord",
+      "description": "Synthetic call with unknown usage and cost, never claimed as a real free call."
+    },
+    {
+      "file": "call-started.json",
+      "model": "CallEvent",
+      "description": "Awaitable observer event contract."
+    },
+    {
+      "file": "checklist-custom.json",
+      "model": "ChecklistVersion",
+      "description": "Custom binary/scale/flag fixture; explicitly NOT the official eight-criterion rubric."
+    },
+    {
+      "file": "checklist-unfamiliar.json",
+      "model": "ChecklistVersion",
+      "description": "Additional criterion demonstrates schema independence from original eight IDs."
+    },
+    {
+      "file": "conversation-chat.json",
+      "model": "Conversation",
+      "description": "Entirely invented three-message chat; original MM:SS remains undated."
+    },
+    {
+      "file": "conversation-missing-action.json",
+      "model": "Conversation",
+      "description": "Companion input for missing-action: full range contains no operator greeting."
+    },
+    {
+      "file": "conversation-na.json",
+      "model": "Conversation",
+      "description": "Companion input for artifact-na: no request was formulated."
+    },
+    {
+      "file": "conversation-voice-unavailable.json",
+      "model": "Conversation",
+      "description": "No invented seek mapping or signed audio URL."
+    },
+    {
+      "file": "conversation-voice-unverified.json",
+      "model": "Conversation",
+      "description": "No invented seek mapping or signed audio URL."
+    },
+    {
+      "file": "corpus-empty.json",
+      "model": "CorpusSnapshot",
+      "description": "Empty corpus is representable."
+    },
+    {
+      "file": "corpus-synthetic.json",
+      "model": "CorpusSnapshot",
+      "description": "Safe invented source and chunk."
+    },
+    {
+      "file": "criterion-unfamiliar.json",
+      "model": "Criterion",
+      "description": "Unfamiliar criterion with explicit reverse nonzero scale."
+    },
+    {
+      "file": "decision-changed.json",
+      "model": "Decision",
+      "description": "Confirmed preserves the proposal; changed uses a human replacement."
+    },
+    {
+      "file": "decision-confirmed.json",
+      "model": "Decision",
+      "description": "Confirmed preserves the proposal; changed uses a human replacement."
+    },
+    {
+      "file": "evaluation-complete.json",
+      "model": "EvaluationView",
+      "description": "Complete synthetic evaluation card."
+    },
+    {
+      "file": "evaluation-confirmed.json",
+      "model": "EvaluationView",
+      "description": "Confirmation does not change automatic proposals or score."
+    },
+    {
+      "file": "evaluation-human-completed.json",
+      "model": "EvaluationView",
+      "description": "Automatic remains partial/null while human effective is complete."
+    },
+    {
+      "file": "evaluation-source-fragments.json",
+      "model": "EvaluationView",
+      "description": "Pinned source text is available in local card, not safe export."
+    },
+    {
+      "file": "execution-budget.json",
+      "model": "ExecutionBudget",
+      "description": "Job-wide budget; unknown usage/cost stays null."
+    },
+    {
+      "file": "health.json",
+      "model": "Health",
+      "description": "Foundation health explicitly reports business_ready=false."
+    },
+    {
+      "file": "import-json.json",
+      "model": "JSONImport",
+      "description": "Portable import request contains synthetic data only."
+    },
+    {
+      "file": "job-failed.json",
+      "model": "Job",
+      "description": "Job state is separate from artifact completeness."
+    },
+    {
+      "file": "job-queued.json",
+      "model": "Job",
+      "description": "Job state is separate from artifact completeness."
+    },
+    {
+      "file": "job-retry_wait.json",
+      "model": "Job",
+      "description": "Job state is separate from artifact completeness."
+    },
+    {
+      "file": "job-succeeded.json",
+      "model": "Job",
+      "description": "Job state is separate from artifact completeness."
+    },
+    {
+      "file": "profile-test.json",
+      "model": "EvaluatorProfile",
+      "description": "Explicitly test-only provider and finite retry limits."
+    },
+    {
+      "file": "safe-export-automatic.json",
+      "model": "SafeExport",
+      "description": "Original partial automatic remains incomplete after human changes."
+    },
+    {
+      "file": "safe-export-effective.json",
+      "model": "SafeExport",
+      "description": "Allowlist-only export includes failed/pending; never free text."
+    },
+    {
+      "file": "score-complete.json",
+      "model": "ScoreSummary",
+      "description": "Handwritten illustrative score; not an arithmetic implementation test."
+    },
+    {
+      "file": "score-human-effective.json",
+      "model": "ScoreSummary",
+      "description": "Illustrative complete score after human replacement."
+    },
+    {
+      "file": "score-na.json",
+      "model": "ScoreSummary",
+      "description": "N/A excluded from applicable weight."
+    },
+    {
+      "file": "score-no-applicable-weight.json",
+      "model": "ScoreSummary",
+      "description": "Separate null reason, not an incomplete evaluation or zero score."
+    },
+    {
+      "file": "score-partial.json",
+      "model": "ScoreSummary",
+      "description": "No complete automatic total for undetermined."
+    }
+  ],
+  "companion_inputs": {
+    "artifact-na.json": "conversation-na.json",
+    "artifact-missing-action.json": "conversation-missing-action.json",
+    "default_conversation": "conversation-chat.json",
+    "default_checklist": "checklist-custom.json",
+    "default_corpus": "corpus-synthetic.json",
+    "default_profile": "profile-test.json"
+  }
+}

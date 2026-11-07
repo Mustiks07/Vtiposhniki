@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cqa-api"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "cqa-contracts==0.1.0", "cqa-domain==0.1.0", "cqa-ai==0.1.0",
+  "fastapi==0.162.0", "uvicorn==0.54.0", "pydantic-settings==2.16.2",
+  "sqlalchemy==2.1.8", "alembic==1.20.1", "httpx==0.28.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cqa_api"]

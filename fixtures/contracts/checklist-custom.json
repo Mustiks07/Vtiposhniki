@@ -1,0 +1,163 @@
+{
+  "schema_version": "1.0",
+  "title": "Synthetic three-criterion checklist",
+  "criteria": [
+    {
+      "schema_version": "1.0",
+      "id": "synthetic-binary",
+      "title": "Synthetic synthetic-binary",
+      "definition": "The first operator reply contains a greeting. Check the full range when it is missing.",
+      "response_type": "binary",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "yes",
+          "label": "yes",
+          "raw_value": true,
+          "anchor": "Synthetic anchor: yes",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "no",
+          "label": "no",
+          "raw_value": false,
+          "anchor": "Synthetic anchor: no",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": false,
+      "na_condition": null,
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "40",
+      "section_id": "synthetic-section",
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "synthetic-scale",
+      "title": "Synthetic synthetic-scale",
+      "definition": "Illustrative contract criterion only.",
+      "response_type": "scale",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "high",
+          "label": "high",
+          "raw_value": 2,
+          "anchor": "Synthetic anchor: high",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "middle",
+          "label": "middle",
+          "raw_value": 1,
+          "anchor": "Synthetic anchor: middle",
+          "score_fraction": "0.5"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "low",
+          "label": "low",
+          "raw_value": 0,
+          "anchor": "Synthetic anchor: low",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": true,
+      "na_condition": "No synthetic request was made.",
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "60",
+      "section_id": "synthetic-section",
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "synthetic-flag",
+      "title": "Synthetic synthetic-flag",
+      "definition": "Illustrative contract criterion only.",
+      "response_type": "flag",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "yes",
+          "label": "yes",
+          "raw_value": true,
+          "anchor": "Synthetic anchor: yes",
+          "score_fraction": null
+        },
+        {
+          "schema_version": "1.0",
+          "id": "no",
+          "label": "no",
+          "raw_value": false,
+          "anchor": "Synthetic anchor: no",
+          "score_fraction": null
+        }
+      ],
+      "allow_na": false,
+      "na_condition": null,
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "0",
+      "section_id": null,
+      "flag_when_choice_ids": [
+        "yes"
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "schema_version": "1.0",
+      "id": "synthetic-section",
+      "title": "Synthetic section"
+    }
+  ],
+  "rounding": {
+    "schema_version": "1.0",
+    "mode": "ROUND_HALF_UP",
+    "decimal_places": 2,
+    "intermediate_rounding": false
+  },
+  "checklist_id": "synthetic-checklist",
+  "version_id": "synthetic-checklist-v1",
+  "semantic_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "scoring_config_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "created_at": "2026-11-07T00:00:00Z"
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "event": "call_started",
+  "logical_job_id": "synthetic-job",
+  "attempt_id": "synthetic-attempt-1",
+  "call_id": "synthetic-call",
+  "record": {
+    "schema_version": "1.0",
+    "call_id": "synthetic-call",
+    "attempt_id": "synthetic-attempt-1",
+    "purpose": "primary",
+    "requested": {
+      "schema_version": "1.0",
+      "provider": "test",
+      "model": "synthetic-contract-v1",
+      "configuration_ref": "synthetic-only"
+    },
+    "actual": {
+      "schema_version": "1.0",
+      "provider": "test",
+      "model": "synthetic-contract-v1",
+      "configuration_ref": "synthetic-only"
+    },
+    "started_at": "2026-11-07T00:00:00Z",
+    "finished_at": null,
+    "outcome": "started",
+    "finish_reason": null,
+    "usage": null,
+    "cost": null,
+    "currency": "USD",
+    "price_version": null,
+    "safe_error": null
+  }
+}

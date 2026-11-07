@@ -1,0 +1,23 @@
+{
+  "name": "cqa-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.13.0",
+  "engines": { "node": ">=26.1.0 <27", "npm": ">=11.13.0 <12" },
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "dev": "npm run dev --workspace @cqa/web",
+    "typecheck": "npm run typecheck --workspace @cqa/web",
+    "test": "npm run test --workspace @cqa/web",
+    "build": "npm run build --workspace @cqa/web",
+    "e2e": "npm run e2e --workspace @cqa/web",
+    "contracts": "uv run python scripts/generate_contracts.py",
+    "contracts:types": "openapi-typescript contracts/openapi.json -o contracts/typescript/api.d.ts",
+    "check": "uv run python scripts/check.py"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "16.0.0",
+    "openapi-typescript": "7.13.0"
+  }
+}

@@ -1,0 +1,442 @@
+{
+  "schema_version": "1.0",
+  "id": "synthetic-evaluation-confirmed",
+  "conversation_id": "synthetic-conversation",
+  "conversation_revision": 1,
+  "checklist_version_id": "synthetic-checklist-v1",
+  "profile_id": "synthetic-profile",
+  "profile_version": "v1",
+  "corpus_snapshot_id": "synthetic-corpus",
+  "created_at": "2026-11-07T00:00:00Z",
+  "revision": 2,
+  "artifact": {
+    "schema_version": "1.0",
+    "status": "complete",
+    "initial": [
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-binary",
+        "applicability": "applicable",
+        "answer_choice_id": "yes",
+        "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+        "reason_codes": [
+          "criteria_met"
+        ],
+        "evidence": [
+          {
+            "schema_version": "1.0",
+            "kind": "message",
+            "message_ids": [
+              "m0002"
+            ],
+            "start_message_id": null,
+            "end_message_id": null,
+            "source_chunk_id": null,
+            "relation": "support",
+            "explanation": "Synthetic checked excerpt; no real conversation."
+          }
+        ],
+        "limitations": [
+          "test_evaluator"
+        ],
+        "review_reasons": [],
+        "origin": "test"
+      },
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-scale",
+        "applicability": "applicable",
+        "answer_choice_id": "middle",
+        "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+        "reason_codes": [
+          "criteria_partially_met"
+        ],
+        "evidence": [
+          {
+            "schema_version": "1.0",
+            "kind": "message",
+            "message_ids": [
+              "m0002"
+            ],
+            "start_message_id": null,
+            "end_message_id": null,
+            "source_chunk_id": null,
+            "relation": "support",
+            "explanation": "Synthetic checked excerpt; no real conversation."
+          }
+        ],
+        "limitations": [
+          "test_evaluator"
+        ],
+        "review_reasons": [],
+        "origin": "test"
+      },
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-flag",
+        "applicability": "applicable",
+        "answer_choice_id": "no",
+        "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+        "reason_codes": [
+          "no_violation_detected"
+        ],
+        "evidence": [
+          {
+            "schema_version": "1.0",
+            "kind": "range",
+            "message_ids": [],
+            "start_message_id": "m0001",
+            "end_message_id": "m0003",
+            "source_chunk_id": null,
+            "relation": "support",
+            "explanation": "Synthetic checked excerpt; no real conversation."
+          }
+        ],
+        "limitations": [
+          "test_evaluator"
+        ],
+        "review_reasons": [],
+        "origin": "test"
+      }
+    ],
+    "reviews": [],
+    "automatic_final": [
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-binary",
+        "applicability": "applicable",
+        "answer_choice_id": "yes",
+        "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+        "reason_codes": [
+          "criteria_met"
+        ],
+        "evidence": [
+          {
+            "schema_version": "1.0",
+            "kind": "message",
+            "message_ids": [
+              "m0002"
+            ],
+            "start_message_id": null,
+            "end_message_id": null,
+            "source_chunk_id": null,
+            "relation": "support",
+            "explanation": "Synthetic checked excerpt; no real conversation."
+          }
+        ],
+        "limitations": [
+          "test_evaluator"
+        ],
+        "review_reasons": [],
+        "origin": "test"
+      },
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-scale",
+        "applicability": "applicable",
+        "answer_choice_id": "middle",
+        "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+        "reason_codes": [
+          "criteria_partially_met"
+        ],
+        "evidence": [
+          {
+            "schema_version": "1.0",
+            "kind": "message",
+            "message_ids": [
+              "m0002"
+            ],
+            "start_message_id": null,
+            "end_message_id": null,
+            "source_chunk_id": null,
+            "relation": "support",
+            "explanation": "Synthetic checked excerpt; no real conversation."
+          }
+        ],
+        "limitations": [
+          "test_evaluator"
+        ],
+        "review_reasons": [],
+        "origin": "test"
+      },
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-flag",
+        "applicability": "applicable",
+        "answer_choice_id": "no",
+        "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+        "reason_codes": [
+          "no_violation_detected"
+        ],
+        "evidence": [
+          {
+            "schema_version": "1.0",
+            "kind": "range",
+            "message_ids": [],
+            "start_message_id": "m0001",
+            "end_message_id": "m0003",
+            "source_chunk_id": null,
+            "relation": "support",
+            "explanation": "Synthetic checked excerpt; no real conversation."
+          }
+        ],
+        "limitations": [
+          "test_evaluator"
+        ],
+        "review_reasons": [],
+        "origin": "test"
+      }
+    ],
+    "calls": [
+      {
+        "schema_version": "1.0",
+        "call_id": "synthetic-call",
+        "attempt_id": "synthetic-attempt-1",
+        "purpose": "primary",
+        "requested": {
+          "schema_version": "1.0",
+          "provider": "test",
+          "model": "synthetic-contract-v1",
+          "configuration_ref": "synthetic-only"
+        },
+        "actual": {
+          "schema_version": "1.0",
+          "provider": "test",
+          "model": "synthetic-contract-v1",
+          "configuration_ref": "synthetic-only"
+        },
+        "started_at": "2026-11-07T00:00:00Z",
+        "finished_at": "2026-11-07T00:00:01Z",
+        "outcome": "succeeded",
+        "finish_reason": "stop",
+        "usage": null,
+        "cost": null,
+        "currency": "USD",
+        "price_version": null,
+        "safe_error": null
+      }
+    ],
+    "identity": {
+      "schema_version": "1.0",
+      "conversation_content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "checklist_semantic_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "profile_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "corpus_snapshot_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "audio_content_hash": null
+    },
+    "source_fragments": [],
+    "limitations": [
+      "test_evaluator"
+    ],
+    "error": null,
+    "evaluator_mode": "test"
+  },
+  "automatic_score": {
+    "schema_version": "1.0",
+    "status": "complete",
+    "total_score": "70.00",
+    "contributions": [
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-binary",
+        "applicability": "applicable",
+        "answer_choice_id": "yes",
+        "raw_value": true,
+        "score_fraction": "1",
+        "original_weight": "40",
+        "earned_weight": "40",
+        "applicable_weight": "40",
+        "normalized_contribution": "40"
+      },
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-scale",
+        "applicability": "applicable",
+        "answer_choice_id": "middle",
+        "raw_value": 1,
+        "score_fraction": "0.5",
+        "original_weight": "60",
+        "earned_weight": "30",
+        "applicable_weight": "60",
+        "normalized_contribution": "30"
+      }
+    ],
+    "section_results": [
+      {
+        "schema_version": "1.0",
+        "section_id": "synthetic-section",
+        "section_earned_weight": "70",
+        "section_applicable_weight": "100",
+        "section_percent": "70.00"
+      }
+    ],
+    "flags": [
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-flag",
+        "detected": false,
+        "answer_choice_id": "no"
+      }
+    ]
+  },
+  "human_decisions": [
+    {
+      "schema_version": "1.0",
+      "expected_revision": 1,
+      "decision": "confirmed",
+      "replacement": null,
+      "reason": "SYNTHETIC PRIVATE_TEXT_SENTINEL: reviewed the complete invented range.",
+      "id": "synthetic-decision-confirmed",
+      "appeal_id": "synthetic-appeal-confirmed",
+      "evaluation_id": "synthetic-evaluation-confirmed",
+      "criterion_id": "synthetic-scale",
+      "reason_codes": [
+        "human_confirmed"
+      ],
+      "revision": 2,
+      "created_at": "2026-11-07T00:00:01Z"
+    }
+  ],
+  "effective_proposals": [
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-binary",
+      "applicability": "applicable",
+      "answer_choice_id": "yes",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "criteria_met"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "message",
+          "message_ids": [
+            "m0002"
+          ],
+          "start_message_id": null,
+          "end_message_id": null,
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    },
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-scale",
+      "applicability": "applicable",
+      "answer_choice_id": "middle",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "criteria_partially_met"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "message",
+          "message_ids": [
+            "m0002"
+          ],
+          "start_message_id": null,
+          "end_message_id": null,
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    },
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-flag",
+      "applicability": "applicable",
+      "answer_choice_id": "no",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "no_violation_detected"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "range",
+          "message_ids": [],
+          "start_message_id": "m0001",
+          "end_message_id": "m0003",
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    }
+  ],
+  "effective_score": {
+    "schema_version": "1.0",
+    "status": "complete",
+    "total_score": "70.00",
+    "contributions": [
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-binary",
+        "applicability": "applicable",
+        "answer_choice_id": "yes",
+        "raw_value": true,
+        "score_fraction": "1",
+        "original_weight": "40",
+        "earned_weight": "40",
+        "applicable_weight": "40",
+        "normalized_contribution": "40"
+      },
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-scale",
+        "applicability": "applicable",
+        "answer_choice_id": "middle",
+        "raw_value": 1,
+        "score_fraction": "0.5",
+        "original_weight": "60",
+        "earned_weight": "30",
+        "applicable_weight": "60",
+        "normalized_contribution": "30"
+      }
+    ],
+    "section_results": [
+      {
+        "schema_version": "1.0",
+        "section_id": "synthetic-section",
+        "section_earned_weight": "70",
+        "section_applicable_weight": "100",
+        "section_percent": "70.00"
+      }
+    ],
+    "flags": [
+      {
+        "schema_version": "1.0",
+        "criterion_id": "synthetic-flag",
+        "detected": false,
+        "answer_choice_id": "no"
+      }
+    ]
+  },
+  "reuse": {
+    "schema_version": "1.0",
+    "mode": "fresh",
+    "reused_from_evaluation_id": null,
+    "reuse_key": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "source_fragments": []
+}

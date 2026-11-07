@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "expected_revision": 1,
+  "decision": "changed",
+  "replacement": {
+    "schema_version": "1.0",
+    "criterion_id": "synthetic-scale",
+    "applicability": "applicable",
+    "answer_choice_id": "high",
+    "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+    "reason_codes": [
+      "human_changed"
+    ],
+    "evidence": [
+      {
+        "schema_version": "1.0",
+        "kind": "range",
+        "message_ids": [],
+        "start_message_id": "m0001",
+        "end_message_id": "m0003",
+        "source_chunk_id": null,
+        "relation": "support",
+        "explanation": "Synthetic checked excerpt; no real conversation."
+      }
+    ],
+    "limitations": [
+      "test_evaluator"
+    ],
+    "review_reasons": [],
+    "origin": "human"
+  },
+  "reason": "SYNTHETIC PRIVATE_TEXT_SENTINEL: reviewed the complete invented range.",
+  "id": "synthetic-decision-changed",
+  "appeal_id": "synthetic-appeal-changed",
+  "evaluation_id": "synthetic-evaluation-changed",
+  "criterion_id": "synthetic-scale",
+  "reason_codes": [
+    "human_changed"
+  ],
+  "revision": 2,
+  "created_at": "2026-11-07T00:00:01Z"
+}

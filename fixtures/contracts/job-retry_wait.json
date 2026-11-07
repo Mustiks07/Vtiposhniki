@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "id": "synthetic-job-retry_wait",
+  "batch_id": "synthetic-batch",
+  "conversation_id": "synthetic-conversation",
+  "conversation_revision": 1,
+  "state": "retry_wait",
+  "attempts": [
+    {
+      "schema_version": "1.0",
+      "attempt_id": "synthetic-attempt-1",
+      "number": 1,
+      "started_at": "2026-11-07T00:00:00Z",
+      "finished_at": "2026-11-07T00:00:01Z",
+      "state": "failed",
+      "error": {
+        "schema_version": "1.0",
+        "code": "provider_error",
+        "message": "Synthetic provider unavailable.",
+        "details": [],
+        "retryable": true,
+        "correlation_id": "synthetic-correlation"
+      }
+    }
+  ],
+  "max_attempts": 3,
+  "next_attempt_at": "2026-11-07T00:00:10Z",
+  "attempt_id": "synthetic-attempt-1",
+  "lease_id": null,
+  "lease_expires_at": null,
+  "budget": {
+    "schema_version": "1.0",
+    "logical_job_id": "synthetic-job-retry_wait",
+    "attempt_id": "synthetic-attempt-1",
+    "max_provider_calls": 8,
+    "consumed_calls": 1,
+    "deadline_at": "2026-11-07T00:05:00Z",
+    "max_total_tokens": 65536,
+    "consumed_tokens": null,
+    "max_cost": null,
+    "consumed_cost": null,
+    "currency": "USD",
+    "usage_complete": false
+  },
+  "progress": {
+    "schema_version": "1.0",
+    "stage": "done",
+    "completed_calls": 1
+  },
+  "evaluation_id": null,
+  "error": {
+    "schema_version": "1.0",
+    "code": "provider_error",
+    "message": "Synthetic provider unavailable.",
+    "details": [],
+    "retryable": true,
+    "correlation_id": "synthetic-correlation"
+  }
+}

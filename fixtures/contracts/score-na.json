@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "status": "complete",
+  "total_score": "100.00",
+  "contributions": [
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-binary",
+      "applicability": "applicable",
+      "answer_choice_id": "yes",
+      "raw_value": true,
+      "score_fraction": "1",
+      "original_weight": "40",
+      "earned_weight": "40",
+      "applicable_weight": "40",
+      "normalized_contribution": "100"
+    },
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-scale",
+      "applicability": "not_applicable",
+      "answer_choice_id": null,
+      "raw_value": null,
+      "score_fraction": null,
+      "original_weight": "60",
+      "earned_weight": "0",
+      "applicable_weight": "0",
+      "normalized_contribution": "0"
+    }
+  ],
+  "section_results": [
+    {
+      "schema_version": "1.0",
+      "section_id": "synthetic-section",
+      "section_earned_weight": "40",
+      "section_applicable_weight": "40",
+      "section_percent": "100.00"
+    }
+  ],
+  "flags": [
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-flag",
+      "detected": false,
+      "answer_choice_id": "no"
+    }
+  ]
+}

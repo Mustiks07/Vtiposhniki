@@ -1,0 +1,55 @@
+name: Foundation contracts and scaffold
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version-file: .python-version
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install pinned uv
+        run: python -m pip install uv==0.13.7
+      - name: Install pinned npm
+        run: npm install --global npm@11.13.0
+      - name: Install Python workspace from lockfile
+        run: uv sync --locked --all-packages --dev
+      - name: Install JavaScript workspace from lockfile
+        run: npm ci
+      - name: Verify generated contracts
+        run: uv run python scripts/generate_contracts.py --check
+      - name: Python lint
+        run: uv run ruff check .
+      - name: Python typecheck
+        run: uv run mypy
+      - name: Python tests
+        run: uv run pytest
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Web unit tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Install Chromium with Linux dependencies
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+      - name: Install Chromium on Windows
+        if: runner.os == 'Windows'
+        run: npx playwright install chromium
+      - name: Foundation browser smoke on real stub API
+        run: npm run e2e

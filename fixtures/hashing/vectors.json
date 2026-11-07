@@ -1,0 +1,821 @@
+{
+  "schema_version": "1.0",
+  "synthetic": true,
+  "vectors": [
+    {
+      "kind": "content",
+      "input": {
+        "schema_version": "1.0",
+        "id": "synthetic-conversation",
+        "external_id": "synthetic-external",
+        "revision": 1,
+        "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "channel": "agent_chat",
+        "language": "RU",
+        "messages": [
+          {
+            "schema_version": "1.0",
+            "id": "m0001",
+            "ordinal": 1,
+            "speaker": "client",
+            "text": "Учебный вопрос о вымышленном сервисе.",
+            "timestamp_original": "00:01",
+            "parsed_time": null,
+            "source_index": 0
+          },
+          {
+            "schema_version": "1.0",
+            "id": "m0002",
+            "ordinal": 2,
+            "speaker": "operator",
+            "text": "Здравствуйте. Учебный ответ. Бұл синтетикалық мысал. Synthetic example.",
+            "timestamp_original": "00:05",
+            "parsed_time": null,
+            "source_index": 1
+          },
+          {
+            "schema_version": "1.0",
+            "id": "m0003",
+            "ordinal": 3,
+            "speaker": "client",
+            "text": "Спасибо за учебный ответ.",
+            "timestamp_original": "00:09",
+            "parsed_time": null,
+            "source_index": 2
+          }
+        ],
+        "occurred_at": null,
+        "audio": {
+          "schema_version": "1.0",
+          "availability": "unavailable",
+          "access_path": null,
+          "content_hash": null,
+          "alignment_status": "unavailable",
+          "mapping": null,
+          "media_type": null
+        },
+        "warnings": []
+      },
+      "projection": {
+        "schema_version": "1.0",
+        "channel": "agent_chat",
+        "language": "RU",
+        "occurred_at": null,
+        "messages": [
+          {
+            "schema_version": "1.0",
+            "speaker": "client",
+            "text": "Учебный вопрос о вымышленном сервисе.",
+            "timestamp_original": "00:01"
+          },
+          {
+            "schema_version": "1.0",
+            "speaker": "operator",
+            "text": "Здравствуйте. Учебный ответ. Бұл синтетикалық мысал. Synthetic example.",
+            "timestamp_original": "00:05"
+          },
+          {
+            "schema_version": "1.0",
+            "speaker": "client",
+            "text": "Спасибо за учебный ответ.",
+            "timestamp_original": "00:09"
+          }
+        ]
+      },
+      "canonical_json": "{\"channel\":\"agent_chat\",\"language\":\"RU\",\"messages\":[{\"schema_version\":\"1.0\",\"speaker\":\"client\",\"text\":\"Учебный вопрос о вымышленном сервисе.\",\"timestamp_original\":\"00:01\"},{\"schema_version\":\"1.0\",\"speaker\":\"operator\",\"text\":\"Здравствуйте. Учебный ответ. Бұл синтетикалық мысал. Synthetic example.\",\"timestamp_original\":\"00:05\"},{\"schema_version\":\"1.0\",\"speaker\":\"client\",\"text\":\"Спасибо за учебный ответ.\",\"timestamp_original\":\"00:09\"}],\"occurred_at\":null,\"schema_version\":\"1.0\"}",
+      "sha256": "0c38ee5de5cd44b8ea5904197cead57c10866308c43e43a6c48ede36d154c492"
+    },
+    {
+      "kind": "semantic",
+      "input": {
+        "schema_version": "1.0",
+        "title": "Synthetic three-criterion checklist",
+        "criteria": [
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-binary",
+            "title": "Synthetic synthetic-binary",
+            "definition": "The first operator reply contains a greeting. Check the full range when it is missing.",
+            "response_type": "binary",
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "yes",
+                "label": "yes",
+                "raw_value": true,
+                "anchor": "Synthetic anchor: yes",
+                "score_fraction": "1"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "no",
+                "label": "no",
+                "raw_value": false,
+                "anchor": "Synthetic anchor: no",
+                "score_fraction": "0"
+              }
+            ],
+            "allow_na": false,
+            "na_condition": null,
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "weight": "40",
+            "section_id": "synthetic-section",
+            "flag_when_choice_ids": []
+          },
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-scale",
+            "title": "Synthetic synthetic-scale",
+            "definition": "Illustrative contract criterion only.",
+            "response_type": "scale",
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "high",
+                "label": "high",
+                "raw_value": 2,
+                "anchor": "Synthetic anchor: high",
+                "score_fraction": "1"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "middle",
+                "label": "middle",
+                "raw_value": 1,
+                "anchor": "Synthetic anchor: middle",
+                "score_fraction": "0.5"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "low",
+                "label": "low",
+                "raw_value": 0,
+                "anchor": "Synthetic anchor: low",
+                "score_fraction": "0"
+              }
+            ],
+            "allow_na": true,
+            "na_condition": "No synthetic request was made.",
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "weight": "60",
+            "section_id": "synthetic-section",
+            "flag_when_choice_ids": []
+          },
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-flag",
+            "title": "Synthetic synthetic-flag",
+            "definition": "Illustrative contract criterion only.",
+            "response_type": "flag",
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "yes",
+                "label": "yes",
+                "raw_value": true,
+                "anchor": "Synthetic anchor: yes",
+                "score_fraction": null
+              },
+              {
+                "schema_version": "1.0",
+                "id": "no",
+                "label": "no",
+                "raw_value": false,
+                "anchor": "Synthetic anchor: no",
+                "score_fraction": null
+              }
+            ],
+            "allow_na": false,
+            "na_condition": null,
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "weight": "0",
+            "section_id": null,
+            "flag_when_choice_ids": [
+              "yes"
+            ]
+          }
+        ],
+        "sections": [
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-section",
+            "title": "Synthetic section"
+          }
+        ],
+        "rounding": {
+          "schema_version": "1.0",
+          "mode": "ROUND_HALF_UP",
+          "decimal_places": 2,
+          "intermediate_rounding": false
+        },
+        "checklist_id": "synthetic-checklist",
+        "version_id": "synthetic-checklist-v1",
+        "semantic_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "scoring_config_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "created_at": "2026-11-07T00:00:00Z"
+      },
+      "projection": {
+        "schema_version": "1.0",
+        "criteria": [
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-binary",
+            "title": "Synthetic synthetic-binary",
+            "definition": "The first operator reply contains a greeting. Check the full range when it is missing.",
+            "response_type": "binary",
+            "allow_na": false,
+            "na_condition": null,
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "flag_when_choice_ids": [],
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "no",
+                "label": "no",
+                "raw_value": false,
+                "anchor": "Synthetic anchor: no"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "yes",
+                "label": "yes",
+                "raw_value": true,
+                "anchor": "Synthetic anchor: yes"
+              }
+            ]
+          },
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-flag",
+            "title": "Synthetic synthetic-flag",
+            "definition": "Illustrative contract criterion only.",
+            "response_type": "flag",
+            "allow_na": false,
+            "na_condition": null,
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "flag_when_choice_ids": [
+              "yes"
+            ],
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "no",
+                "label": "no",
+                "raw_value": false,
+                "anchor": "Synthetic anchor: no"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "yes",
+                "label": "yes",
+                "raw_value": true,
+                "anchor": "Synthetic anchor: yes"
+              }
+            ]
+          },
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-scale",
+            "title": "Synthetic synthetic-scale",
+            "definition": "Illustrative contract criterion only.",
+            "response_type": "scale",
+            "allow_na": true,
+            "na_condition": "No synthetic request was made.",
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "flag_when_choice_ids": [],
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "high",
+                "label": "high",
+                "raw_value": 2,
+                "anchor": "Synthetic anchor: high"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "low",
+                "label": "low",
+                "raw_value": 0,
+                "anchor": "Synthetic anchor: low"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "middle",
+                "label": "middle",
+                "raw_value": 1,
+                "anchor": "Synthetic anchor: middle"
+              }
+            ]
+          }
+        ]
+      },
+      "canonical_json": "{\"criteria\":[{\"allow_na\":false,\"channel_instructions\":{\"agent_chat\":\"\",\"schema_version\":\"1.0\",\"voice_call\":\"\",\"voice_policy_version\":\"text-observable-v1\"},\"choices\":[{\"anchor\":\"Synthetic anchor: no\",\"id\":\"no\",\"label\":\"no\",\"raw_value\":false,\"schema_version\":\"1.0\"},{\"anchor\":\"Synthetic anchor: yes\",\"id\":\"yes\",\"label\":\"yes\",\"raw_value\":true,\"schema_version\":\"1.0\"}],\"definition\":\"The first operator reply contains a greeting. Check the full range when it is missing.\",\"evidence_policy\":{\"allow_source\":true,\"missing_action_requires_range\":true,\"require_evidence\":true,\"schema_version\":\"1.0\"},\"flag_when_choice_ids\":[],\"id\":\"synthetic-binary\",\"na_condition\":null,\"requires_reference\":false,\"response_type\":\"binary\",\"schema_version\":\"1.0\",\"title\":\"Synthetic synthetic-binary\"},{\"allow_na\":false,\"channel_instructions\":{\"agent_chat\":\"\",\"schema_version\":\"1.0\",\"voice_call\":\"\",\"voice_policy_version\":\"text-observable-v1\"},\"choices\":[{\"anchor\":\"Synthetic anchor: no\",\"id\":\"no\",\"label\":\"no\",\"raw_value\":false,\"schema_version\":\"1.0\"},{\"anchor\":\"Synthetic anchor: yes\",\"id\":\"yes\",\"label\":\"yes\",\"raw_value\":true,\"schema_version\":\"1.0\"}],\"definition\":\"Illustrative contract criterion only.\",\"evidence_policy\":{\"allow_source\":true,\"missing_action_requires_range\":true,\"require_evidence\":true,\"schema_version\":\"1.0\"},\"flag_when_choice_ids\":[\"yes\"],\"id\":\"synthetic-flag\",\"na_condition\":null,\"requires_reference\":false,\"response_type\":\"flag\",\"schema_version\":\"1.0\",\"title\":\"Synthetic synthetic-flag\"},{\"allow_na\":true,\"channel_instructions\":{\"agent_chat\":\"\",\"schema_version\":\"1.0\",\"voice_call\":\"\",\"voice_policy_version\":\"text-observable-v1\"},\"choices\":[{\"anchor\":\"Synthetic anchor: high\",\"id\":\"high\",\"label\":\"high\",\"raw_value\":2,\"schema_version\":\"1.0\"},{\"anchor\":\"Synthetic anchor: low\",\"id\":\"low\",\"label\":\"low\",\"raw_value\":0,\"schema_version\":\"1.0\"},{\"anchor\":\"Synthetic anchor: middle\",\"id\":\"middle\",\"label\":\"middle\",\"raw_value\":1,\"schema_version\":\"1.0\"}],\"definition\":\"Illustrative contract criterion only.\",\"evidence_policy\":{\"allow_source\":true,\"missing_action_requires_range\":true,\"require_evidence\":true,\"schema_version\":\"1.0\"},\"flag_when_choice_ids\":[],\"id\":\"synthetic-scale\",\"na_condition\":\"No synthetic request was made.\",\"requires_reference\":false,\"response_type\":\"scale\",\"schema_version\":\"1.0\",\"title\":\"Synthetic synthetic-scale\"}],\"schema_version\":\"1.0\"}",
+      "sha256": "a6c573a5e237823d25bd1bbc4b910c6cce93575675b5177a55221a423fc23335"
+    },
+    {
+      "kind": "scoring",
+      "input": {
+        "schema_version": "1.0",
+        "title": "Synthetic three-criterion checklist",
+        "criteria": [
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-binary",
+            "title": "Synthetic synthetic-binary",
+            "definition": "The first operator reply contains a greeting. Check the full range when it is missing.",
+            "response_type": "binary",
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "yes",
+                "label": "yes",
+                "raw_value": true,
+                "anchor": "Synthetic anchor: yes",
+                "score_fraction": "1"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "no",
+                "label": "no",
+                "raw_value": false,
+                "anchor": "Synthetic anchor: no",
+                "score_fraction": "0"
+              }
+            ],
+            "allow_na": false,
+            "na_condition": null,
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "weight": "40",
+            "section_id": "synthetic-section",
+            "flag_when_choice_ids": []
+          },
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-scale",
+            "title": "Synthetic synthetic-scale",
+            "definition": "Illustrative contract criterion only.",
+            "response_type": "scale",
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "high",
+                "label": "high",
+                "raw_value": 2,
+                "anchor": "Synthetic anchor: high",
+                "score_fraction": "1"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "middle",
+                "label": "middle",
+                "raw_value": 1,
+                "anchor": "Synthetic anchor: middle",
+                "score_fraction": "0.5"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "low",
+                "label": "low",
+                "raw_value": 0,
+                "anchor": "Synthetic anchor: low",
+                "score_fraction": "0"
+              }
+            ],
+            "allow_na": true,
+            "na_condition": "No synthetic request was made.",
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "weight": "60",
+            "section_id": "synthetic-section",
+            "flag_when_choice_ids": []
+          },
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-flag",
+            "title": "Synthetic synthetic-flag",
+            "definition": "Illustrative contract criterion only.",
+            "response_type": "flag",
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "yes",
+                "label": "yes",
+                "raw_value": true,
+                "anchor": "Synthetic anchor: yes",
+                "score_fraction": null
+              },
+              {
+                "schema_version": "1.0",
+                "id": "no",
+                "label": "no",
+                "raw_value": false,
+                "anchor": "Synthetic anchor: no",
+                "score_fraction": null
+              }
+            ],
+            "allow_na": false,
+            "na_condition": null,
+            "channel_instructions": {
+              "schema_version": "1.0",
+              "agent_chat": "",
+              "voice_call": "",
+              "voice_policy_version": "text-observable-v1"
+            },
+            "evidence_policy": {
+              "schema_version": "1.0",
+              "require_evidence": true,
+              "missing_action_requires_range": true,
+              "allow_source": true
+            },
+            "requires_reference": false,
+            "weight": "0",
+            "section_id": null,
+            "flag_when_choice_ids": [
+              "yes"
+            ]
+          }
+        ],
+        "sections": [
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-section",
+            "title": "Synthetic section"
+          }
+        ],
+        "rounding": {
+          "schema_version": "1.0",
+          "mode": "ROUND_HALF_UP",
+          "decimal_places": 2,
+          "intermediate_rounding": false
+        },
+        "checklist_id": "synthetic-checklist",
+        "version_id": "synthetic-checklist-v1",
+        "semantic_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "scoring_config_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "created_at": "2026-11-07T00:00:00Z"
+      },
+      "projection": {
+        "schema_version": "1.0",
+        "criteria": [
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-binary",
+            "weight": "40",
+            "section_id": "synthetic-section",
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "no",
+                "score_fraction": "0"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "yes",
+                "score_fraction": "1"
+              }
+            ]
+          },
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-flag",
+            "weight": "0",
+            "section_id": null,
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "no",
+                "score_fraction": null
+              },
+              {
+                "schema_version": "1.0",
+                "id": "yes",
+                "score_fraction": null
+              }
+            ]
+          },
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-scale",
+            "weight": "60",
+            "section_id": "synthetic-section",
+            "choices": [
+              {
+                "schema_version": "1.0",
+                "id": "high",
+                "score_fraction": "1"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "low",
+                "score_fraction": "0"
+              },
+              {
+                "schema_version": "1.0",
+                "id": "middle",
+                "score_fraction": "0.5"
+              }
+            ]
+          }
+        ],
+        "sections": [
+          {
+            "schema_version": "1.0",
+            "id": "synthetic-section",
+            "title": "Synthetic section"
+          }
+        ],
+        "rounding": {
+          "schema_version": "1.0",
+          "mode": "ROUND_HALF_UP",
+          "decimal_places": 2,
+          "intermediate_rounding": false
+        }
+      },
+      "canonical_json": "{\"criteria\":[{\"choices\":[{\"id\":\"no\",\"schema_version\":\"1.0\",\"score_fraction\":\"0\"},{\"id\":\"yes\",\"schema_version\":\"1.0\",\"score_fraction\":\"1\"}],\"id\":\"synthetic-binary\",\"schema_version\":\"1.0\",\"section_id\":\"synthetic-section\",\"weight\":\"40\"},{\"choices\":[{\"id\":\"no\",\"schema_version\":\"1.0\",\"score_fraction\":null},{\"id\":\"yes\",\"schema_version\":\"1.0\",\"score_fraction\":null}],\"id\":\"synthetic-flag\",\"schema_version\":\"1.0\",\"section_id\":null,\"weight\":\"0\"},{\"choices\":[{\"id\":\"high\",\"schema_version\":\"1.0\",\"score_fraction\":\"1\"},{\"id\":\"low\",\"schema_version\":\"1.0\",\"score_fraction\":\"0\"},{\"id\":\"middle\",\"schema_version\":\"1.0\",\"score_fraction\":\"0.5\"}],\"id\":\"synthetic-scale\",\"schema_version\":\"1.0\",\"section_id\":\"synthetic-section\",\"weight\":\"60\"}],\"rounding\":{\"decimal_places\":2,\"intermediate_rounding\":false,\"mode\":\"ROUND_HALF_UP\",\"schema_version\":\"1.0\"},\"schema_version\":\"1.0\",\"sections\":[{\"id\":\"synthetic-section\",\"schema_version\":\"1.0\",\"title\":\"Synthetic section\"}]}",
+      "sha256": "4eff2dab394caf0bf8d2df1043dc56fd40b2b57f8e9a791a416f77b496663a49"
+    },
+    {
+      "kind": "profile",
+      "input": {
+        "schema_version": "1.0",
+        "id": "synthetic-profile",
+        "version": "v1",
+        "mode": "test",
+        "primary": {
+          "schema_version": "1.0",
+          "provider": "test",
+          "model": "synthetic-contract-v1",
+          "configuration_ref": "synthetic-only"
+        },
+        "reviewer": null,
+        "fallbacks": [],
+        "generation": {
+          "schema_version": "1.0",
+          "temperature": "0",
+          "max_output_tokens": 4096,
+          "seed": null
+        },
+        "prompt_version": "synthetic-v1",
+        "output_schema_version": "1.0",
+        "preprocessing_version": "identity-v1",
+        "reviewer_policy": {
+          "schema_version": "1.0",
+          "enabled": false,
+          "version": "keep_valid_initial_v1",
+          "max_criteria": 2,
+          "blind": true
+        },
+        "retries": {
+          "schema_version": "1.0",
+          "max_job_attempts": 3,
+          "max_format_repairs": 1,
+          "max_transport_retries": 1,
+          "call_timeout_seconds": 60,
+          "job_deadline_seconds": 300,
+          "max_provider_calls": 8,
+          "max_total_tokens": 65536,
+          "max_cost": null,
+          "currency": "USD"
+        },
+        "corpus_snapshot_id": "synthetic-corpus"
+      },
+      "projection": {
+        "schema_version": "1.0",
+        "id": "synthetic-profile",
+        "version": "v1",
+        "mode": "test",
+        "primary": {
+          "schema_version": "1.0",
+          "provider": "test",
+          "model": "synthetic-contract-v1",
+          "configuration_ref": "synthetic-only"
+        },
+        "reviewer": null,
+        "fallbacks": [],
+        "generation": {
+          "schema_version": "1.0",
+          "temperature": "0",
+          "max_output_tokens": 4096,
+          "seed": null
+        },
+        "prompt_version": "synthetic-v1",
+        "output_schema_version": "1.0",
+        "preprocessing_version": "identity-v1",
+        "reviewer_policy": {
+          "schema_version": "1.0",
+          "enabled": false,
+          "version": "keep_valid_initial_v1",
+          "max_criteria": 2,
+          "blind": true
+        },
+        "retries": {
+          "schema_version": "1.0",
+          "max_job_attempts": 3,
+          "max_format_repairs": 1,
+          "max_transport_retries": 1,
+          "call_timeout_seconds": 60,
+          "job_deadline_seconds": 300,
+          "max_provider_calls": 8,
+          "max_total_tokens": 65536,
+          "max_cost": null,
+          "currency": "USD"
+        },
+        "corpus_snapshot_id": "synthetic-corpus"
+      },
+      "canonical_json": "{\"corpus_snapshot_id\":\"synthetic-corpus\",\"fallbacks\":[],\"generation\":{\"max_output_tokens\":4096,\"schema_version\":\"1.0\",\"seed\":null,\"temperature\":\"0\"},\"id\":\"synthetic-profile\",\"mode\":\"test\",\"output_schema_version\":\"1.0\",\"preprocessing_version\":\"identity-v1\",\"primary\":{\"configuration_ref\":\"synthetic-only\",\"model\":\"synthetic-contract-v1\",\"provider\":\"test\",\"schema_version\":\"1.0\"},\"prompt_version\":\"synthetic-v1\",\"retries\":{\"call_timeout_seconds\":60,\"currency\":\"USD\",\"job_deadline_seconds\":300,\"max_cost\":null,\"max_format_repairs\":1,\"max_job_attempts\":3,\"max_provider_calls\":8,\"max_total_tokens\":65536,\"max_transport_retries\":1,\"schema_version\":\"1.0\"},\"reviewer\":null,\"reviewer_policy\":{\"blind\":true,\"enabled\":false,\"max_criteria\":2,\"schema_version\":\"1.0\",\"version\":\"keep_valid_initial_v1\"},\"schema_version\":\"1.0\",\"version\":\"v1\"}",
+      "sha256": "eb40824bef0c890da2ffe8ca8381b2800617983da7ea430e14f452ea9ca38107"
+    },
+    {
+      "kind": "corpus",
+      "input": {
+        "schema_version": "1.0",
+        "id": "synthetic-corpus",
+        "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "sources": [
+          {
+            "schema_version": "1.0",
+            "source_id": "synthetic-source",
+            "version": "v1",
+            "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+            "provenance": "synthetic",
+            "title": "Invented fixture source",
+            "safe_url": null,
+            "locator": "fixture section 1",
+            "legal_entity": null,
+            "product": null,
+            "published_at": null,
+            "effective_from": null,
+            "effective_until": null,
+            "retrieved_at": "2026-11-07T00:00:00Z"
+          }
+        ],
+        "chunks": [
+          {
+            "schema_version": "1.0",
+            "chunk_id": "synthetic-chunk",
+            "source_id": "synthetic-source",
+            "source_version": "v1",
+            "text": "This invented source says that the imaginary service has a help screen.",
+            "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+            "locator": "fixture section 1"
+          }
+        ],
+        "applicability_policy": "Synthetic fixtures only.",
+        "priority_policy": "One synthetic source; not an organizer or product authority."
+      },
+      "projection": {
+        "schema_version": "1.0",
+        "id": "synthetic-corpus",
+        "sources": [
+          {
+            "schema_version": "1.0",
+            "source_id": "synthetic-source",
+            "version": "v1",
+            "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+            "provenance": "synthetic",
+            "title": "Invented fixture source",
+            "safe_url": null,
+            "locator": "fixture section 1",
+            "legal_entity": null,
+            "product": null,
+            "published_at": null,
+            "effective_from": null,
+            "effective_until": null,
+            "retrieved_at": "2026-11-07T00:00:00Z"
+          }
+        ],
+        "chunks": [
+          {
+            "schema_version": "1.0",
+            "chunk_id": "synthetic-chunk",
+            "source_id": "synthetic-source",
+            "source_version": "v1",
+            "text": "This invented source says that the imaginary service has a help screen.",
+            "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+            "locator": "fixture section 1"
+          }
+        ],
+        "applicability_policy": "Synthetic fixtures only.",
+        "priority_policy": "One synthetic source; not an organizer or product authority."
+      },
+      "canonical_json": "{\"applicability_policy\":\"Synthetic fixtures only.\",\"chunks\":[{\"chunk_id\":\"synthetic-chunk\",\"content_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"locator\":\"fixture section 1\",\"schema_version\":\"1.0\",\"source_id\":\"synthetic-source\",\"source_version\":\"v1\",\"text\":\"This invented source says that the imaginary service has a help screen.\"}],\"id\":\"synthetic-corpus\",\"priority_policy\":\"One synthetic source; not an organizer or product authority.\",\"schema_version\":\"1.0\",\"sources\":[{\"content_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"effective_from\":null,\"effective_until\":null,\"legal_entity\":null,\"locator\":\"fixture section 1\",\"product\":null,\"provenance\":\"synthetic\",\"published_at\":null,\"retrieved_at\":\"2026-11-07T00:00:00Z\",\"safe_url\":null,\"schema_version\":\"1.0\",\"source_id\":\"synthetic-source\",\"title\":\"Invented fixture source\",\"version\":\"v1\"}]}",
+      "sha256": "bcd34baaef6bfb2f75eef51242ddaca8c42911385f3fe6ede015262ff1faa2eb"
+    },
+    {
+      "kind": "reuse",
+      "input": {
+        "schema_version": "1.0",
+        "conversation_content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "checklist_semantic_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "profile_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "corpus_snapshot_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "audio_content_hash": null
+      },
+      "projection": {
+        "schema_version": "1.0",
+        "conversation_content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "checklist_semantic_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "profile_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "corpus_snapshot_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+        "audio_content_hash": null
+      },
+      "canonical_json": "{\"audio_content_hash\":null,\"checklist_semantic_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"conversation_content_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"corpus_snapshot_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"profile_hash\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"schema_version\":\"1.0\"}",
+      "sha256": "6a9a5e7affd806f5af499cb468ff7c73c4383a185f597d379ac6a75ec588b390"
+    }
+  ]
+}

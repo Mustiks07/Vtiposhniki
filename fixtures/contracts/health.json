@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "status": "ok",
+  "phase": "foundation",
+  "business_ready": false,
+  "evaluator_mode": "production"
+}

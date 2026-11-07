@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "logical_job_id": "synthetic-job",
+  "attempt_id": "synthetic-attempt-1",
+  "max_provider_calls": 8,
+  "consumed_calls": 1,
+  "deadline_at": "2026-11-07T00:05:00Z",
+  "max_total_tokens": 65536,
+  "consumed_tokens": null,
+  "max_cost": null,
+  "consumed_cost": null,
+  "currency": "USD",
+  "usage_complete": false
+}

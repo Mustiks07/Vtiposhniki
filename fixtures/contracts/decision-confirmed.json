@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "expected_revision": 1,
+  "decision": "confirmed",
+  "replacement": null,
+  "reason": "SYNTHETIC PRIVATE_TEXT_SENTINEL: reviewed the complete invented range.",
+  "id": "synthetic-decision-confirmed",
+  "appeal_id": "synthetic-appeal-confirmed",
+  "evaluation_id": "synthetic-evaluation-confirmed",
+  "criterion_id": "synthetic-scale",
+  "reason_codes": [
+    "human_confirmed"
+  ],
+  "revision": 2,
+  "created_at": "2026-11-07T00:00:01Z"
+}

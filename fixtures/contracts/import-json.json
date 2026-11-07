@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "source": "json",
+  "records": [
+    {
+      "schema_version": "1.0",
+      "external_id": "synthetic-import",
+      "channel": "agent_chat",
+      "language": "KZ",
+      "messages": [
+        {
+          "schema_version": "1.0",
+          "speaker": "client",
+          "text": "Бұл тек синтетикалық мысал.",
+          "timestamp_original": "00:01"
+        }
+      ],
+      "occurred_at": null
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "id": "synthetic-job-queued",
+  "batch_id": "synthetic-batch",
+  "conversation_id": "synthetic-conversation",
+  "conversation_revision": 1,
+  "state": "queued",
+  "attempts": [],
+  "max_attempts": 3,
+  "next_attempt_at": null,
+  "attempt_id": null,
+  "lease_id": null,
+  "lease_expires_at": null,
+  "budget": null,
+  "progress": {
+    "schema_version": "1.0",
+    "stage": "queued",
+    "completed_calls": 0
+  },
+  "evaluation_id": null,
+  "error": null
+}

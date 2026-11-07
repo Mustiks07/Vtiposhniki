@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "id": "custom-followup-unknown-to-code",
+  "title": "Synthetic custom-followup-unknown-to-code",
+  "definition": "Illustrative contract criterion only.",
+  "response_type": "scale",
+  "choices": [
+    {
+      "schema_version": "1.0",
+      "id": "a",
+      "label": "a",
+      "raw_value": 10,
+      "anchor": "Synthetic anchor: a",
+      "score_fraction": "0"
+    },
+    {
+      "schema_version": "1.0",
+      "id": "b",
+      "label": "b",
+      "raw_value": 1,
+      "anchor": "Synthetic anchor: b",
+      "score_fraction": "1"
+    }
+  ],
+  "allow_na": true,
+  "na_condition": "No synthetic request was made.",
+  "channel_instructions": {
+    "schema_version": "1.0",
+    "agent_chat": "",
+    "voice_call": "",
+    "voice_policy_version": "text-observable-v1"
+  },
+  "evidence_policy": {
+    "schema_version": "1.0",
+    "require_evidence": true,
+    "missing_action_requires_range": true,
+    "allow_source": true
+  },
+  "requires_reference": false,
+  "weight": "7",
+  "section_id": "synthetic-section",
+  "flag_when_choice_ids": []
+}

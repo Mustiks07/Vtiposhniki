@@ -1,0 +1,234 @@
+{
+  "schema_version": "1.0",
+  "status": "complete",
+  "initial": [
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-binary",
+      "applicability": "applicable",
+      "answer_choice_id": "yes",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "criteria_met"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "message",
+          "message_ids": [
+            "m0002"
+          ],
+          "start_message_id": null,
+          "end_message_id": null,
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    },
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-scale",
+      "applicability": "applicable",
+      "answer_choice_id": "middle",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "criteria_partially_met"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "message",
+          "message_ids": [
+            "m0002"
+          ],
+          "start_message_id": null,
+          "end_message_id": null,
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    },
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-flag",
+      "applicability": "applicable",
+      "answer_choice_id": "no",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "no_violation_detected"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "range",
+          "message_ids": [],
+          "start_message_id": "m0001",
+          "end_message_id": "m0003",
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    }
+  ],
+  "reviews": [
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-scale",
+      "proposal": null,
+      "call_ids": [],
+      "outcome": "skipped",
+      "limitations": [
+        "Reviewer was not called: shared budget exhausted."
+      ]
+    }
+  ],
+  "automatic_final": [
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-binary",
+      "applicability": "applicable",
+      "answer_choice_id": "yes",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "criteria_met"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "message",
+          "message_ids": [
+            "m0002"
+          ],
+          "start_message_id": null,
+          "end_message_id": null,
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    },
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-scale",
+      "applicability": "applicable",
+      "answer_choice_id": "middle",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "criteria_partially_met"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "message",
+          "message_ids": [
+            "m0002"
+          ],
+          "start_message_id": null,
+          "end_message_id": null,
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    },
+    {
+      "schema_version": "1.0",
+      "criterion_id": "synthetic-flag",
+      "applicability": "applicable",
+      "answer_choice_id": "no",
+      "rationale": "SYNTHETIC TEST: illustrative explanation, not an AI assessment.",
+      "reason_codes": [
+        "no_violation_detected"
+      ],
+      "evidence": [
+        {
+          "schema_version": "1.0",
+          "kind": "range",
+          "message_ids": [],
+          "start_message_id": "m0001",
+          "end_message_id": "m0003",
+          "source_chunk_id": null,
+          "relation": "support",
+          "explanation": "Synthetic checked excerpt; no real conversation."
+        }
+      ],
+      "limitations": [
+        "test_evaluator"
+      ],
+      "review_reasons": [],
+      "origin": "test"
+    }
+  ],
+  "calls": [
+    {
+      "schema_version": "1.0",
+      "call_id": "synthetic-call",
+      "attempt_id": "synthetic-attempt-1",
+      "purpose": "primary",
+      "requested": {
+        "schema_version": "1.0",
+        "provider": "test",
+        "model": "synthetic-contract-v1",
+        "configuration_ref": "synthetic-only"
+      },
+      "actual": {
+        "schema_version": "1.0",
+        "provider": "test",
+        "model": "synthetic-contract-v1",
+        "configuration_ref": "synthetic-only"
+      },
+      "started_at": "2026-11-07T00:00:00Z",
+      "finished_at": "2026-11-07T00:00:01Z",
+      "outcome": "succeeded",
+      "finish_reason": "stop",
+      "usage": null,
+      "cost": null,
+      "currency": "USD",
+      "price_version": null,
+      "safe_error": null
+    }
+  ],
+  "identity": {
+    "schema_version": "1.0",
+    "conversation_content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "checklist_semantic_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "profile_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "corpus_snapshot_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "audio_content_hash": null
+  },
+  "source_fragments": [],
+  "limitations": [
+    "test_evaluator",
+    "review_unfinished"
+  ],
+  "error": null,
+  "evaluator_mode": "test"
+}
