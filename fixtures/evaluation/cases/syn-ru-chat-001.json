@@ -1,0 +1,96 @@
+{
+  "case_id": "syn-ru-chat-001",
+  "group_id": "g-topup",
+  "synthetic": true,
+  "conversation": {
+    "channel": "agent_chat",
+    "language": "RU",
+    "messages": [
+      {
+        "speaker": "client",
+        "timestamp_original": "10:00",
+        "text": "Здравствуйте! Как пополнить учебный счёт в вымышленном сервисе?"
+      },
+      {
+        "speaker": "bot",
+        "timestamp_original": "10:00",
+        "text": "Здравствуйте! Соединяю с оператором."
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "10:01",
+        "text": "Здравствуйте, меня зовут Арман. Уточните, с какой карты вы планируете пополнение?"
+      },
+      {
+        "speaker": "client",
+        "timestamp_original": "10:02",
+        "text": "С карты учебного банка."
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "10:03",
+        "text": "Откройте раздел «Пополнение», выберите карту и подтвердите перевод. Зачисление обычно занимает несколько минут."
+      },
+      {
+        "speaker": "client",
+        "timestamp_original": "10:04",
+        "text": "Спасибо, понятно."
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "10:04",
+        "text": "Итак, пополнение через раздел «Пополнение». Могу ещё чем-то помочь? Хорошего дня!"
+      }
+    ]
+  },
+  "labels": {
+    "provenance": "rule_synthetic",
+    "rubric_version": "cqa-original-v1",
+    "author": "claude-a (synthetic construction, not an expert label)",
+    "labelled_before_model_output": true,
+    "coverage": [
+      "c1_contact",
+      "c2_needs",
+      "c3_identification",
+      "c4_consultation",
+      "c5_empathy",
+      "c6_dialog_management",
+      "c7_closing",
+      "c8_gross_errors"
+    ],
+    "answers": {
+      "c1_contact": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c2_needs": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c3_identification": {
+        "applicability": "not_applicable",
+        "answer_choice_id": null
+      },
+      "c4_consultation": {
+        "applicability": "applicable",
+        "answer_choice_id": "p20"
+      },
+      "c5_empathy": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c6_dialog_management": {
+        "applicability": "applicable",
+        "answer_choice_id": "p10"
+      },
+      "c7_closing": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c8_gross_errors": {
+        "applicability": "applicable",
+        "answer_choice_id": "no"
+      }
+    }
+  }
+}

@@ -1,0 +1,404 @@
+{
+  "schema_version": "1.0",
+  "title": "CQA: исходный чек-лист качества",
+  "criteria": [
+    {
+      "schema_version": "1.0",
+      "id": "c1_contact",
+      "title": "Установление контакта",
+      "definition": "Да: в первом ответе оператора есть приветствие на языке клиента И оператор представился. Приветствие бота не заменяет первый ответ оператора. Иначе — Нет. N/A запрещён.",
+      "response_type": "binary",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "yes",
+          "label": "Да",
+          "raw_value": true,
+          "anchor": "Первый ответ оператора содержит приветствие на языке клиента и представление.",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "no",
+          "label": "Нет",
+          "raw_value": false,
+          "anchor": "В первом ответе оператора нет приветствия на языке клиента или представления.",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": false,
+      "na_condition": null,
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "Звонок оценивается по тексту расшифровки. Ошибки распознавания речи (ASR), искажённые слова и пунктуацию не приписывать оператору. Внутренние консультации и неясную принадлежность реплики отмечать как ограничение, а не угадывать личность.",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "10",
+      "section_id": null,
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "c2_needs",
+      "title": "Выявление потребности",
+      "definition": "Да: оператор учёл уже известные детали и уточнил недостающее до того, как дать ответ. Нет: ответ дан без учёта известных деталей или без уточнения недостающего.",
+      "response_type": "binary",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "yes",
+          "label": "Да",
+          "raw_value": true,
+          "anchor": "Известные детали учтены, недостающее уточнено до ответа.",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "no",
+          "label": "Нет",
+          "raw_value": false,
+          "anchor": "Известные детали не учтены или недостающее не уточнено до ответа.",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": true,
+      "na_condition": "Данных клиента хватало для ответа с самого начала.",
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "Звонок оценивается по тексту расшифровки. Ошибки распознавания речи (ASR), искажённые слова и пунктуацию не приписывать оператору. Внутренние консультации и неясную принадлежность реплики отмечать как ограничение, а не угадывать личность.",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "15",
+      "section_id": null,
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "c3_identification",
+      "title": "Идентификация",
+      "definition": "Да: личность клиента подтверждена до раскрытия данных или выполнения защищённого действия. Нет: проверка была необходима, но подтверждения нет (или оно получено после раскрытия). Согласие на обработку данных не является идентификацией; системное подтверждение может быть её доказательством.",
+      "response_type": "binary",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "yes",
+          "label": "Да",
+          "raw_value": true,
+          "anchor": "Личность подтверждена до раскрытия данных или защищённого действия.",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "no",
+          "label": "Нет",
+          "raw_value": false,
+          "anchor": "Проверка была необходима, но личность не подтверждена до раскрытия/действия.",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": true,
+      "na_condition": "Запрос клиента не требовал идентификации.",
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "Звонок оценивается по тексту расшифровки. Ошибки распознавания речи (ASR), искажённые слова и пунктуацию не приписывать оператору. Внутренние консультации и неясную принадлежность реплики отмечать как ограничение, а не угадывать личность.",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "20",
+      "section_id": null,
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "c4_consultation",
+      "title": "Корректная и полная консультация",
+      "definition": "Корректность и полнота ответа и следующего шага по существенным вопросам клиента. Допустимы только ступени 0, 5, 10, 15, 20. Учитывать карту существенных вопросов, закрытые пункты и следующий шаг. Непроверенное продуктовое утверждение не считать доказанно верным или ложным.",
+      "response_type": "scale",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "p20",
+          "label": "20",
+          "raw_value": 20,
+          "anchor": "Все существенные вопросы клиента закрыты или дан корректный следующий шаг.",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "p15",
+          "label": "15",
+          "raw_value": 15,
+          "anchor": "Основной вопрос решён, пропущена второстепенная деталь.",
+          "score_fraction": "0.75"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "p10",
+          "label": "10",
+          "raw_value": 10,
+          "anchor": "Часть запроса закрыта, существенный вопрос остался открытым.",
+          "score_fraction": "0.5"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "p5",
+          "label": "5",
+          "raw_value": 5,
+          "anchor": "Дана общая подсказка, но клиенту непонятно, как действовать.",
+          "score_fraction": "0.25"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "p0",
+          "label": "0",
+          "raw_value": 0,
+          "anchor": "Нет ответа по существу или ключевая рекомендация ошибочна.",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": true,
+      "na_condition": "Разговор закончился до того, как клиент сформулировал запрос.",
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "Звонок оценивается по тексту расшифровки. Ошибки распознавания речи (ASR), искажённые слова и пунктуацию не приписывать оператору. Внутренние консультации и неясную принадлежность реплики отмечать как ограничение, а не угадывать личность.",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "20",
+      "section_id": null,
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "c5_empathy",
+      "title": "Эмпатия и клиентоориентированность",
+      "definition": "Да: оператор вежлив; при недовольстве или неудобстве клиента — реагирует на конкретную проблему клиента. Нет: невежливость или отсутствие реакции на выраженное недовольство/неудобство. N/A запрещён.",
+      "response_type": "binary",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "yes",
+          "label": "Да",
+          "raw_value": true,
+          "anchor": "Вежливость; на недовольство/неудобство есть реакция по конкретной проблеме.",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "no",
+          "label": "Нет",
+          "raw_value": false,
+          "anchor": "Невежливость или нет реакции на конкретное недовольство/неудобство.",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": false,
+      "na_condition": null,
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "Звонок оценивается по тексту расшифровки. Ошибки распознавания речи (ASR), искажённые слова и пунктуацию не приписывать оператору. Внутренние консультации и неясную принадлежность реплики отмечать как ограничение, а не угадывать личность.",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "15",
+      "section_id": null,
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "c6_dialog_management",
+      "title": "Управление диалогом, скорость и грамотность",
+      "definition": "Ясность, порядок изложения, предупреждение об ожидании. Допустимы только ступени 0, 4, 7, 10. Оценивается отдельно от №4. N/A запрещён.",
+      "response_type": "scale",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "p10",
+          "label": "10",
+          "raw_value": 10,
+          "anchor": "Ясные и связные ответы; при явном ожидании оператор предупредил клиента.",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "p7",
+          "label": "7",
+          "raw_value": 7,
+          "anchor": "Один заметный сбой, но ответ понятен и разговор можно продолжить.",
+          "score_fraction": "0.7"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "p4",
+          "label": "4",
+          "raw_value": 4,
+          "anchor": "Клиент переспрашивает из-за формулировок или порядка изложения.",
+          "score_fraction": "0.4"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "p0",
+          "label": "0",
+          "raw_value": 0,
+          "anchor": "Бессвязность или противоречия делают ход разговора непонятным.",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": false,
+      "na_condition": null,
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "Звонок оценивается по тексту расшифровки. Ошибки распознавания речи (ASR), искажённые слова и пунктуацию не приписывать оператору. Внутренние консультации и неясную принадлежность реплики отмечать как ограничение, а не угадывать личность. Для звонков №6: логичность, понятность, уместность выражений, речевые формулировки и наблюдаемое управление паузами. Темп, дикцию и разборчивость не оценивать без фактического анализа звука; при недоступном звуке сохранять ограничение, а не ставить N/A.",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "15",
+      "section_id": null,
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "c7_closing",
+      "title": "Завершение",
+      "definition": "Да: (оператор подвёл итог ИЛИ предложил дальнейшую помощь) И попрощался. Нет: условие не выполнено.",
+      "response_type": "binary",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "yes",
+          "label": "Да",
+          "raw_value": true,
+          "anchor": "Подведён итог или предложена дальнейшая помощь, и есть прощание.",
+          "score_fraction": "1"
+        },
+        {
+          "schema_version": "1.0",
+          "id": "no",
+          "label": "Нет",
+          "raw_value": false,
+          "anchor": "Нет итога/предложения помощи или нет прощания.",
+          "score_fraction": "0"
+        }
+      ],
+      "allow_na": true,
+      "na_condition": "Разговор оборвался до возможности завершения.",
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "Звонок оценивается по тексту расшифровки. Ошибки распознавания речи (ASR), искажённые слова и пунктуацию не приписывать оператору. Внутренние консультации и неясную принадлежность реплики отмечать как ограничение, а не угадывать личность.",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "5",
+      "section_id": null,
+      "flag_when_choice_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "id": "c8_gross_errors",
+      "title": "Грубые ошибки",
+      "definition": "Отдельный флаг, не влияет на итоговый балл. Да: оскорбление клиента, предложение платной услуги в обход компании или раскрытие конфиденциальной информации. Самого предложения частной платной услуги достаточно; согласие клиента и перевод денег не требуются.",
+      "response_type": "flag",
+      "choices": [
+        {
+          "schema_version": "1.0",
+          "id": "yes",
+          "label": "Да",
+          "raw_value": true,
+          "anchor": "Есть оскорбление, платная услуга в обход компании или раскрытие конфиденциальной информации.",
+          "score_fraction": null
+        },
+        {
+          "schema_version": "1.0",
+          "id": "no",
+          "label": "Нет",
+          "raw_value": false,
+          "anchor": "Грубых ошибок не обнаружено.",
+          "score_fraction": null
+        }
+      ],
+      "allow_na": false,
+      "na_condition": null,
+      "channel_instructions": {
+        "schema_version": "1.0",
+        "agent_chat": "",
+        "voice_call": "Звонок оценивается по тексту расшифровки. Ошибки распознавания речи (ASR), искажённые слова и пунктуацию не приписывать оператору. Внутренние консультации и неясную принадлежность реплики отмечать как ограничение, а не угадывать личность.",
+        "voice_policy_version": "text-observable-v1"
+      },
+      "evidence_policy": {
+        "schema_version": "1.0",
+        "require_evidence": true,
+        "missing_action_requires_range": true,
+        "allow_source": true
+      },
+      "requires_reference": false,
+      "weight": "0",
+      "section_id": null,
+      "flag_when_choice_ids": [
+        "yes"
+      ]
+    }
+  ],
+  "sections": [],
+  "rounding": {
+    "schema_version": "1.0",
+    "mode": "ROUND_HALF_UP",
+    "decimal_places": 2,
+    "intermediate_rounding": false
+  },
+  "checklist_id": "cqa-original",
+  "version_id": "cqa-original-v1",
+  "semantic_hash": "6713a2568b244c0550727974a6cbd2f69432b85104cc163f1ca980fb164cad55",
+  "scoring_config_hash": "018d1560ad9e9f70162152bd5095c4b8446dc9a7514d38db1615e31645916889",
+  "created_at": "2026-11-07T00:00:00Z"
+}

@@ -1,53 +1,64 @@
-"""Claude A implements these entrypoints after foundation."""
+"""CQA domain: rubric rules, the single Decimal scorer and canonical hashing.
 
-from cqa_contracts.models import (
-    ChecklistVersion,
-    Conversation,
-    CorpusSnapshot,
-    CriterionProposal,
-    EvaluationArtifact,
-    EvaluationIdentity,
-    EvaluatorProfile,
-    ScoreSummary,
+Pure functions only: no network, ORM, HTTP routes or UI. Shared DTOs come from
+cqa_contracts; this package never defines competing public types.
+"""
+
+from .artifact import (
+    PROPOSAL_LIMITATION_CODES,
+    REVIEW_REASON_CODES,
+    REVIEW_TRIGGER_CODES,
+    automatic_proposal_problems,
+    evidence_messages,
+    validate_artifact,
+    validate_corpus,
 )
+from .canonical import canonical_decimal, canonical_hash, canonical_json
+from .checklist import build_checklist_version, validate_checklist, validate_checklist_draft
+from .hashing import (
+    checklist_scoring_hash,
+    checklist_semantic_hash,
+    content_projection,
+    conversation_content_hash,
+    corpus_projection,
+    corpus_snapshot_hash,
+    evaluation_reuse_key,
+    profile_hash,
+    scoring_projection,
+    semantic_projection,
+    text_hash,
+)
+from .proposals import validate_proposals
+from .rubric import original_checklist, original_checklist_draft
+from .scoring import score
 
-
-def validate_checklist(config: ChecklistVersion) -> None:
-    raise NotImplementedError("Claude A: implement checklist business validation")
-
-
-def score(checklist: ChecklistVersion, proposals: list[CriterionProposal]) -> ScoreSummary:
-    raise NotImplementedError("Claude A: implement the single Decimal scorer")
-
-
-def validate_artifact(
-    conversation: Conversation,
-    checklist: ChecklistVersion,
-    corpus: CorpusSnapshot,
-    artifact: EvaluationArtifact,
-) -> None:
-    raise NotImplementedError("Claude A: implement cross-object artifact validation")
-
-
-def conversation_content_hash(conversation: Conversation) -> str:
-    raise NotImplementedError("Claude A: implement content projection/hash")
-
-
-def checklist_semantic_hash(checklist: ChecklistVersion) -> str:
-    raise NotImplementedError("Claude A: implement semantic projection/hash")
-
-
-def checklist_scoring_hash(checklist: ChecklistVersion) -> str:
-    raise NotImplementedError("Claude A: implement scoring projection/hash")
-
-
-def profile_hash(profile: EvaluatorProfile) -> str:
-    raise NotImplementedError("Claude A: implement profile projection/hash")
-
-
-def corpus_snapshot_hash(corpus: CorpusSnapshot) -> str:
-    raise NotImplementedError("Claude A: hash corpus excluding its own content_hash")
-
-
-def evaluation_reuse_key(identity: EvaluationIdentity) -> str:
-    raise NotImplementedError("Claude A: implement reuse identity hash")
+__all__ = [
+    "PROPOSAL_LIMITATION_CODES",
+    "REVIEW_REASON_CODES",
+    "REVIEW_TRIGGER_CODES",
+    "automatic_proposal_problems",
+    "evidence_messages",
+    "validate_corpus",
+    "build_checklist_version",
+    "canonical_decimal",
+    "canonical_hash",
+    "canonical_json",
+    "checklist_scoring_hash",
+    "checklist_semantic_hash",
+    "content_projection",
+    "conversation_content_hash",
+    "corpus_projection",
+    "corpus_snapshot_hash",
+    "evaluation_reuse_key",
+    "original_checklist",
+    "original_checklist_draft",
+    "profile_hash",
+    "score",
+    "scoring_projection",
+    "semantic_projection",
+    "text_hash",
+    "validate_artifact",
+    "validate_checklist",
+    "validate_checklist_draft",
+    "validate_proposals",
+]

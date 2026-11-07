@@ -1,0 +1,15 @@
+{
+  "id": "synthetic-eval-corpus-v1",
+  "applicability_policy": "Synthetic sources for offline pipeline checks only.",
+  "priority_policy": "Organizer materials first when applicable; this corpus is synthetic.",
+  "documents": [
+    {
+      "source_id": "synthetic-help-topup",
+      "version": "v1",
+      "provenance": "synthetic",
+      "title": "Вымышленная справка: пополнение учебного счёта",
+      "text_file": "synthetic-help-topup.txt",
+      "retrieved_at": "2026-11-07T00:00:00+00:00"
+    }
+  ]
+}

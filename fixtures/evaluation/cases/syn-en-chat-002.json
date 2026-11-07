@@ -1,0 +1,96 @@
+{
+  "case_id": "syn-en-chat-002",
+  "group_id": "g-withdraw",
+  "synthetic": true,
+  "conversation": {
+    "channel": "agent_chat",
+    "language": "EN",
+    "messages": [
+      {
+        "speaker": "client",
+        "timestamp_original": "00:01",
+        "text": "Hello! How can I withdraw money from my training account?"
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "00:20",
+        "text": "Hello! Please send your contract number and date of birth."
+      },
+      {
+        "speaker": "client",
+        "timestamp_original": "00:40",
+        "text": "Contract 000, 01.01.2000."
+      },
+      {
+        "speaker": "system",
+        "timestamp_original": "00:41",
+        "text": "Client identification passed."
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "01:10",
+        "text": "Thank you. Fill in the request in the Withdraw section; funds arrive within one business day."
+      },
+      {
+        "speaker": "client",
+        "timestamp_original": "01:30",
+        "text": "Clear, thanks."
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "01:35",
+        "text": "Anything else I can help with? Goodbye!"
+      }
+    ]
+  },
+  "labels": {
+    "provenance": "rule_synthetic",
+    "rubric_version": "cqa-original-v1",
+    "author": "claude-a (synthetic construction, not an expert label)",
+    "labelled_before_model_output": true,
+    "coverage": [
+      "c1_contact",
+      "c2_needs",
+      "c3_identification",
+      "c4_consultation",
+      "c5_empathy",
+      "c6_dialog_management",
+      "c7_closing",
+      "c8_gross_errors"
+    ],
+    "answers": {
+      "c1_contact": {
+        "applicability": "applicable",
+        "answer_choice_id": "no"
+      },
+      "c2_needs": {
+        "applicability": "not_applicable",
+        "answer_choice_id": null
+      },
+      "c3_identification": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c4_consultation": {
+        "applicability": "applicable",
+        "answer_choice_id": "p20"
+      },
+      "c5_empathy": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c6_dialog_management": {
+        "applicability": "applicable",
+        "answer_choice_id": "p10"
+      },
+      "c7_closing": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c8_gross_errors": {
+        "applicability": "applicable",
+        "answer_choice_id": "no"
+      }
+    }
+  }
+}

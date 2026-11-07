@@ -1,0 +1,96 @@
+{
+  "case_id": "syn-ru-call-004",
+  "group_id": "g-call",
+  "synthetic": true,
+  "conversation": {
+    "channel": "voice_call",
+    "language": "RU",
+    "messages": [
+      {
+        "speaker": "operator",
+        "timestamp_original": "00:00",
+        "text": "добрый день компания учебный брокер меня зовут ерлан чем могу помочь"
+      },
+      {
+        "speaker": "client",
+        "timestamp_original": "00:05",
+        "text": "здрасте я хотел узнать про отчёт брокера где его взять"
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "00:12",
+        "text": "секунду уточню у коллеги подождите пожалуйста"
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "00:20",
+        "text": "коллега где у нас отчёт для клиентов в учебном кабинете"
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "00:35",
+        "text": "спасибо за ожидание отчёт в личном кабинете раздел документы"
+      },
+      {
+        "speaker": "client",
+        "timestamp_original": "00:45",
+        "text": "а понял спасибо"
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "00:48",
+        "text": "ещё вопросы есть нет всего доброго до свидания"
+      }
+    ]
+  },
+  "labels": {
+    "provenance": "rule_synthetic",
+    "rubric_version": "cqa-original-v1",
+    "author": "claude-a (synthetic construction, not an expert label)",
+    "labelled_before_model_output": true,
+    "coverage": [
+      "c1_contact",
+      "c2_needs",
+      "c3_identification",
+      "c4_consultation",
+      "c5_empathy",
+      "c6_dialog_management",
+      "c7_closing",
+      "c8_gross_errors"
+    ],
+    "answers": {
+      "c1_contact": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c2_needs": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c3_identification": {
+        "applicability": "not_applicable",
+        "answer_choice_id": null
+      },
+      "c4_consultation": {
+        "applicability": "applicable",
+        "answer_choice_id": "p20"
+      },
+      "c5_empathy": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c6_dialog_management": {
+        "applicability": "applicable",
+        "answer_choice_id": "p7"
+      },
+      "c7_closing": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c8_gross_errors": {
+        "applicability": "applicable",
+        "answer_choice_id": "no"
+      }
+    }
+  }
+}

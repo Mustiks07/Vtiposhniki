@@ -1,0 +1,76 @@
+{
+  "case_id": "syn-ru-chat-005",
+  "group_id": "g-early-end",
+  "synthetic": true,
+  "conversation": {
+    "channel": "agent_chat",
+    "language": "RU",
+    "messages": [
+      {
+        "speaker": "client",
+        "timestamp_original": "09:00",
+        "text": "Здравствуйте"
+      },
+      {
+        "speaker": "operator",
+        "timestamp_original": "09:01",
+        "text": "Здравствуйте, меня зовут Алия. Чем могу помочь?"
+      },
+      {
+        "speaker": "system",
+        "timestamp_original": "09:06",
+        "text": "Клиент покинул чат."
+      }
+    ]
+  },
+  "labels": {
+    "provenance": "rule_synthetic",
+    "rubric_version": "cqa-original-v1",
+    "author": "claude-a (synthetic construction, not an expert label)",
+    "labelled_before_model_output": true,
+    "coverage": [
+      "c1_contact",
+      "c2_needs",
+      "c3_identification",
+      "c4_consultation",
+      "c5_empathy",
+      "c6_dialog_management",
+      "c7_closing",
+      "c8_gross_errors"
+    ],
+    "answers": {
+      "c1_contact": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c2_needs": {
+        "applicability": "undetermined",
+        "answer_choice_id": null
+      },
+      "c3_identification": {
+        "applicability": "not_applicable",
+        "answer_choice_id": null
+      },
+      "c4_consultation": {
+        "applicability": "not_applicable",
+        "answer_choice_id": null
+      },
+      "c5_empathy": {
+        "applicability": "applicable",
+        "answer_choice_id": "yes"
+      },
+      "c6_dialog_management": {
+        "applicability": "applicable",
+        "answer_choice_id": "p10"
+      },
+      "c7_closing": {
+        "applicability": "not_applicable",
+        "answer_choice_id": null
+      },
+      "c8_gross_errors": {
+        "applicability": "applicable",
+        "answer_choice_id": "no"
+      }
+    }
+  }
+}
