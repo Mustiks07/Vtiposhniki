@@ -34,6 +34,7 @@ export function Transcript({
   canSeek,
   citations,
   onCriterion,
+  approximatePositions,
 }: {
   conversation: Conversation;
   highlighted: string[];
@@ -45,6 +46,7 @@ export function Transcript({
   canSeek: boolean;
   citations?: Map<string, { id: string; number: number; title: string }[]>;
   onCriterion?: (id: string) => void;
+  approximatePositions?: Map<string, number>;
 }) {
   const [onlyEvidence, setOnlyEvidence] = useState(false);
   const listRef = useRef<HTMLOListElement>(null);
@@ -137,6 +139,11 @@ export function Transcript({
                 {canSeek && start !== undefined && onSeek ? (
                   <button type="button" className="link" onClick={() => onSeek(m.id)}>
                     ▶ запись с {decimalRu(start)} с
+                  </button>
+                ) : null}
+                {start === undefined && approximatePositions?.has(m.id) && onSeek ? (
+                  <button type="button" className="link" title="Приблизительно, не сверено со звуком" onClick={() => onSeek(m.id)}>
+                    ≈ к моменту реплики · {decimalRu(String(approximatePositions.get(m.id)))} с
                   </button>
                 ) : null}
               </div>

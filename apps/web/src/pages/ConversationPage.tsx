@@ -10,6 +10,7 @@ import { Transcript } from '../components/Transcript';
 import { serverTime } from '../lib/format';
 import { conversationTitle } from '../lib/presentation';
 import { artifactStatusLabel, channelLabel, languageLabel } from '../lib/labels';
+import { useAudioNavigation } from '../lib/audioNavigation';
 
 export function ConversationPage() {
   const { id = '' } = useParams();
@@ -30,6 +31,7 @@ export function ConversationPage() {
     enabled: revision !== null,
   });
   const conversation = revision === null ? latest.data : selected.data;
+  const audioNavigation = useAudioNavigation(conversation, audioRef);
   const evaluations = useQuery({
     queryKey: ['evaluations', { conversation_id: id }],
     queryFn: ({ signal }) => api.listEvaluations({ conversation_id: id, limit: 200 }, signal),
@@ -97,11 +99,16 @@ export function ConversationPage() {
                 key={`${conversation.id}:${conversation.revision}`}
                 ref={audioRef}
                 conversation={conversation}
+                timing={audioNavigation.timing}
+                onTiming={audioNavigation.setTiming}
+                timingError={audioNavigation.error}
                 onAvailable={() => {
                   void (revision === null ? latest : selected).refetch();
                 }}
               />
-              <Transcript conversation={conversation} highlighted={[]} focusToken={0} canSeek={false} />
+              <Transcript conversation={conversation} highlighted={[]} focusToken={0}
+                canSeek={conversation.audio.alignment_status === 'verified'}
+                approximatePositions={audioNavigation.positions} onSeek={audioNavigation.seek} />
             </>
           ) : null}
         </div>
