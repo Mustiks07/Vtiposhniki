@@ -24,8 +24,18 @@ from cqa_contracts.operations import ERROR_RESPONSES, EXPORT_RESPONSE, Limit, Of
 from fastapi import APIRouter, Header, Query, Request
 from fastapi.responses import Response
 
-from . import checklists, conversations, evaluations, importing, jobs, organizer, registry
-from .errors import not_implemented
+from . import (
+    appeals,
+    audio,
+    checklists,
+    conversations,
+    evaluations,
+    exports,
+    importing,
+    jobs,
+    organizer,
+    registry,
+)
 from .services import Services
 
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
@@ -33,6 +43,12 @@ router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
 
 def _services(request: Request) -> Services:
     return cast(Services, request.app.state.services)
+
+
+def _export_response(export: SafeExport, output: str) -> Any:
+    if output == "csv":
+        return Response(exports.to_csv(export), media_type="text/csv; charset=utf-8")
+    return export
 
 
 @router.get("/health", operation_id="getHealth", response_model=h.Health)
@@ -108,7 +124,7 @@ async def get_audio(
     revision: Annotated[int | None, Query(ge=1)] = None,
     range: Annotated[str | None, Header(alias="Range")] = None,
 ) -> Response:
-    raise not_implemented()
+    return await audio.stream_audio(_services(request), id, revision, range)
 
 
 @router.get("/checklists", operation_id="listChecklists", response_model=Page[h.ChecklistSummary])
@@ -212,7 +228,7 @@ def get_evaluation(request: Request, id: str) -> EvaluationView:
     "/evaluations/{id}/appeals", operation_id="createAppeal", response_model=Appeal, status_code=201
 )
 def create_appeal(request: Request, id: str, body: h.CreateAppeal) -> Appeal:
-    raise not_implemented()
+    return appeals.create_appeal(_services(request), id, body)
 
 
 @router.get("/appeals", operation_id="listAppeals", response_model=Page[Appeal])
@@ -223,12 +239,13 @@ def list_appeals(
     state: Literal["open", "resolved"] | None = None,
     evaluation_id: str | None = None,
 ) -> Page[Appeal]:
-    raise not_implemented()
+    items, total = appeals.list_appeals(_services(request), limit, offset, state, evaluation_id)
+    return Page[Appeal](items=items, total=total, limit=limit, offset=offset)
 
 
 @router.post("/appeals/{id}/decision", operation_id="decideAppeal", response_model=Decision)
 def decide_appeal(request: Request, id: str, body: DecisionRequest) -> Decision:
-    raise not_implemented()
+    return appeals.decide_appeal(_services(request), id, body)
 
 
 @router.get(
@@ -243,7 +260,7 @@ def export_evaluation(
     scope: Literal["automatic", "effective"] = "automatic",
     format: Literal["json", "csv"] = "json",
 ) -> Any:
-    raise not_implemented()
+    return _export_response(exports.export_evaluation(_services(request), id, scope), format)
 
 
 @router.get(
@@ -258,7 +275,7 @@ def export_batch(
     scope: Literal["automatic", "effective"] = "automatic",
     format: Literal["json", "csv"] = "json",
 ) -> Any:
-    raise not_implemented()
+    return _export_response(exports.export_batch(_services(request), id, scope), format)
 
 
 @router.get(

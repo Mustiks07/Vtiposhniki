@@ -15,6 +15,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from .checklists import seed_original_checklist
 from .errors import install_error_handlers, make_error
 from .ports import DomainPort, production_domain
 from .registry import sync_registry
@@ -134,6 +135,7 @@ def create_app(
         )
         services.db.migrate()
         sync_registry(services)
+        seed_original_checklist(services)
         worker = Worker(services)
         app.state.services = services
         app.state.worker = worker

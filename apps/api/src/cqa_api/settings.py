@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     data_dir: Path = Path("data/private")
     database_url: str = "sqlite:///data/private/cqa.sqlite3"
     config_dir: Path | None = None  # default: <data_dir>/config
+    seed_original_checklist: bool = True
     dataset_url: SecretStr | None = None
 
     import_max_bytes: int = 10_485_760

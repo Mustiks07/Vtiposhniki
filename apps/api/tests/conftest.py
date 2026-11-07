@@ -22,6 +22,7 @@ def make_settings(tmp_path: Path, **overrides) -> Settings:
         "retry_base_seconds": 0.0,
         "retry_max_seconds": 0.0,
         "dataset_url": None,
+        "seed_original_checklist": False,
     }
     values.update(overrides)
     return Settings(_env_file=None, **values)

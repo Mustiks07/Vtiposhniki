@@ -258,7 +258,6 @@ class Worker:
 
     async def run(self, stop: asyncio.Event) -> None:
         """Bounded concurrency over a single loop; provider waits share it, not DB locks."""
-        await self._db(self._queue.recover)
         running: set[asyncio.Task[None]] = set()
         limit = max(self._services.settings.worker_concurrency, 1)
         poll = self._services.settings.worker_poll_seconds
@@ -266,10 +265,12 @@ class Worker:
             while not stop.is_set():
                 claimed = False
                 if len(running) < limit:
+                    # Claiming also recovers expired leases, so restart needs no separate pass.
                     try:
                         claim = await self._db(self._queue.claim_next)
-                    except SQLAlchemyError:
-                        logger.error("Could not poll for work; will retry")
+                    except Exception as exc:
+                        # One bad row or a busy disk must not silently end the executor.
+                        logger.error("Could not poll for work: %s", type(exc).__name__)
                         claim = None
                     if claim is not None:
                         claimed = True

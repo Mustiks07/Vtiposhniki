@@ -27,8 +27,8 @@ def test_health_reports_application_without_secrets(client):
     assert body["status"] == "ok"
     assert body["phase"] == "application"
     assert body["evaluator_mode"] == "test"
-    # Stand-ins are not domain readiness: this stays false until A delivers cqa_domain.
-    assert body["business_ready"] is False
+    # Stand-ins are not domain readiness: only the real content hash makes this true.
+    assert body["business_ready"] is client.app.state.domain_ready
 
 
 def test_vertical_path_survives_restart(tmp_path):
@@ -77,8 +77,11 @@ def test_vertical_path_survives_restart(tmp_path):
         assert view.checklist_version_id == version["version_id"]
         assert view.revision == 1
         assert view.artifact.calls[0].cost is None  # unknown is not zero
-        # Until cqa_domain.score exists there is no total at all, not a false one.
-        assert view.automatic_score.total_score is None
+        if third.app.state.domain_ready:
+            assert view.automatic_score.status == "complete"
+        else:
+            # Without cqa_domain.score there is no total at all, not a false one.
+            assert view.automatic_score.total_score is None
 
         listed = third.get(
             "/api/v1/conversations", params={"status": "complete"}

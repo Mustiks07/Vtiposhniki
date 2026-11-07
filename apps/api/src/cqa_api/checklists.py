@@ -1,8 +1,10 @@
 """Immutable checklist versions, validated by the domain before they are stored."""
 
+import logging
 from uuid import uuid4
 
 from cqa_contracts.http_models import ChecklistSummary
+from cqa_contracts.interfaces import ContractError
 from cqa_contracts.models import ChecklistDraft, ChecklistVersion, ErrorCode
 from sqlalchemy import Connection
 
@@ -10,6 +12,7 @@ from .db import from_wire_time, row, rows, run, to_wire_time
 from .errors import ApiFailure, make_error, not_found
 from .services import Services
 
+logger = logging.getLogger("cqa_api.checklists")
 ZERO_HASH = "0" * 64
 
 
@@ -62,6 +65,23 @@ def create_checklist(services: Services, draft: ChecklistDraft) -> ChecklistVers
         )
         _insert_version(conn, version)
     return version
+
+
+def seed_original_checklist(services: Services) -> None:
+    """The starting rubric from the domain, once, into an empty checklist table."""
+    draft_source = services.domain.original_checklist_draft
+    if draft_source is None or not services.settings.seed_original_checklist:
+        return
+    with services.db.read() as conn:
+        if row(conn, "SELECT 1 AS x FROM checklists LIMIT 1") is not None:
+            return
+    try:
+        create_checklist(services, draft_source())
+    except (ContractError, NotImplementedError) as exc:
+        # Not fatal: the server stays diagnosable and other checklists stay usable.
+        message = f"original checklist not seeded: {type(exc).__name__}"
+        services.registry_errors.append(message)
+        logger.error(message)
 
 
 def _latest_version_id(conn: Connection, checklist_id: str) -> str | None:

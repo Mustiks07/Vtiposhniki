@@ -4,6 +4,7 @@ from typing import Any
 
 from cqa_contracts.models import (
     CriterionProposal,
+    Decision,
     EvaluationArtifact,
     EvaluationView,
     ReuseProvenance,
@@ -16,7 +17,7 @@ from .db import from_wire_time, row, rows
 from .errors import not_found
 from .services import Services
 
-_PROPOSALS = TypeAdapter(list[CriterionProposal])
+PROPOSALS = TypeAdapter(list[CriterionProposal])
 
 
 def no_score() -> ScoreSummary:
@@ -44,8 +45,15 @@ def view_from_row(conn: Connection, found: RowMapping) -> EvaluationView:
         revision=found["revision"],
         artifact=artifact,
         automatic_score=ScoreSummary.model_validate_json(found["automatic_score_json"]),
-        human_decisions=[],
-        effective_proposals=_PROPOSALS.validate_json(found["effective_proposals_json"]),
+        human_decisions=[
+            Decision.model_validate_json(d["document_json"])
+            for d in rows(
+                conn,
+                "SELECT document_json FROM decisions WHERE evaluation_id = :id ORDER BY revision",
+                {"id": found["id"]},
+            )
+        ],
+        effective_proposals=PROPOSALS.validate_json(found["effective_proposals_json"]),
         effective_score=ScoreSummary.model_validate_json(found["effective_score_json"]),
         reuse=ReuseProvenance(
             mode=found["reuse_mode"],

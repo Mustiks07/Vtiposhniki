@@ -11,6 +11,7 @@ import cqa_ai
 import cqa_domain
 from cqa_contracts.interfaces import ArtifactValidator, ChecklistValidator, Evaluator, Scorer
 from cqa_contracts.models import (
+    ChecklistDraft,
     ChecklistVersion,
     Conversation,
     CorpusSnapshot,
@@ -30,6 +31,8 @@ class DomainPort:
     profile_hash: Callable[[EvaluatorProfile], str]
     corpus_snapshot_hash: Callable[[CorpusSnapshot], str]
     evaluation_reuse_key: Callable[[EvaluationIdentity], str]
+    # Optional until the shared interfaces name it (handoff request R-3).
+    original_checklist_draft: Callable[[], ChecklistDraft] | None = None
 
 
 def production_domain() -> DomainPort:
@@ -43,6 +46,7 @@ def production_domain() -> DomainPort:
         profile_hash=cqa_domain.profile_hash,
         corpus_snapshot_hash=cqa_domain.corpus_snapshot_hash,
         evaluation_reuse_key=cqa_domain.evaluation_reuse_key,
+        original_checklist_draft=getattr(cqa_domain, "original_checklist_draft", None),
     )
 
 

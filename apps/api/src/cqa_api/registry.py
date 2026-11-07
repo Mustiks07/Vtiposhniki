@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 
 from cqa_contracts.http_models import ProfileSummary
-from cqa_contracts.interfaces import ConfigurationError
+from cqa_contracts.interfaces import ConfigurationError, ContractError
 from cqa_contracts.models import CorpusSnapshot, ErrorCode, EvaluatorProfile, SourceVersion
 from cqa_contracts.runtime import require_production_configuration
 from pydantic import ValidationError
@@ -94,7 +94,7 @@ def _load_directory(
                     register_corpus(conn, services, CorpusSnapshot.model_validate_json(text))
                 else:
                     register_profile(conn, services, EvaluatorProfile.model_validate_json(text))
-        except (OSError, ValueError, ValidationError, NotImplementedError) as exc:
+        except (OSError, ValueError, ValidationError, ContractError, NotImplementedError) as exc:
             # A bad file must not silently become a usable profile. File name and type only.
             message = f"{kind} configuration {path.name} rejected: {type(exc).__name__}"
             services.registry_errors.append(message)
