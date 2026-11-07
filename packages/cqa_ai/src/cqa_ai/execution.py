@@ -12,6 +12,7 @@ import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Literal
 
 from cqa_contracts.interfaces import (
@@ -203,7 +204,6 @@ class CallRunner:
         messages: tuple[ChatMessage, ...],
     ) -> ProviderResponse:
         max_out = self.check_can_call(selection)
-        timeout = min(float(self.retries.call_timeout_seconds), self.remaining_seconds())
         started = CallRecord(
             call_id=self.id_factory(),
             attempt_id=self.budget.attempt_id,
@@ -213,6 +213,21 @@ class CallRunner:
             outcome="started",
         )
         await self._emit("call_started", started)  # failure here: request is never sent
+        # The observer may take time (B persists and reserves). Re-check ONLY the
+        # deadline here: the call is already reserved, so the call/token/cost
+        # counters must not count it a second time.
+        remaining = self.remaining_seconds()
+        if remaining <= 0:
+            await self._finish(started, outcome="timeout", not_sent=True)
+            raise EvaluationTimeout(
+                _error(
+                    ErrorCode.TIMEOUT,
+                    "Logical job deadline reached before the request was sent",
+                    self.budget.logical_job_id,
+                    False,
+                )
+            )
+        timeout = min(float(self.retries.call_timeout_seconds), remaining)
         request = ProviderRequest(
             model=selection.model,
             messages=messages,
@@ -250,10 +265,14 @@ class CallRunner:
         outcome: Literal["succeeded", "failed", "timeout", "cancelled", "unknown"],
         response: ProviderResponse | None = None,
         failure: ProviderFailure | None = None,
+        not_sent: bool = False,
     ) -> None:
         usage: TokenUsage | None = (
             response.usage if response else (failure.usage if failure else None)
         )
+        if not_sent:
+            # Reserved and recorded, but no request left the process: usage is known zero.
+            usage = TokenUsage(input_tokens=0, output_tokens=0, reasoning_tokens=0, cached_tokens=0)
         actual_model = (
             response.actual_model if response else (failure.actual_model if failure else None)
         )
@@ -263,6 +282,8 @@ class CallRunner:
             else (started.requested if response else None)
         )
         cost, price_version = self.prices.cost(actual or started.requested, usage)
+        if not_sent:
+            cost, price_version = Decimal(0), None
         finish_reason = (
             response.finish_reason
             if response
@@ -272,6 +293,13 @@ class CallRunner:
         if failure is not None:
             code = ErrorCode.TIMEOUT if failure.kind == "timeout" else ErrorCode.PROVIDER_ERROR
             safe_error = _error(code, failure.safe_message, started.call_id, failure.retryable)
+        elif not_sent:
+            safe_error = _error(
+                ErrorCode.TIMEOUT,
+                "Deadline reached before the request was sent",
+                started.call_id,
+                False,
+            )
         elif outcome == "cancelled":
             safe_error = _error(ErrorCode.CANCELLED, "Evaluation cancelled", started.call_id, False)
         record = started.model_copy(
