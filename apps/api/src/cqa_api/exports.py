@@ -46,6 +46,7 @@ CSV_COLUMNS = (
 ).split(",")
 FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 TERMINAL_STATES = ("succeeded", "failed", "cancelled")
+KNOWN_LIMITATIONS = {"test_evaluator", "review_unfinished", "cost_unknown"}
 
 
 def _criteria(
@@ -104,7 +105,10 @@ def _limitations(
         score is not None and score.status == "incomplete_evaluation"
     ):
         codes.append("incomplete")
-    if artifact is not None and any(r.outcome in ("skipped", "failed") for r in artifact.reviews):
+    listed = set(artifact.limitations) if artifact is not None else set()
+    if "review_unfinished" in listed or (
+        artifact is not None and any(r.outcome in ("skipped", "failed") for r in artifact.reviews)
+    ):
         codes.append("review_unfinished")
     if any(ReasonCode.FACTUAL_VERIFICATION_LIMITED in p.reason_codes for p in proposals):
         codes.append("factual_verification_limited")
@@ -113,7 +117,8 @@ def _limitations(
         codes.append("audio_unavailable")
     if not cost_known:
         codes.append("cost_unknown")
-    if artifact is not None and any(text != "test_evaluator" for text in artifact.limitations):
+    # Limitation text is free-form: it is reduced to a code and never copied out.
+    if listed - KNOWN_LIMITATIONS:
         codes.append("other")
     return codes
 

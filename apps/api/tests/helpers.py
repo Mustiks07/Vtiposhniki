@@ -140,7 +140,9 @@ def add_profile(client, *, version="v2", **retries):
     updated = base.model_copy(
         update={
             "version": version,
-            "retries": base.retries.model_copy(update=retries),
+            "retries": type(base.retries).model_validate(
+                {**base.retries.model_dump(), **retries}
+            ),
         }
     )
     services = client.app.state.services
