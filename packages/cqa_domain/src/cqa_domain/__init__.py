@@ -4,13 +4,15 @@ Pure functions only: no network, ORM, HTTP routes or UI. Shared DTOs come from
 cqa_contracts; this package never defines competing public types.
 """
 
-from cqa_contracts.models import (
-    ChecklistVersion,
-    Conversation,
-    CorpusSnapshot,
-    EvaluationArtifact,
+from .artifact import (
+    PROPOSAL_LIMITATION_CODES,
+    REVIEW_REASON_CODES,
+    REVIEW_TRIGGER_CODES,
+    automatic_proposal_problems,
+    evidence_messages,
+    validate_artifact,
+    validate_corpus,
 )
-
 from .canonical import canonical_decimal, canonical_hash, canonical_json
 from .checklist import build_checklist_version, validate_checklist, validate_checklist_draft
 from .hashing import (
@@ -30,17 +32,13 @@ from .proposals import validate_proposals
 from .rubric import original_checklist, original_checklist_draft
 from .scoring import score
 
-
-def validate_artifact(
-    conversation: Conversation,
-    checklist: ChecklistVersion,
-    corpus: CorpusSnapshot,
-    artifact: EvaluationArtifact,
-) -> None:
-    raise NotImplementedError("Claude A: implement cross-object artifact validation (A2)")
-
-
 __all__ = [
+    "PROPOSAL_LIMITATION_CODES",
+    "REVIEW_REASON_CODES",
+    "REVIEW_TRIGGER_CODES",
+    "automatic_proposal_problems",
+    "evidence_messages",
+    "validate_corpus",
     "build_checklist_version",
     "canonical_decimal",
     "canonical_hash",
