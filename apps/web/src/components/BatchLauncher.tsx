@@ -14,6 +14,11 @@ type LaunchProps = {
   initialVersionId?: string | null;
 };
 
+/** The same launch form, rendered inline (e.g. right after a pasted dialog was imported). */
+export function BatchLaunchForm(props: LaunchProps) {
+  return <LaunchForm {...props} />;
+}
+
 export function BatchLauncher(props: LaunchProps) {
   const [open, setOpen] = useState(false);
   return (

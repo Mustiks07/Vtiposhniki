@@ -8,11 +8,14 @@ export function Modal({
   title,
   onClose,
   children,
+  wide = false,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Wider dialog for side-by-side input and preview. */
+  wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -32,7 +35,7 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      className="modal"
+      className={wide ? 'modal modal-wide' : 'modal'}
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
