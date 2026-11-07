@@ -12,6 +12,7 @@ from cqa_contracts.models import (
     APIError,
     CallEvent,
     CallRecord,
+    ReasonCode,
     ScoreSummary,
     TokenUsage,
 )
@@ -79,6 +80,65 @@ class ScriptedEvaluator:
             await step(budget, call_observer)
         evaluator = SyntheticEvaluator(app_mode="test", scenario=self.scenario)
         return await evaluator(conversation, checklist, profile, corpus, budget, call_observer)
+
+
+UNDETERMINED = "__undetermined__"
+NOT_APPLICABLE = "__not_applicable__"
+
+
+class PlannedEvaluator:
+    """Answers come from the test's plan; the real cqa_domain computes every flag from them.
+
+    ``plan[external_id]`` is an exception to raise, "failed" for a failed artifact, or a map
+    of criterion ID to a choice ID, UNDETERMINED or NOT_APPLICABLE. Criteria it does not
+    name keep the first choice. The clock is the one the queue uses.
+    """
+
+    def __init__(self, clock):
+        self.plan = {}
+        self._clock = clock
+
+    @staticmethod
+    def _answered(proposal, answer):
+        if answer is None:
+            return proposal
+        if answer == UNDETERMINED:
+            update = {
+                "applicability": "undetermined",
+                "answer_choice_id": None,
+                "reason_codes": [ReasonCode.INSUFFICIENT_EVIDENCE],
+            }
+        elif answer == NOT_APPLICABLE:
+            update = {
+                "applicability": "not_applicable",
+                "answer_choice_id": None,
+                "reason_codes": [ReasonCode.NOT_APPLICABLE],
+            }
+        else:
+            update = {"answer_choice_id": answer}
+        return proposal.model_copy(update=update)
+
+    async def __call__(self, conversation, checklist, profile, corpus, budget, call_observer):
+        entry = self.plan.get(conversation.external_id, {})
+        if isinstance(entry, BaseException):
+            raise entry
+        evaluator = SyntheticEvaluator(
+            app_mode="test",
+            scenario="failed" if entry == "failed" else "complete",
+            clock=self._clock,
+        )
+        artifact = await evaluator(conversation, checklist, profile, corpus, budget, call_observer)
+        if entry == "failed":
+            return artifact
+        final = [self._answered(p, entry.get(p.criterion_id)) for p in artifact.automatic_final]
+        partial = any(p.applicability == "undetermined" for p in final)
+        return artifact.model_copy(
+            update={
+                "status": "partial" if partial else "complete",
+                "initial": final,
+                "automatic_final": final,
+            }
+        )
 
 
 def call_event(
