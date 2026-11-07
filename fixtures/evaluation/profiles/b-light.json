@@ -8,7 +8,7 @@
     "configuration_ref": "offline"
   },
   "generation": {},
-  "prompt_version": "cqa-eval-v1",
+  "prompt_version": "cqa-eval-v2",
   "preprocessing_version": "identity-v1",
   "retries": {
     "max_format_repairs": 0,

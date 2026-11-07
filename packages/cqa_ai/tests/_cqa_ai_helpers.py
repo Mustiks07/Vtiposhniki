@@ -93,7 +93,7 @@ def profile(
             "reviewer": {**sel, "model": "scripted-reviewer"} if reviewer else None,
             "fallbacks": [{**sel, "model": f"scripted-fallback-{i}"} for i in range(fallbacks)],
             "generation": {},
-            "prompt_version": "cqa-eval-v1",
+            "prompt_version": "cqa-eval-v2",
             "preprocessing_version": "identity-v1",
             "reviewer_policy": {"enabled": reviewer, "max_criteria": max_criteria},
             "retries": retries,

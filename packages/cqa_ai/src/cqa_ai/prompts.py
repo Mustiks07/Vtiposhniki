@@ -20,7 +20,8 @@ from cqa_domain import (
 from .retrieval import RetrievedChunk
 from .transport import ChatMessage
 
-PROMPT_VERSION = "cqa-eval-v1"
+# v2: known conversation date and per-source date applicability are part of the request.
+PROMPT_VERSION = "cqa-eval-v2"
 SUPPORTED_PROMPT_VERSIONS = frozenset({PROMPT_VERSION})
 PREPROCESSING_VERSION = "identity-v1"
 SUPPORTED_PREPROCESSING_VERSIONS = frozenset({PREPROCESSING_VERSION})
@@ -59,6 +60,11 @@ For calls: do not blame the operator for ASR punctuation or distorted words; do 
 tempo, diction or audibility unless audio_analyzed is true. Internal consultations and unclear \
 speaker attribution are limitations, not reasons to guess identities.
 The language of a button caption alone is not a change of the conversation language.
+Dates: conversation.occurred_at is the known conversation date or null when unknown; never \
+assume a date. Each source has date_applicability: "in_effect" (valid on the conversation \
+date), "conversation_date_unknown" or "effective_period_unknown" — in the last two cases do \
+not treat the source as proven current; add limitation "factual_verification_limited" if a \
+decision depends on it.
 reason_codes: non-empty, only from the allowed list; use "other" if none fits. rationale: \
 concise explanation in the conversation's language or Russian.
 review_flags (optional): only from the allowed list, when the case warrants an independent \
@@ -128,9 +134,12 @@ def _rubric(checklist: ChecklistDraft, channel: str, criterion_ids: set[str] | N
 
 
 def _conversation(conversation: Conversation) -> Any:
+    occurred = conversation.model_dump(mode="json", include={"occurred_at"})["occurred_at"]
     return {
         "channel": conversation.channel,
         "language": conversation.language,
+        # Known date as stored (DTO ISO form); null means unknown and is never invented.
+        "occurred_at": occurred,
         "audio_analyzed": False,
         "messages": [
             {"id": m.id, "speaker": m.speaker, "time": m.timestamp_original, "text": m.text}
@@ -154,6 +163,7 @@ def _sources(chunks: Sequence[RetrievedChunk]) -> Any:
             "effective_until": None
             if r.source.effective_until is None
             else str(r.source.effective_until),
+            "date_applicability": r.date_status,
             "text": r.chunk.text,
         }
         for r in chunks

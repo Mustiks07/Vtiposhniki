@@ -56,7 +56,7 @@ from .prompts import (
     build_repair_messages,
     prompt_size,
 )
-from .retrieval import RetrievalPolicy, RetrievedChunk, retrieve
+from .retrieval import RetrievalPolicy, RetrievedChunk, retrieve, sources_not_in_effect
 from .reviewer import mark, select_for_review
 from .transport import NO_FALLBACK, ChatMessage, ProviderFailure, ProviderTransport
 
@@ -143,6 +143,10 @@ class Evaluator:
             limitations.append("audio_not_analyzed")
         if not retrieved:
             limitations.append("knowledge_sources_empty")
+        if sources_not_in_effect(conversation, corpus):
+            limitations.append("sources_not_in_effect_excluded")
+        if any(r.date_status != "in_effect" for r in retrieved):
+            limitations.append("source_date_applicability_unknown")
 
         runner = CallRunner(
             budget=budget,

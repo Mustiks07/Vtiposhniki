@@ -15,7 +15,7 @@ rubric rules, scoring and hashing come from `cqa_domain`. No ORM, routes or UI.
 | `cqa_ai.corpus.build_corpus_snapshot`, `load_corpus_manifest`, `empty_corpus` | Pinned `CorpusSnapshot` with real chunk/corpus hashes. |
 | `python -m cqa_ai.experiments` | Baseline vs B-light replay report (see below). |
 
-## Pipeline (prompt `cqa-eval-v1`, preprocessing `identity-v1`)
+## Pipeline (prompt `cqa-eval-v2`, preprocessing `identity-v1`)
 
 1. Preconditions without calls: supported prompt/preprocessing versions, profile
    pinned to the given corpus id, transports exist, `validate_checklist`,

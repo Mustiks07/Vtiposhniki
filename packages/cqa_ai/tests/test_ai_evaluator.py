@@ -444,3 +444,96 @@ async def test_validate_artifact_rejects_tampering() -> None:
     )
     with pytest.raises(DomainValidationError):
         validate_artifact(other, CHECKLIST, corpus(), artifact)
+
+
+# --- Conversation date and source applicability (integrator regression) -----------
+
+
+def _dated_corpus() -> Any:
+    from datetime import date
+
+    from _cqa_ai_helpers import NOW
+    from cqa_ai.corpus import SourceDocument, build_corpus_snapshot
+
+    return build_corpus_snapshot(
+        "synthetic-corpus",
+        [
+            SourceDocument(
+                source_id="synthetic-rule",
+                version="2025",
+                provenance="synthetic",
+                title="Вымышленное правило пополнения",
+                text="Пополнить учебный счёт можно переводом в разделе Пополнение.",
+                retrieved_at=NOW,
+                effective_from=date(2025, 1, 1),
+            )
+        ],
+        applicability_policy="Synthetic dated source.",
+        priority_policy="Single synthetic source.",
+    )
+
+
+def _dated(occurred_at: str | None) -> Any:
+    conv = conversation()
+    data = conv.model_dump(mode="json")
+    data["occurred_at"] = occurred_at
+    from cqa_contracts.models import Conversation
+    from cqa_domain import conversation_content_hash
+
+    draft = Conversation.model_validate(data)
+    return draft.model_copy(update={"content_hash": conversation_content_hash(draft)})
+
+
+async def _prompt_payload(conv: Any) -> tuple[dict[str, Any], EvaluationArtifact]:
+    evaluator, transport, _ = make([ok(answer_all(CHECKLIST, conv))])
+    artifact, _ = await run(evaluator, conv=conv, corp=_dated_corpus())
+    return json.loads(transport.requests[0].messages[1].content), artifact
+
+
+async def test_known_date_reaches_prompt_and_filters_sources_by_effective_period() -> None:
+    before, before_artifact = await _prompt_payload(_dated("2020-06-01T10:00:00Z"))
+    after, after_artifact = await _prompt_payload(_dated("2026-06-01T10:00:00Z"))
+    assert before["conversation"]["occurred_at"] == "2020-06-01T10:00:00Z"
+    assert after["conversation"]["occurred_at"] == "2026-06-01T10:00:00Z"
+    assert before != after  # identical messages, different known dates
+    # Before the source took effect it is not offered at all.
+    assert before["sources"] == []
+    assert before_artifact.source_fragments == []
+    assert "sources_not_in_effect_excluded" in before_artifact.limitations
+    assert "knowledge_sources_empty" in before_artifact.limitations
+    # After it took effect it is offered and marked as in effect.
+    assert [s["date_applicability"] for s in after["sources"]] == ["in_effect"]
+    assert after["sources"][0]["effective_from"] == "2025-01-01"
+    assert len(after_artifact.source_fragments) == 1
+    assert "sources_not_in_effect_excluded" not in after_artifact.limitations
+    assert "source_date_applicability_unknown" not in after_artifact.limitations
+
+
+async def test_effective_until_excludes_later_conversations() -> None:
+    from datetime import date
+
+    from cqa_ai.retrieval import retrieve
+    from cqa_domain import corpus_snapshot_hash
+
+    dated = _dated_corpus()
+    source = dated.sources[0].model_copy(update={"effective_until": date(2025, 12, 31)})
+    expired = dated.model_copy(update={"sources": [source]})
+    expired = expired.model_copy(update={"content_hash": corpus_snapshot_hash(expired)})
+    assert retrieve(_dated("2026-06-01T10:00:00Z"), expired) == []
+    in_effect = retrieve(_dated("2025-12-31T23:00:00Z"), expired)
+    assert [r.date_status for r in in_effect] == ["in_effect"]
+
+
+async def test_unknown_date_is_not_invented_and_source_is_marked() -> None:
+    payload, artifact = await _prompt_payload(_dated(None))
+    assert payload["conversation"]["occurred_at"] is None
+    assert [s["date_applicability"] for s in payload["sources"]] == ["conversation_date_unknown"]
+    assert "source_date_applicability_unknown" in artifact.limitations
+    assert "sources_not_in_effect_excluded" not in artifact.limitations
+
+
+async def test_undated_source_is_marked_effective_period_unknown() -> None:
+    evaluator, transport, _ = make([ok(full())])
+    await run(evaluator, conv=_dated("2026-06-01T10:00:00Z"))  # helper corpus has no dates
+    sources = json.loads(transport.requests[0].messages[1].content)["sources"]
+    assert sources and {s["date_applicability"] for s in sources} == {"effective_period_unknown"}
