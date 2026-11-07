@@ -1,14 +1,39 @@
-# Claude A handoff — domain + AI (2026-11-07, updated after integrator review)
+# Claude A handoff — domain + AI (2026-11-07, updated after integrator review and sync to b9e69c9)
 
 - Foundation SHA: `e526aef85ad9a368b7389488514f0d53ed531ef0` (verified with `git rev-parse HEAD` before work).
 - Branch: `claude/domain-ai` (the assigned name; no remapping). Not merged into `main`.
 - Stages: A0–A5 delivered as offline-verified code. Real provider runs: **not performed**.
 - Commits: A1 `1bf14b8756d2eb7d89132ad17c6e75fa79f2a113` (first verified checkpoint for B);
   A2/A3 `a8e506c`; A4/A5 `93c7738d49856f2d478f4af652d72f4a420a58e5` (first delivery);
-  integrator fixes `0edc43e`, `2304a56`, `283758d` (below). The handoff update itself is
-  the next commit; a commit cannot embed its own SHA (`git log -1 -- docs/handoffs/claude-domain-ai.md`).
+  integrator fixes `0edc43e`, `2304a56`, `283758d`; handoff `36adbdb`; fast-forward to
+  shared `b9e69c9`; flag regressions and this update follow (a commit cannot embed its own
+  SHA: `git log -1 -- docs/handoffs/claude-domain-ai.md`).
 - Changed paths: only `packages/cqa_domain/**`, `packages/cqa_ai/**`, `fixtures/evaluation/**`
   and this file. No shared contract, manifest, lockfile, CI, README or foreign handoff edited.
+
+## Sync to shared b9e69c9 (addendum 05, flag filter contract 1.1.0)
+
+- Merged `b9e69c94c373b1192b8b7694fa71049d4c3f48ef` (integration/gpt-pro, tags
+  `integration-v1.1.1`/`contracts-v1.1.0`) into `claude/domain-ai`. The previous head
+  `36adbdb` was its ancestor, so the merge is a fast-forward (no rewrite, no force-push).
+  The integration did not change any A path.
+- Read `docs/specs/05_ORGANIZER_ADDENDUM.md` and `docs/FLAG_FILTER_CONTRACT.md`. A's
+  part is the flag state produced by `cqa_domain.score(...).flags`, which B reads for
+  `automatic_score`/`effective_score`. The existing behaviour already meets it, so no
+  production code changed; it is now pinned by regression tests
+  (`packages/cqa_domain/tests/test_domain_flags.py`, plus an evaluator-level test):
+  - explicit triggering answer → `detected=true`, also when other criteria are
+    undetermined (artifact partial, score `incomplete_evaluation`, total null);
+  - explicit non-triggering answer → `false`; N/A and undetermined → `null`, never `false`;
+  - arbitrary flag criterion IDs/choice IDs work through `flag_when_choice_ids`
+    (no reliance on №8, titles or totals); a flag never changes the total;
+  - automatic and effective sets are scored independently (automatic `true` stays
+    `true` after a human change of the effective set to `false`);
+  - a flag-only checklist reports the flag with `no_applicable_weight`.
+- Original rubric, steps, weights, N/A rules and arithmetic are unchanged
+  (`fixtures/evaluation/original-checklist.json` drift check passes). No ensemble was added.
+- The production smoke on `gemini-3.5-flash-lite` was reported by the integrator; A did
+  not run or re-verify a live call in this sync.
 
 ## Integrator review of 93c7738 — fixes
 
@@ -94,14 +119,14 @@ Stable limitation codes in artifacts: `test_evaluator`, `audio_not_analyzed`,
 | Command | Result |
 |---|---|
 | `uv sync --locked --all-packages --dev` | ok |
-| `uv run pytest packages/cqa_domain` | 140 passed |
-| `uv run pytest packages/cqa_ai` | 89 passed |
-| `uv run pytest` | 299 passed, 1 foundation Starlette deprecation warning, exit 0 |
+| `uv run pytest packages/cqa_domain` | 150 passed (after sync to b9e69c9) |
+| `uv run pytest packages/cqa_ai` | 90 passed (after sync to b9e69c9) |
+| `uv run pytest` | 515 passed on the merged base (A + contracts + B), 1 Starlette deprecation warning, exit 0 |
 | `uv run ruff check .` | All checks passed, exit 0 |
-| `uv run mypy` | Success, 34 source files, exit 0 |
+| `uv run mypy` | Success, 56 source files, exit 0 |
 | `uv run python scripts/generate_contracts.py --check` | no drift, exit 0 |
 | `uv run python -m cqa_domain rubric --check fixtures/evaluation/original-checklist.json` | up to date, exit 0 |
-| `uv run python scripts/check.py` (after `npm ci`, `npx playwright install chromium`) | "Foundation checks passed", exit 0 (rerun at `283758d`) |
+| `uv run python scripts/check.py` (after `npm ci`, `npx playwright install chromium`) | exit 0 on the merged base: contract drift none, ruff, mypy 56 files, pytest 515, vitest 26, Playwright 29 (explicit test mode; no live provider) |
 | Replay: `uv run python -m cqa_ai.experiments --dataset fixtures/evaluation --profile baseline=fixtures/evaluation/profiles/baseline.json --profile "b-light=fixtures/evaluation/profiles/b-light.json,fixtures/evaluation/corpus/manifest.json"` | exit 0; 6 synthetic cases, baseline 6 calls / B-light 8 calls (2 blind reviews: 1 agreed, 1 conflicted, initial kept), 0 changed decisions, cost null |
 
 Not run: any real Gemini/DeepSeek/OpenRouter call; real DEV evaluation; GitHub CI
