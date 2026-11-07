@@ -16,6 +16,7 @@ import { NotFound } from './pages/NotFound';
 const ComparisonPage = lazy(() =>
   import('./pages/ComparisonPage').then((module) => ({ default: module.ComparisonPage })),
 );
+const TutorialPage = lazy(() => import('./pages/TutorialPage').then((module) => ({ default: module.TutorialPage })));
 const ChecklistEditorPage = lazy(() =>
   import('./pages/ChecklistEditorPage').then((module) => ({ default: module.ChecklistEditorPage })),
 );
@@ -127,6 +128,14 @@ export const routes = [
         ),
       },
       { path: 'evaluations/:id', element: <EvaluationPage /> },
+      {
+        path: 'example/:exampleId',
+        element: (
+          <Suspense fallback={<Loading />}>
+            <TutorialPage />
+          </Suspense>
+        ),
+      },
       { path: 'batches/:id', element: <BatchPage /> },
       { path: 'checklists', element: <ChecklistsPage /> },
       {

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useId, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Channel, ImportRecord, ImportResult, JSONImport, Language } from '../api/types';
@@ -70,9 +70,25 @@ function ImportResultView({ result }: { result: ImportResult }) {
 
 type ImportMode = 'paste' | 'json' | 'organizer';
 
-export function ImportPanel() {
+export function ImportPanel({ pasteRequest = null }: { pasteRequest?: { exampleId: string | null } | null } = {}) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ImportMode>('json');
+  const [seed, setSeed] = useState<string | null>(null);
+  // Opened from the tutorial: plain-text mode; the example text is offered only on request.
+  useEffect(() => {
+    if (!pasteRequest) return;
+    setMode('paste');
+    setOpen(true);
+    if (!pasteRequest.exampleId) return;
+    let cancelled = false;
+    void import('../tutorial/example').then(({ tutorialExample, exampleAsPlainText }) => {
+      const example = tutorialExample(pasteRequest.exampleId);
+      if (!cancelled && example) setSeed(exampleAsPlainText(example));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pasteRequest]);
   return (
     <>
       <button
@@ -120,7 +136,7 @@ export function ImportPanel() {
           </fieldset>
           {/* Both forms stay mounted, so switching the source never loses typed input. */}
           <div hidden={mode !== 'paste'}>
-            <PasteDialogForm />
+            <PasteDialogForm seed={seed} />
           </div>
           <div hidden={mode === 'paste'}>
             <ImportForm mode={mode === 'organizer' ? 'organizer' : 'json'} />
@@ -250,7 +266,7 @@ interface Imported {
  * after a network error re-sends the same record; the server's revision rules decide whether
  * anything new is stored. Nothing is kept in browser storage.
  */
-function PasteDialogForm() {
+function PasteDialogForm({ seed = null }: { seed?: string | null }) {
   const queryClient = useQueryClient();
   const ids = {
     text: useId(),
@@ -261,6 +277,19 @@ function PasteDialogForm() {
     errors: useId(),
   };
   const [text, setText] = useState('');
+  const [seedNote, setSeedNote] = useState<string | null>(null);
+  // A seed never overwrites a draft the user already typed.
+  useEffect(() => {
+    if (!seed) return;
+    setText((current) => {
+      if (current.trim()) {
+        setSeedNote('В поле уже есть ваш текст — пример не перенесён.');
+        return current;
+      }
+      setSeedNote('Текст учебного примера перенесён для редактирования. Импорт и оценка выполняются только по вашей команде.');
+      return seed;
+    });
+  }, [seed]);
   const [language, setLanguage] = useState<Language>('RU');
   const [channel, setChannel] = useState<Channel>('agent_chat');
   const [externalId, setExternalId] = useState(() => newPastedExternalId());
@@ -368,6 +397,11 @@ function PasteDialogForm() {
         </div>
 
         <label htmlFor={ids.text}>Текст диалога</label>
+        {seedNote ? (
+          <p className="hint" data-testid="paste-seed-note">
+            {seedNote}
+          </p>
+        ) : null}
         <textarea
           id={ids.text}
           className="paste-text"

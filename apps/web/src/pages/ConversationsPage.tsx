@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { ConversationSummary } from '../api/types';
 import { BatchLauncher } from '../components/BatchLauncher';
 import { FlagCell, FlagFilters, SearchScope, flagCriteria, useSelectedVersion } from '../components/FlagSearch';
 import { ImportPanel } from '../components/ImportPanel';
+import { DEFAULT_EXAMPLE_ID } from '../tutorial/ids';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { FILTER_KEYS, PAGE_SIZE, parseConversationQuery, withFilter } from '../lib/conversationQuery';
 import { channelLabel, evaluationListStatusLabel, languageLabel } from '../lib/labels';
@@ -27,6 +28,17 @@ function preview(summary: ConversationSummary): string {
 
 export function ConversationsPage() {
   const [params, setParams] = useSearchParams();
+  // `?paste=open[&example=<id>]` (from the tutorial) opens the plain-text import once; the
+  // dialog text itself never travels through the URL. The parameters are then removed.
+  const [pasteRequest, setPasteRequest] = useState<{ exampleId: string | null } | null>(null);
+  useEffect(() => {
+    if (params.get('paste') !== 'open') return;
+    setPasteRequest({ exampleId: params.get('example') });
+    const next = new URLSearchParams(params);
+    next.delete('paste');
+    next.delete('example');
+    setParams(next, { replace: true });
+  }, [params, setParams]);
   const parsed = parseConversationQuery(params);
   const { query, offset } = parsed;
   const language = query.language ?? null;
@@ -85,7 +97,10 @@ export function ConversationsPage() {
           <p className="page-intro">Разговор, оценка и основания для каждого решения.</p>
         </div>
         <div className="page-actions">
-          <ImportPanel />
+          <Link className="button" to={`/example/${DEFAULT_EXAMPLE_ID}`} data-testid="open-example">
+            Посмотреть пример
+          </Link>
+          <ImportPanel pasteRequest={pasteRequest} />
           <BatchLauncher
             conversationIds={selected}
             initialChecklistId={params.get('launch_checklist')}
@@ -251,7 +266,14 @@ export function ConversationsPage() {
           {list.isError ? <ErrorPanel error={list.error} onRetry={() => list.refetch()} /> : null}
           {list.data && !list.isError && items.length === 0 ? (
             <Empty title={hasFilters ? 'Нет разговоров по выбранным условиям' : 'Разговоров пока нет'}>
-              {hasFilters ? 'Измените условия поиска.' : 'Импортируйте разговоры через JSON или API организаторов.'}
+              {hasFilters ? (
+                'Измените условия поиска.'
+              ) : (
+                <>
+                  Вставьте диалог текстом или импортируйте JSON / данные организаторов.{' '}
+                  <Link to={`/example/${DEFAULT_EXAMPLE_ID}`}>Посмотреть пример</Link> — как читать оценку.
+                </>
+              )}
             </Empty>
           ) : null}
           {items.length > 0 && !list.isError ? (
