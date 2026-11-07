@@ -1,13 +1,32 @@
 import { expect, test } from '@playwright/test';
-import { createChecklist, criterion, draft, evaluation, importViaApi, record, runBatchApi, servers, uid } from './support';
+import {
+  createChecklist,
+  criterion,
+  draft,
+  evaluation,
+  importViaApi,
+  record,
+  runBatchApi,
+  servers,
+  uid,
+} from './support';
 
-test('U06: definition changed in the UI → new version saved → fresh run applies it; old card keeps old rules', async ({ page, request }) => {
+test('U06: definition changed in the UI → new version saved → fresh run applies it; old card keeps old rules', async ({
+  page,
+  request,
+}) => {
   const base = servers.complete;
   const title = uid('U06 чек-лист');
   const v1 = await createChecklist(
     request,
     base,
-    draft(title, [criterion('u6-greet', { weight: '50', title: 'Приветствие', definition: 'Старое определение: оператор поздоровался.' })]),
+    draft(title, [
+      criterion('u6-greet', {
+        weight: '50',
+        title: 'Приветствие',
+        definition: 'Старое определение: оператор поздоровался.',
+      }),
+    ]),
   );
   const externalId = uid('u06');
   const imp = await importViaApi(request, base, [record(externalId)]);
@@ -21,7 +40,7 @@ test('U06: definition changed in the UI → new version saved → fresh run appl
   await greet.getByLabel('Определение').fill('Новое определение: оператор поздоровался и представился по имени.');
   await greet.getByLabel('Вес').fill('30');
   await page.getByRole('button', { name: '+ Критерий' }).click();
-  const added = page.getByTestId('editor-criterion').nth(1);
+  const added = page.getByTestId('editor-criterion').first();
   await added.getByLabel('Название', { exact: true }).fill('Резюме разговора');
   await added.getByLabel('Определение').fill('Оператор подвёл итог разговора.');
   await added.getByLabel('Вес').fill('70');
@@ -34,7 +53,10 @@ test('U06: definition changed in the UI → new version saved → fresh run appl
   const diff = page.getByTestId('version-diff');
   await expect(diff.getByTestId('diff-item').filter({ hasText: 'Приветствие' })).toContainText('определение');
   await expect(diff.getByTestId('diff-item').filter({ hasText: 'Приветствие' })).toContainText('вес');
-  await expect(diff.getByTestId('diff-item').filter({ hasText: 'Резюме разговора' })).toHaveAttribute('data-kind', 'added');
+  await expect(diff.getByTestId('diff-item').filter({ hasText: 'Резюме разговора' })).toHaveAttribute(
+    'data-kind',
+    'added',
+  );
   const v2 = (await page.getByTestId('version-saved').locator('code').textContent())!;
 
   // Fresh run with the new version from the UI.
@@ -49,7 +71,9 @@ test('U06: definition changed in the UI → new version saved → fresh run appl
 
   // New rules applied: new definition, new criterion, server arithmetic 30·1 + 70·0 over 100 = 30,00.
   await page.getByTestId('criterion-item').filter({ hasText: 'Приветствие' }).click();
-  await expect(page.getByTestId('criterion-detail')).toContainText('Новое определение: оператор поздоровался и представился по имени.');
+  await expect(page.getByTestId('criterion-detail')).toContainText(
+    'Новое определение: оператор поздоровался и представился по имени.',
+  );
   await expect(page.getByTestId('weighted')).toHaveText('30 / 30');
   await expect(page.getByTestId('criterion-item').filter({ hasText: 'Резюме разговора' })).toContainText('Нет');
   await expect(page.getByTestId('automatic-total')).toHaveText('30,00 из 100');

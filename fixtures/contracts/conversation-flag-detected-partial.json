@@ -66,5 +66,12 @@
       "detected": true,
       "answer_choice_id": "yes"
     }
-  }
+  },
+  "total_score": null,
+  "result_scope": "automatic",
+  "detected_flag": null,
+  "checklist_version_id": null,
+  "profile_id": null,
+  "open_appeals": 0,
+  "review_reasons": []
 }

@@ -15,6 +15,7 @@ from .models import (
     FlagResult,
     Job,
     Nonempty,
+    Percentage,
     SourceVersion,
     UTCDateTime,
 )
@@ -128,10 +129,14 @@ class ProfileSummary(DTO):
     profile: EvaluatorProfile
     configured: bool
     configuration_error: APIError | None = None
+    preferred: bool = False
 
 
 FlagStatus = Literal["detected", "not_detected", "unknown"]
 FlagScope = Literal["automatic", "effective"]
+WorkQueue = Literal["flagged", "needs_review", "open_appeals"]
+ConversationSort = Literal["newest", "score_asc", "score_desc"]
+ReviewReason = Literal["incomplete", "conflict", "open_appeal", "evaluation_failed"]
 
 
 class ConversationFlagQuery(DTO):
@@ -165,8 +170,11 @@ class ConversationFlagSummary(DTO):
     @model_validator(mode="after")
     def consistent_status(self) -> Self:
         expected = (
-            "unknown" if self.result.detected is None
-            else "detected" if self.result.detected else "not_detected"
+            "unknown"
+            if self.result.detected is None
+            else "detected"
+            if self.result.detected
+            else "not_detected"
         )
         if self.status != expected:
             raise ValueError("Flag status must agree with the tri-state FlagResult")
@@ -178,6 +186,13 @@ class ConversationSummary(DTO):
     latest_evaluation_id: ID | None = None
     evaluation_status: Literal["unevaluated", "complete", "partial", "failed", "pending"]
     flag_summary: ConversationFlagSummary | None = None
+    total_score: Percentage | None = None
+    result_scope: FlagScope = "automatic"
+    detected_flag: bool | None = None
+    checklist_version_id: ID | None = None
+    profile_id: ID | None = None
+    open_appeals: int = Field(default=0, ge=0)
+    review_reasons: list[ReviewReason] = Field(default_factory=list)
 
 
 class VersionList(Page[ChecklistVersion]):

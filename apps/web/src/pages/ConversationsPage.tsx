@@ -9,6 +9,14 @@ import { ImportPanel } from '../components/ImportPanel';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { FILTER_KEYS, PAGE_SIZE, parseConversationQuery, withFilter } from '../lib/conversationQuery';
 import { channelLabel, evaluationListStatusLabel, languageLabel } from '../lib/labels';
+import { shortId, totalRu } from '../lib/format';
+
+const reviewLabels = {
+  incomplete: 'Неполная оценка',
+  conflict: 'Спорный вывод',
+  open_appeal: 'Открытая апелляция',
+  evaluation_failed: 'Ошибка оценки',
+};
 
 function preview(summary: ConversationSummary): string {
   const first =
@@ -29,7 +37,7 @@ export function ConversationsPage() {
   const version = useSelectedVersion(parsed.versionId);
   const flagTitle = new Map(flagCriteria(version.data).map((c) => [c.id, c.title]));
 
-  // Filtering, counting and paging happen on the server (contract 1.1.0), never on this page.
+  // Filtering, counting and paging happen on the server (API 1.4.0), never on this page.
   const list = useQuery({
     queryKey: ['conversations', query],
     queryFn: ({ signal }) => api.listConversations(query, signal),
@@ -38,6 +46,10 @@ export function ConversationsPage() {
 
   function setFilter(key: (typeof FILTER_KEYS)[number], value: string | null, extra?: Record<string, string>) {
     let next = withFilter(params, key, value);
+    if (key === 'flag_scope') next = withFilter(next, 'result_scope', value);
+    if (key === 'result_scope' && parsed.flagCriterionId) next = withFilter(next, 'flag_scope', value);
+    if (key === 'flag_criterion_id' && value)
+      next = withFilter(next, 'flag_scope', query.result_scope ?? 'automatic');
     for (const [k, v] of Object.entries(extra ?? {}))
       next = new URLSearchParams(withFilter(next, k as (typeof FILTER_KEYS)[number], v));
     setParams(next);
@@ -48,7 +60,14 @@ export function ConversationsPage() {
     else next.delete('offset');
     setParams(next);
   }
-  const hasFilters = Boolean(language || channel || status || parsed.versionId);
+  const hasFilters = Boolean(
+    language || channel || status || parsed.versionId || query.q || query.work_queue || query.max_score != null,
+  );
+  function quickFilter(queue: 'flagged' | 'needs_review' | 'open_appeals' | 'unevaluated' | null) {
+    let next = withFilter(params, 'work_queue', queue === 'unevaluated' ? null : queue);
+    next = withFilter(next, 'status', queue === 'unevaluated' ? 'unevaluated' : null);
+    setParams(next);
+  }
   function toggle(id: string) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   }
@@ -80,6 +99,82 @@ export function ConversationsPage() {
             Список разговоров
           </h2>
           <div className="filter-panel">
+            <div className="worklist-toolbar">
+              <form
+                className="worklist-search"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const value = new FormData(event.currentTarget).get('q');
+                  setFilter('q', typeof value === 'string' ? value.trim() || null : null);
+                }}
+              >
+                <label className="visually-hidden" htmlFor={`${ids.lang}-search`}>
+                  Поиск по ID или тексту
+                </label>
+                <input
+                  id={`${ids.lang}-search`}
+                  key={query.q ?? ''}
+                  name="q"
+                  type="search"
+                  maxLength={200}
+                  defaultValue={query.q ?? ''}
+                  placeholder="ID разговора или слова из диалога"
+                />
+                <button type="submit">Найти</button>
+                {query.q ? (
+                  <button type="button" className="link" onClick={() => setFilter('q', null)}>
+                    Сбросить
+                  </button>
+                ) : null}
+              </form>
+              <label className="worklist-select">
+                Порядок
+                <select value={query.sort ?? 'newest'} onChange={(e) => setFilter('sort', e.target.value)}>
+                  <option value="newest">Сначала новые</option>
+                  <option value="score_asc">Сначала низкий балл</option>
+                  <option value="score_desc">Сначала высокий балл</option>
+                </select>
+              </label>
+              <label className="worklist-select">
+                Оценка в списке
+                <select
+                  value={query.result_scope ?? parsed.flagScope}
+                  onChange={(e) => setFilter('result_scope', e.target.value)}
+                >
+                  <option value="automatic">Исходная AI-оценка</option>
+                  <option value="effective">С учётом пересмотра</option>
+                </select>
+              </label>
+            </div>
+            <div className="quick-filters" role="group" aria-label="Быстрый отбор">
+              <button type="button" aria-pressed={!query.work_queue && !status} onClick={() => quickFilter(null)}>
+                Все диалоги
+              </button>
+              <button
+                type="button"
+                aria-pressed={query.work_queue === 'flagged'}
+                onClick={() => quickFilter('flagged')}
+              >
+                Есть нарушения
+              </button>
+              <button
+                type="button"
+                aria-pressed={query.work_queue === 'needs_review'}
+                onClick={() => quickFilter('needs_review')}
+              >
+                Нужна проверка
+              </button>
+              <button type="button" aria-pressed={status === 'unevaluated'} onClick={() => quickFilter('unevaluated')}>
+                Без оценки
+              </button>
+              <button
+                type="button"
+                aria-pressed={query.work_queue === 'open_appeals'}
+                onClick={() => quickFilter('open_appeals')}
+              >
+                Открытые апелляции
+              </button>
+            </div>
             <div className="filters" role="group" aria-label="Фильтры">
               <div>
                 <label htmlFor={ids.lang}>Язык</label>
@@ -124,6 +219,19 @@ export function ConversationsPage() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label htmlFor={`${ids.status}-max`}>Баллы не выше</label>
+                <input
+                  id={`${ids.status}-max`}
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={params.get('max_score') ?? ''}
+                  placeholder="Любые"
+                  onChange={(e) => setFilter('max_score', e.target.value || null)}
+                />
+              </div>
             </div>
             <FlagFilters parsed={parsed} onChange={setFilter} />
           </div>
@@ -165,10 +273,10 @@ export function ConversationsPage() {
                     </th>
                     <th scope="col">Разговор</th>
                     <th scope="col">Канал / язык</th>
-                    <th scope="col">Версия</th>
-                    <th scope="col">Реплик</th>
+                    <th scope="col">Балл / 100</th>
+                    <th scope="col">{parsed.flagCriterionId ? 'Флаг' : 'Нарушения'}</th>
                     <th scope="col">Статус</th>
-                    {parsed.flagCriterionId ? <th scope="col">Флаг</th> : null}
+                    <th scope="col">Проверка</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -200,8 +308,42 @@ export function ConversationsPage() {
                         <td>
                           {channelLabel[c.channel]} · {c.language}
                         </td>
-                        <td>{c.revision}</td>
-                        <td>{c.messages.length}</td>
+                        <td className="score-cell">
+                          <strong data-testid="row-score">{totalRu(summary.total_score)}</strong>
+                          <small className="muted">
+                            {summary.checklist_version_id
+                              ? `Версия ${shortId(summary.checklist_version_id)}`
+                              : 'Нет запуска'}
+                          </small>
+                        </td>
+                        <td>
+                          {parsed.flagCriterionId && summary.flag_summary ? (
+                            <FlagCell
+                              summary={summary.flag_summary}
+                              evaluationId={summary.latest_evaluation_id}
+                              title={
+                                flagTitle.get(summary.flag_summary.result.criterion_id) ??
+                                summary.flag_summary.result.criterion_id
+                              }
+                            />
+                          ) : (
+                            <Badge
+                              status={
+                                summary.detected_flag === true
+                                  ? 'failed'
+                                  : summary.detected_flag === false
+                                    ? 'complete'
+                                    : 'unevaluated'
+                              }
+                            >
+                              {summary.detected_flag === true
+                                ? 'Обнаружены'
+                                : summary.detected_flag === false
+                                  ? 'Не обнаружены'
+                                  : 'Неизвестно'}
+                            </Badge>
+                          )}
+                        </td>
                         <td>
                           <Badge status={summary.evaluation_status}>
                             {evaluationListStatusLabel[summary.evaluation_status]}
@@ -215,22 +357,19 @@ export function ConversationsPage() {
                             </>
                           ) : null}
                         </td>
-                        {parsed.flagCriterionId ? (
-                          <td>
-                            {summary.flag_summary ? (
-                              <FlagCell
-                                summary={summary.flag_summary}
-                                evaluationId={summary.latest_evaluation_id}
-                                title={
-                                  flagTitle.get(summary.flag_summary.result.criterion_id) ??
-                                  summary.flag_summary.result.criterion_id
-                                }
-                              />
-                            ) : (
-                              <span className="muted">сервер не вернул состояние флага</span>
-                            )}
-                          </td>
-                        ) : null}
+                        <td className="review-cell">
+                          {(summary.review_reasons ?? []).map((reason) => (
+                            <small key={reason} className="review-reason">
+                              {reviewLabels[reason]}
+                            </small>
+                          ))}
+                          {summary.open_appeals && summary.latest_evaluation_id ? (
+                            <Link to={`/appeals?evaluation_id=${encodeURIComponent(summary.latest_evaluation_id)}`}>
+                              Апелляций: {summary.open_appeals}
+                            </Link>
+                          ) : null}
+                          {!summary.review_reasons?.length ? <span className="muted">—</span> : null}
+                        </td>
                       </tr>
                     );
                   })}

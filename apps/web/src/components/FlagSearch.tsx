@@ -41,7 +41,7 @@ export function FlagFilters({
   const version = useSelectedVersion(parsed.versionId);
   const flags = flagCriteria(version.data);
   const scopeName = useId();
-  const [expanded, setExpanded] = useState(() => Boolean(parsed.versionId) || window.innerWidth > 760);
+  const [expanded, setExpanded] = useState(() => Boolean(parsed.versionId));
 
   return (
     <details className="advanced-filters" open={expanded} onToggle={(event) => setExpanded(event.currentTarget.open)}>
@@ -155,14 +155,15 @@ export function SearchScope({ parsed, total }: { parsed: ParsedQuery; total: num
   if (!parsed.versionId) {
     return (
       <p className="search-scope" data-testid="search-scope">
-        Область: все разговоры, текущая revision, последний запуск любого чек-листа.
+        Последний запуск по текущей версии разговора · любой чек-лист ·{' '}
+        {parsed.query.result_scope === 'effective' ? 'с учётом пересмотра' : 'исходная AI-оценка'}.
         {total !== undefined ? ` Найдено: ${total}.` : ''}
       </p>
     );
   }
   return (
     <p className="search-scope" data-testid="search-scope" aria-live="polite">
-      Область: текущая revision каждого разговора · последний запуск версии <code>{shortId(parsed.versionId)}</code>
+      Последний запуск по текущей версии разговора · чек-лист <code>{shortId(parsed.versionId)}</code>
       {version.data ? ` («${version.data.title}»)` : ''}
       {flag ? (
         <>

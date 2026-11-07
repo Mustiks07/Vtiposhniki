@@ -1,17 +1,24 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { createHashRouter, Navigate, NavLink, Outlet, RouterProvider, useLocation } from 'react-router-dom';
 import { api } from './api/client';
 import { Icon } from './components/Icon';
 import { AppealsPage } from './pages/AppealsPage';
 import { BatchPage } from './pages/BatchPage';
 import { ChecklistPage, ChecklistVersionRedirect } from './pages/ChecklistPage';
-import { ChecklistEditorPage } from './pages/ChecklistEditorPage';
 import { ChecklistsPage } from './pages/ChecklistsPage';
 import { ConversationPage } from './pages/ConversationPage';
+import { Loading } from './components/States';
 import { ConversationsPage } from './pages/ConversationsPage';
 import { EvaluationPage } from './pages/EvaluationPage';
 import { NotFound } from './pages/NotFound';
+
+const ComparisonPage = lazy(() =>
+  import('./pages/ComparisonPage').then((module) => ({ default: module.ComparisonPage })),
+);
+const ChecklistEditorPage = lazy(() =>
+  import('./pages/ChecklistEditorPage').then((module) => ({ default: module.ChecklistEditorPage })),
+);
 
 function HealthLine() {
   const health = useQuery({ queryKey: ['health'], queryFn: ({ signal }) => api.health(signal), retry: 0 });
@@ -111,11 +118,33 @@ export const routes = [
       { index: true, element: <Navigate to="/conversations" replace /> },
       { path: 'conversations', element: <ConversationsPage /> },
       { path: 'conversations/:id', element: <ConversationPage /> },
+      {
+        path: 'conversations/:id/compare',
+        element: (
+          <Suspense fallback={<Loading />}>
+            <ComparisonPage />
+          </Suspense>
+        ),
+      },
       { path: 'evaluations/:id', element: <EvaluationPage /> },
       { path: 'batches/:id', element: <BatchPage /> },
       { path: 'checklists', element: <ChecklistsPage /> },
-      { path: 'checklists/new', element: <ChecklistEditorPage /> },
-      { path: 'checklists/:id/edit', element: <ChecklistEditorPage /> },
+      {
+        path: 'checklists/new',
+        element: (
+          <Suspense fallback={<Loading />}>
+            <ChecklistEditorPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'checklists/:id/edit',
+        element: (
+          <Suspense fallback={<Loading />}>
+            <ChecklistEditorPage />
+          </Suspense>
+        ),
+      },
       { path: 'checklists/version/:versionId', element: <ChecklistVersionRedirect /> },
       { path: 'checklists/:id', element: <ChecklistPage /> },
       { path: 'appeals', element: <AppealsPage /> },

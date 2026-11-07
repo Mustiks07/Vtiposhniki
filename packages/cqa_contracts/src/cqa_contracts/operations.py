@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException
 from . import API_VERSION
 from .http_models import (
     ChecklistSummary,
+    ConversationSort,
     ConversationSummary,
     CreateAppeal,
     CreateBatch,
@@ -29,6 +30,7 @@ from .http_models import (
     Page,
     ProfileSummary,
     VersionList,
+    WorkQueue,
 )
 from .interfaces import ContractError
 from .models import (
@@ -101,6 +103,11 @@ async def list_conversations(
     flag_criterion_id: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
     flag_status: FlagStatus | None = None,
     flag_scope: FlagScope = "automatic",
+    q: Annotated[str | None, Query(max_length=200)] = None,
+    work_queue: WorkQueue | None = None,
+    sort: ConversationSort = "newest",
+    max_score: Annotated[float | None, Query(ge=0, le=100, allow_inf_nan=False)] = None,
+    result_scope: FlagScope = "automatic",
 ) -> None:
     conversation_flag_query(checklist_version_id, flag_criterion_id, flag_status, flag_scope)
     unimplemented()

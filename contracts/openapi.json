@@ -852,8 +852,32 @@
       "ConversationSummary": {
         "additionalProperties": false,
         "properties": {
+          "checklist_version_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checklist Version Id"
+          },
           "conversation": {
             "$ref": "#/components/schemas/Conversation"
+          },
+          "detected_flag": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detected Flag"
           },
           "evaluation_status": {
             "enum": [
@@ -889,11 +913,64 @@
             ],
             "title": "Latest Evaluation Id"
           },
+          "open_appeals": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Open Appeals",
+            "type": "integer"
+          },
+          "profile_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Id"
+          },
+          "result_scope": {
+            "default": "automatic",
+            "enum": [
+              "automatic",
+              "effective"
+            ],
+            "title": "Result Scope",
+            "type": "string"
+          },
+          "review_reasons": {
+            "items": {
+              "enum": [
+                "incomplete",
+                "conflict",
+                "open_appeal",
+                "evaluation_failed"
+              ],
+              "type": "string"
+            },
+            "title": "Review Reasons",
+            "type": "array"
+          },
           "schema_version": {
             "const": "1.0",
             "default": "1.0",
             "title": "Schema Version",
             "type": "string"
+          },
+          "total_score": {
+            "anyOf": [
+              {
+                "pattern": "^-?\\d+(\\.\\d+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Score"
           }
         },
         "required": [
@@ -3138,6 +3215,11 @@
             "title": "Configured",
             "type": "boolean"
           },
+          "preferred": {
+            "default": false,
+            "title": "Preferred",
+            "type": "boolean"
+          },
           "profile": {
             "$ref": "#/components/schemas/EvaluatorProfile"
           },
@@ -4586,7 +4668,7 @@
   },
   "info": {
     "title": "CQA API",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5754,6 +5836,91 @@
                 "effective"
               ],
               "title": "Flag Scope",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "work_queue",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "flagged",
+                    "needs_review",
+                    "open_appeals"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Work Queue"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "newest",
+              "enum": [
+                "newest",
+                "score_asc",
+                "score_desc"
+              ],
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "max_score",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Score"
+            }
+          },
+          {
+            "in": "query",
+            "name": "result_scope",
+            "required": false,
+            "schema": {
+              "default": "automatic",
+              "enum": [
+                "automatic",
+                "effective"
+              ],
+              "title": "Result Scope",
               "type": "string"
             }
           }

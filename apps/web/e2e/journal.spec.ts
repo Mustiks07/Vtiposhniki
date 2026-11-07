@@ -164,6 +164,7 @@ test('journal: required desktop and phone layouts keep the viewport readable', a
   await page.screenshot({ path: path.join(screenshots, 'import-1440.png') });
   await page.getByRole('button', { name: 'Закрыть окно' }).click();
   await page.goto(`/#/checklists/${version.checklist_id}/edit`);
-  await expect(page.getByTestId('editor-criterion')).toHaveCount(8);
+  await expect(page.getByTestId('editor-criterion')).toHaveCount(1);
+  await expect(page.getByRole('navigation', { name: 'Критерии в редакторе' }).getByRole('button')).toHaveCount(8);
   await page.screenshot({ path: path.join(screenshots, 'editor-1440.png') });
 });

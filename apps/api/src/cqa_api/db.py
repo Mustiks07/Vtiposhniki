@@ -67,6 +67,10 @@ class Database:
         def configure(dbapi_connection: Any, _record: Any) -> None:
             # Driver autocommit: transaction boundaries are the explicit BEGIN below.
             dbapi_connection.isolation_level = None
+            # SQLite lower()/LIKE are ASCII-only; text search must also handle RU/KZ.
+            dbapi_connection.create_function(
+                "cqa_casefold", 1, lambda value: str(value or "").casefold(), deterministic=True
+            )
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA journal_mode=WAL")
             cursor.execute("PRAGMA foreign_keys=ON")

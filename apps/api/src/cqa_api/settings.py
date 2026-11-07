@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     data_dir: Path = Path("data/private")
     database_url: str = "sqlite:///data/private/cqa.sqlite3"
     config_dir: Path | None = None  # default: <data_dir>/config
+    default_evaluator_profile: str | None = None
     seed_original_checklist: bool = True
     dataset_url: SecretStr | None = None
 

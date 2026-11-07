@@ -691,7 +691,11 @@ export interface components {
         };
         /** ConversationSummary */
         ConversationSummary: {
+            /** Checklist Version Id */
+            checklist_version_id?: string | null;
             conversation: components["schemas"]["Conversation"];
+            /** Detected Flag */
+            detected_flag?: boolean | null;
             /**
              * Evaluation Status
              * @enum {string}
@@ -701,11 +705,28 @@ export interface components {
             /** Latest Evaluation Id */
             latest_evaluation_id?: string | null;
             /**
+             * Open Appeals
+             * @default 0
+             */
+            open_appeals: number;
+            /** Profile Id */
+            profile_id?: string | null;
+            /**
+             * Result Scope
+             * @default automatic
+             * @enum {string}
+             */
+            result_scope: "automatic" | "effective";
+            /** Review Reasons */
+            review_reasons?: ("incomplete" | "conflict" | "open_appeal" | "evaluation_failed")[];
+            /**
              * Schema Version
              * @default 1.0
              * @constant
              */
             schema_version: "1.0";
+            /** Total Score */
+            total_score?: string | null;
         };
         /** CreateAppeal */
         CreateAppeal: {
@@ -1581,6 +1602,11 @@ export interface components {
             configuration_error?: components["schemas"]["APIError"] | null;
             /** Configured */
             configured: boolean;
+            /**
+             * Preferred
+             * @default false
+             */
+            preferred: boolean;
             profile: components["schemas"]["EvaluatorProfile"];
             /**
              * Schema Version
@@ -2941,6 +2967,11 @@ export interface operations {
                 flag_criterion_id?: string | null;
                 flag_status?: ("detected" | "not_detected" | "unknown") | null;
                 flag_scope?: "automatic" | "effective";
+                q?: string | null;
+                work_queue?: ("flagged" | "needs_review" | "open_appeals") | null;
+                sort?: "newest" | "score_asc" | "score_desc";
+                max_score?: number | null;
+                result_scope?: "automatic" | "effective";
             };
             header?: never;
             path?: never;

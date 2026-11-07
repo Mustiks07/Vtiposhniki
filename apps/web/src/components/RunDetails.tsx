@@ -13,9 +13,10 @@ function CallTable({ calls, attempts }: { calls: CallRecord[]; attempts?: Job['a
             {attempts ? <th scope="col">Попытка</th> : null}
             <th scope="col">Назначение</th>
             <th scope="col">Запрошенная модель</th>
-            <th scope="col">Фактическая модель</th>
+            <th scope="col">Модель по ответу API</th>
             <th scope="col">Длительность</th>
             <th scope="col">Результат</th>
+            <th scope="col">Токены: вход / выход</th>
             <th scope="col">Стоимость</th>
           </tr>
         </thead>
@@ -32,6 +33,10 @@ function CallTable({ calls, attempts }: { calls: CallRecord[]; attempts?: Job['a
               <td>
                 {callOutcomeLabel[c.outcome] ?? c.outcome}
                 {c.safe_error ? ` · ${errorCodeLabel[c.safe_error.code] ?? c.safe_error.code}` : ''}
+              </td>
+              <td>
+                {c.usage?.input_tokens?.toLocaleString('ru-RU') ?? 'неизвестно'} /{' '}
+                {c.usage?.output_tokens?.toLocaleString('ru-RU') ?? 'неизвестно'}
               </td>
               <td>{c.cost === null || c.cost === undefined ? 'неизвестна' : `${decimalRu(c.cost)} ${c.currency}`}</td>
             </tr>
@@ -109,6 +114,10 @@ export function RunDetails({ evaluation }: { evaluation: EvaluationView }) {
             </ol>
           </details>
           <h3>Вызовы этого запуска</h3>
+          <p className="muted">
+            Расход токенов указан по данным API. Выход включает reasoning-токены; они не прибавляются повторно.
+            Имя, возвращённое сторонним шлюзом, само по себе не подтверждает модель за ним.
+          </p>
           {run.calls.length ? (
             <CallTable calls={run.calls} attempts={run.job.attempts} />
           ) : (

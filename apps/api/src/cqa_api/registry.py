@@ -175,6 +175,7 @@ def list_profiles(
                 profile=profile,
                 configured=failure is None,
                 configuration_error=None if failure is None else failure.error,
+                preferred=profile.id == services.settings.default_evaluator_profile,
             )
         )
     return summaries, len(profiles)

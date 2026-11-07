@@ -12,10 +12,15 @@ async function fillCriterion(page: Page, index: number, v: { title: string; defi
 test('E08: an unknown criterion created in the editor reaches the real API and the card', async ({ page }) => {
   const title = uid('E08 чек-лист');
   await page.goto('/#/checklists/new');
+  await page.getByLabel('Показать все критерии').check();
   await page.getByLabel('Название чек-листа').fill(title);
   await fillCriterion(page, 0, { title: 'Приветствие', definition: 'Оператор поздоровался.', weight: '30' });
   await page.getByRole('button', { name: '+ Критерий' }).click();
-  const block = await fillCriterion(page, 1, { title: 'Неизвестный критерий: упомянут номер заявки', definition: 'Оператор назвал номер заявки клиенту.', weight: '70' });
+  const block = await fillCriterion(page, 1, {
+    title: 'Неизвестный критерий: упомянут номер заявки',
+    definition: 'Оператор назвал номер заявки клиенту.',
+    weight: '70',
+  });
   // fill anchors (required)
   for (const b of [page.getByTestId('editor-criterion').nth(0), block]) {
     await b.getByLabel('Смысл ступени варианта 1').fill('Выполнено');
@@ -28,7 +33,9 @@ test('E08: an unknown criterion created in the editor reaches the real API and t
   await importViaApi(page.request, servers.complete, [record(id)]);
   await launchFromList(page, [id], title);
   await page.getByRole('link', { name: /карточка/ }).click();
-  await expect(page.getByTestId('criterion-item').filter({ hasText: 'Неизвестный критерий: упомянут номер заявки' })).toBeVisible();
+  await expect(
+    page.getByTestId('criterion-item').filter({ hasText: 'Неизвестный критерий: упомянут номер заявки' }),
+  ).toBeVisible();
   await page.getByTestId('criterion-item').filter({ hasText: 'Неизвестный критерий' }).click();
   await expect(page.getByTestId('weighted')).toHaveText('70 / 70');
   // The appeal uses the new criterion too.
@@ -43,12 +50,19 @@ test('E08: an unknown criterion created in the editor reaches the real API and t
   await expect(queued.getByRole('heading', { name: 'Неизвестный критерий: упомянут номер заявки' })).toBeVisible();
 });
 
-test('E09: non-zero/reverse scale needs explicit mapping; invalid fraction is rejected, valid one saved', async ({ page }) => {
+test('E09: non-zero/reverse scale needs explicit mapping; invalid fraction is rejected, valid one saved', async ({
+  page,
+}) => {
   const title = uid('E09 шкала');
   await page.goto('/#/checklists/new');
   await page.getByLabel('Название чек-листа').fill(title);
-  const block = await fillCriterion(page, 0, { title: 'Шкала 1–3', definition: 'Синтетическая шкала с ненулевой нижней ступенью.', weight: '10' });
+  const block = await fillCriterion(page, 0, {
+    title: 'Шкала 1–3',
+    definition: 'Синтетическая шкала с ненулевой нижней ступенью.',
+    weight: '10',
+  });
   await block.getByLabel('Тип ответа').selectOption('scale');
+  await block.getByRole('button', { name: 'Настроить значения и доли' }).click();
   await block.getByRole('button', { name: '+ Вариант' }).click();
   const rows = [
     ['низко', '1', '0'],
@@ -80,9 +94,16 @@ test('E09: non-zero/reverse scale needs explicit mapping; invalid fraction is re
   await expect(snap.locator('tbody tr').nth(2)).toContainText('1');
 });
 
-test('E10: batch stays pinned to the old version; a new run uses the new version; old card keeps old rules', async ({ page, request }) => {
+test('E10: batch stays pinned to the old version; a new run uses the new version; old card keeps old rules', async ({
+  page,
+  request,
+}) => {
   const title = uid('E10 чек-лист');
-  const v1 = await createChecklist(request, servers.complete, draft(title, [criterion('c-a', { weight: '10', title: 'Старое название' })]));
+  const v1 = await createChecklist(
+    request,
+    servers.complete,
+    draft(title, [criterion('c-a', { weight: '10', title: 'Старое название' })]),
+  );
   const id = uid('e10');
   await importViaApi(request, servers.complete, [record(id)]);
   const batch1 = await launchFromList(page, [id], title);
@@ -112,9 +133,16 @@ test('E10: batch stays pinned to the old version; a new run uses the new version
   await expect(page.getByTestId('criterion-item').first()).toContainText('Старое название');
 });
 
-test('E11: weight-only change shows server provenance for reuse; fresh is not masked as reused', async ({ page, request }) => {
+test('E11: weight-only change shows server provenance for reuse; fresh is not masked as reused', async ({
+  page,
+  request,
+}) => {
   const title = uid('E11 чек-лист');
-  const v1 = await createChecklist(request, servers.complete, draft(title, [criterion('c-a', { weight: '10' }), criterion('c-b', { weight: '30' })]));
+  const v1 = await createChecklist(
+    request,
+    servers.complete,
+    draft(title, [criterion('c-a', { weight: '10' }), criterion('c-b', { weight: '30' })]),
+  );
   const id = uid('e11');
   await importViaApi(request, servers.complete, [record(id)]);
   await launchFromList(page, [id], title);

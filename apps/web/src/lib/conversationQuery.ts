@@ -1,4 +1,4 @@
-// URL ⇄ listConversations query (contract 1.1.0). The server filters and counts; the UI only
+// URL ⇄ listConversations query (API 1.4.0). The server filters and counts; the UI only
 // keeps a valid, dependency-consistent query in the URL so refresh restores the search.
 import type { ConversationQuery, FlagScope, FlagStatus } from '../api/types';
 
@@ -43,12 +43,32 @@ export function parseConversationQuery(params: URLSearchParams): ParsedQuery {
     status: pick(params.get('status'), STATUSES),
   };
   if (versionId) query.checklist_version_id = versionId;
+  const text = params.get('q')?.trim();
+  if (text) query.q = text.slice(0, 200);
+  const queue = pick(params.get('work_queue'), ['flagged', 'needs_review', 'open_appeals'] as const);
+  if (queue) query.work_queue = queue;
+  const sort = pick(params.get('sort'), ['newest', 'score_asc', 'score_desc'] as const);
+  if (sort) query.sort = sort;
+  const max = params.get('max_score');
+  if (max !== null && max.trim() && Number.isFinite(Number(max)) && Number(max) >= 0 && Number(max) <= 100)
+    query.max_score = Number(max);
+  const scope = pick(params.get('result_scope'), SCOPES);
+  if (scope) query.result_scope = scope;
+  else if (flagScope === 'effective') query.result_scope = 'effective';
   if (flagCriterionId) {
     query.flag_criterion_id = flagCriterionId;
     query.flag_scope = flagScope;
     if (flagStatus) query.flag_status = flagStatus;
   }
-  return { query, offset, checklistId: params.get('checklist') || null, versionId, flagCriterionId, flagStatus, flagScope };
+  return {
+    query,
+    offset,
+    checklistId: params.get('checklist') || null,
+    versionId,
+    flagCriterionId,
+    flagStatus,
+    flagScope,
+  };
 }
 
 /** Keys that change the result set: changing any of them returns to page 1. */
@@ -61,10 +81,19 @@ export const FILTER_KEYS = [
   'flag_criterion_id',
   'flag_status',
   'flag_scope',
+  'q',
+  'work_queue',
+  'sort',
+  'max_score',
+  'result_scope',
 ] as const;
 
 /** Applies a filter change, clears dependents that became invalid and resets paging. */
-export function withFilter(params: URLSearchParams, key: (typeof FILTER_KEYS)[number], value: string | null): URLSearchParams {
+export function withFilter(
+  params: URLSearchParams,
+  key: (typeof FILTER_KEYS)[number],
+  value: string | null,
+): URLSearchParams {
   const next = new URLSearchParams(params);
   if (value) next.set(key, value);
   else next.delete(key);

@@ -19,7 +19,10 @@ export function ConversationPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Latest revision (to offer the list of revisions) and the selected one.
-  const latest = useQuery({ queryKey: ['conversation', id, null], queryFn: ({ signal }) => api.getConversation(id, null, signal) });
+  const latest = useQuery({
+    queryKey: ['conversation', id, null],
+    queryFn: ({ signal }) => api.getConversation(id, null, signal),
+  });
   const selected = useQuery({
     queryKey: ['conversation', id, revision],
     queryFn: ({ signal }) => api.getConversation(id, revision, signal),
@@ -78,8 +81,14 @@ export function ConversationPage() {
           {revision !== null && selected.isPending ? <Loading /> : null}
           {conversation ? (
             <>
-              <AudioPanel key={`${conversation.id}:${conversation.revision}`} ref={audioRef} conversation={conversation}
-                onAvailable={() => { void (revision === null ? latest : selected).refetch(); }} />
+              <AudioPanel
+                key={`${conversation.id}:${conversation.revision}`}
+                ref={audioRef}
+                conversation={conversation}
+                onAvailable={() => {
+                  void (revision === null ? latest : selected).refetch();
+                }}
+              />
               <Transcript conversation={conversation} highlighted={[]} focusToken={0} canSeek={false} />
             </>
           ) : null}
@@ -87,8 +96,15 @@ export function ConversationPage() {
         <aside className="side">
           <section className="panel" aria-labelledby="evals-title">
             <h2 id="evals-title">Оценки разговора</h2>
+            {(evaluations.data?.items.length ?? 0) > 1 ? (
+              <p>
+                <Link to={`/conversations/${encodeURIComponent(id)}/compare`}>Сравнить оценки и версии</Link>
+              </p>
+            ) : null}
             {evaluations.isPending ? <Loading /> : null}
-            {evaluations.isError ? <ErrorPanel error={evaluations.error} onRetry={() => evaluations.refetch()} /> : null}
+            {evaluations.isError ? (
+              <ErrorPanel error={evaluations.error} onRetry={() => evaluations.refetch()} />
+            ) : null}
             {evaluations.data && evaluations.data.items.length === 0 ? (
               <Empty title="Оценок пока нет">Запустите оценку ниже.</Empty>
             ) : null}
@@ -97,13 +113,15 @@ export function ConversationPage() {
                 <li key={e.id} data-testid="evaluation-item" data-revision={e.conversation_revision}>
                   <Link to={`/evaluations/${encodeURIComponent(e.id)}`}>Карточка {shortId(e.id)}</Link>
                   <div>
-                    <Badge status={e.artifact.status}>{artifactStatusLabel[e.artifact.status]}</Badge>{' '}
-                    effective: <TotalValue score={e.effective_score} />
+                    <Badge status={e.artifact.status}>{artifactStatusLabel[e.artifact.status]}</Badge> effective:{' '}
+                    <TotalValue score={e.effective_score} />
                   </div>
                   <div className="muted">
                     revision разговора {e.conversation_revision}
-                    {e.conversation_revision !== latestRevision ? ' (не последняя — результат относится к старому тексту)' : ''} ·
-                    чек-лист {shortId(e.checklist_version_id)} · {serverTime(e.created_at)}
+                    {e.conversation_revision !== latestRevision
+                      ? ' (не последняя — результат относится к старому тексту)'
+                      : ''}{' '}
+                    · чек-лист {shortId(e.checklist_version_id)} · {serverTime(e.created_at)}
                     {e.human_decisions.length ? ` · решений: ${e.human_decisions.length}` : ''}
                   </div>
                 </li>

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "id": "live-xerosharc-quality-v1",
+  "version": "1",
+  "mode": "production",
+  "primary": {
+    "schema_version": "1.0",
+    "provider": "xerosharc",
+    "model": "gpt-6.1-sol",
+    "configuration_ref": "XEROSHARC_API_KEY"
+  },
+  "reviewer": null,
+  "fallbacks": [],
+  "generation": {
+    "schema_version": "1.0",
+    "temperature": "0",
+    "max_output_tokens": 8192,
+    "seed": null
+  },
+  "prompt_version": "cqa-eval-v4",
+  "output_schema_version": "1.0",
+  "preprocessing_version": "identity-v1",
+  "reviewer_policy": {
+    "schema_version": "1.0",
+    "enabled": false,
+    "version": "keep_valid_initial_v1",
+    "max_criteria": 0,
+    "blind": true
+  },
+  "retries": {
+    "schema_version": "1.0",
+    "max_job_attempts": 2,
+    "max_format_repairs": 1,
+    "max_transport_retries": 1,
+    "call_timeout_seconds": 120,
+    "job_deadline_seconds": 360,
+    "max_provider_calls": 4,
+    "max_total_tokens": 98304,
+    "max_cost": null,
+    "currency": "USD"
+  },
+  "corpus_snapshot_id": "live-xerosharc-empty-v1"
+}

@@ -42,11 +42,20 @@ function renderAt(url: string, conversationItems: ConversationSummary[], total: 
       calls.push(u);
       if (u.startsWith('/api/v1/conversations')) return json(rows(conversationItems, total));
       if (u.startsWith('/api/v1/checklist-versions/')) return json(version);
-      if (u.includes('/versions')) return json({ schema_version: '1.0', items: [version], total: 1, limit: 200, offset: 0 });
+      if (u.includes('/versions'))
+        return json({ schema_version: '1.0', items: [version], total: 1, limit: 200, offset: 0 });
       if (u.startsWith('/api/v1/checklists'))
         return json({
           schema_version: '1.0',
-          items: [{ schema_version: '1.0', checklist_id: version.checklist_id, title: version.title, latest_version_id: version.version_id, created_at: version.created_at }],
+          items: [
+            {
+              schema_version: '1.0',
+              checklist_id: version.checklist_id,
+              title: version.title,
+              latest_version_id: version.version_id,
+              created_at: version.created_at,
+            },
+          ],
           total: 1,
           limit: 200,
           offset: 0,
@@ -58,7 +67,15 @@ function renderAt(url: string, conversationItems: ConversationSummary[], total: 
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: 0 } } })}>
       <MemoryRouter initialEntries={[url]}>
         <Routes>
-          <Route path="/conversations" element={<><ConversationsPage /><Probe /></>} />
+          <Route
+            path="/conversations"
+            element={
+              <>
+                <ConversationsPage />
+                <Probe />
+              </>
+            }
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -67,14 +84,27 @@ function renderAt(url: string, conversationItems: ConversationSummary[], total: 
 }
 
 test('query keeps contract dependencies: no criterion → no status/scope; no version → no criterion', () => {
-  const p = parseConversationQuery(new URLSearchParams('flag_criterion_id=f&flag_status=detected&flag_scope=effective'));
+  const p = parseConversationQuery(
+    new URLSearchParams('flag_criterion_id=f&flag_status=detected&flag_scope=effective'),
+  );
   expect(p.query.flag_criterion_id).toBeUndefined();
   expect(p.query.flag_status).toBeUndefined();
   expect(p.query.flag_scope).toBeUndefined();
-  const q = parseConversationQuery(new URLSearchParams('checklist_version_id=v&flag_criterion_id=f&flag_status=bogus&offset=25'));
-  expect(q.query).toMatchObject({ checklist_version_id: 'v', flag_criterion_id: 'f', flag_scope: 'automatic', offset: 25 });
+  const q = parseConversationQuery(
+    new URLSearchParams('checklist_version_id=v&flag_criterion_id=f&flag_status=bogus&offset=25'),
+  );
+  expect(q.query).toMatchObject({
+    checklist_version_id: 'v',
+    flag_criterion_id: 'f',
+    flag_scope: 'automatic',
+    offset: 25,
+  });
   expect(q.query.flag_status).toBeUndefined();
-  const changed = withFilter(new URLSearchParams('checklist_version_id=v&flag_criterion_id=f&flag_status=detected&offset=25'), 'checklist_version_id', 'v2');
+  const changed = withFilter(
+    new URLSearchParams('checklist_version_id=v&flag_criterion_id=f&flag_status=detected&offset=25'),
+    'checklist_version_id',
+    'v2',
+  );
   expect(changed.get('flag_criterion_id')).toBeNull();
   expect(changed.get('flag_status')).toBeNull();
   expect(changed.get('offset')).toBeNull();
@@ -103,7 +133,7 @@ test('flag search is sent to the server with total and page; arbitrary flag is n
   );
   const scope = await screen.findByTestId('search-scope');
   await waitFor(() => expect(scope.textContent).toContain('флаг «Synthetic synthetic-flag»'));
-  expect(scope.textContent).toContain('текущая revision');
+  expect(scope.textContent).toContain('текущей версии разговора');
   expect(scope.textContent).toContain('Найдено: 31');
   expect(screen.getByLabelText('Флаговый критерий').querySelectorAll('option').length).toBe(2); // none + one flag
 });
@@ -112,7 +142,11 @@ test('unknown (pending/failed) is not shown as "no violation"; switching scope r
   const url = `/conversations?checklist=${version.checklist_id}&checklist_version_id=${version.version_id}&flag_criterion_id=synthetic-flag`;
   const calls = renderAt(url, [negative, pending, failed] as ConversationSummary[], 3);
   const cells = await screen.findAllByTestId('flag-cell');
-  expect(cells.map((c) => c.getAttribute('data-flag-status'))).toEqual(['not_detected', 'unknown', 'unknown']);
+  expect(cells.map((c) => c.getAttribute('data-flag-status'))).toEqual([
+    'not_detected',
+    'unknown',
+    'unknown',
+  ]);
   expect(cells[1].textContent).toContain('неизвестно');
   expect(cells[1].textContent).toContain('нет результата выбранного запуска');
   fireEvent.click(screen.getByRole('radio', { name: /effective/ }));
@@ -120,18 +154,53 @@ test('unknown (pending/failed) is not shown as "no violation"; switching scope r
   expect(lastSearch).toContain('flag_scope=effective');
 });
 
+test('adding a flag after selecting human results keeps scores and flags in the same scope', async () => {
+  const url = `/conversations?checklist=${version.checklist_id}&checklist_version_id=${version.version_id}&result_scope=effective`;
+  const calls = renderAt(url, [], 0);
+  await waitFor(() =>
+    expect(screen.getByLabelText('Флаговый критерий').querySelectorAll('option')).toHaveLength(2),
+  );
+  fireEvent.change(screen.getByLabelText('Флаговый критерий'), { target: { value: 'synthetic-flag' } });
+  await waitFor(() =>
+    expect(
+      calls.some((c) => c.includes('flag_scope=effective') && c.includes('result_scope=effective')),
+    ).toBe(true),
+  );
+  expect(new URLSearchParams(lastSearch).get('result_scope')).toBe('effective');
+  expect(new URLSearchParams(lastSearch).get('flag_scope')).toBe('effective');
+});
+
 test('server error for the flag query is shown, never replaced by a local filter', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (u: string) =>
       u.startsWith('/api/v1/conversations')
-        ? ({ ok: false, status: 501, json: async () => ({ schema_version: '1.0', code: 'not_implemented', message: 'x', details: [], retryable: false, correlation_id: 'c-501' }) } as Response)
-        : json(u.startsWith('/api/v1/checklist-versions/') ? version : { schema_version: '1.0', items: [], total: 0, limit: 200, offset: 0 }),
+        ? ({
+            ok: false,
+            status: 501,
+            json: async () => ({
+              schema_version: '1.0',
+              code: 'not_implemented',
+              message: 'x',
+              details: [],
+              retryable: false,
+              correlation_id: 'c-501',
+            }),
+          } as Response)
+        : json(
+            u.startsWith('/api/v1/checklist-versions/')
+              ? version
+              : { schema_version: '1.0', items: [], total: 0, limit: 200, offset: 0 },
+          ),
     ),
   );
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: 0 } } })}>
-      <MemoryRouter initialEntries={[`/conversations?checklist_version_id=${version.version_id}&flag_criterion_id=synthetic-flag`]}>
+      <MemoryRouter
+        initialEntries={[
+          `/conversations?checklist_version_id=${version.version_id}&flag_criterion_id=synthetic-flag`,
+        ]}
+      >
         <Routes>
           <Route path="/conversations" element={<ConversationsPage />} />
         </Routes>
@@ -142,28 +211,42 @@ test('server error for the flag query is shown, never replaced by a local filter
   expect(screen.queryByTestId('conversation-row')).toBeNull();
 });
 
-test.each(['scope', 'page'] as const)('changing %s hides previous rows and total while the new server result is pending', async (change) => {
-  let respond!: (value: ConversationPage) => void;
-  const response = new Promise<ConversationPage>((resolve) => { respond = resolve; });
-  const list = vi.spyOn(api, 'listConversations')
-    .mockResolvedValueOnce(rows([detected as ConversationSummary], 31))
-    .mockReturnValueOnce(response);
-  renderAt(`/conversations?checklist=${version.checklist_id}&checklist_version_id=${version.version_id}&flag_criterion_id=synthetic-flag`, [], 0);
-  await screen.findByTestId('conversation-row');
-  expect(screen.getByTestId('search-scope').textContent).toContain('Найдено: 31');
+test.each(['scope', 'page'] as const)(
+  'changing %s hides previous rows and total while the new server result is pending',
+  async (change) => {
+    let respond!: (value: ConversationPage) => void;
+    const response = new Promise<ConversationPage>((resolve) => {
+      respond = resolve;
+    });
+    const list = vi
+      .spyOn(api, 'listConversations')
+      .mockResolvedValueOnce(rows([detected as ConversationSummary], 31))
+      .mockReturnValueOnce(response);
+    renderAt(
+      `/conversations?checklist=${version.checklist_id}&checklist_version_id=${version.version_id}&flag_criterion_id=synthetic-flag`,
+      [],
+      0,
+    );
+    await screen.findByTestId('conversation-row');
+    expect(screen.getByTestId('search-scope').textContent).toContain('Найдено: 31');
 
-  fireEvent.click(change === 'scope'
-    ? screen.getByRole('radio', { name: /effective/ })
-    : screen.getByRole('button', { name: 'Вперёд →' }));
-  await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
-  expect(list.mock.calls[1][0]).toMatchObject(change === 'scope' ? { flag_scope: 'effective', offset: 0 } : { offset: 25 });
-  // A changed heading or page range must never label rows from the previous query.
-  expect(screen.queryByTestId('conversation-row')).toBeNull();
-  expect(screen.getByTestId('search-scope').textContent).not.toContain('Найдено:');
-  expect(screen.queryByTestId('pager-range')).toBeNull();
-  expect(screen.getByRole('status').textContent).toContain('Загрузка');
+    fireEvent.click(
+      change === 'scope'
+        ? screen.getByRole('radio', { name: /effective/ })
+        : screen.getByRole('button', { name: 'Вперёд →' }),
+    );
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    expect(list.mock.calls[1][0]).toMatchObject(
+      change === 'scope' ? { flag_scope: 'effective', offset: 0 } : { offset: 25 },
+    );
+    // A changed heading or page range must never label rows from the previous query.
+    expect(screen.queryByTestId('conversation-row')).toBeNull();
+    expect(screen.getByTestId('search-scope').textContent).not.toContain('Найдено:');
+    expect(screen.queryByTestId('pager-range')).toBeNull();
+    expect(screen.getByRole('status').textContent).toContain('Загрузка');
 
-  await act(async () => respond({ ...rows([], 0), offset: change === 'page' ? 25 : 0 }));
-  await waitFor(() => expect(screen.getByTestId('search-scope').textContent).toContain('Найдено: 0'));
-  expect(screen.queryByTestId('conversation-row')).toBeNull();
-});
+    await act(async () => respond({ ...rows([], 0), offset: change === 'page' ? 25 : 0 }));
+    await waitFor(() => expect(screen.getByTestId('search-scope').textContent).toContain('Найдено: 0'));
+    expect(screen.queryByTestId('conversation-row')).toBeNull();
+  },
+);

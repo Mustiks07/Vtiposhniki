@@ -1123,8 +1123,34 @@
     "ConversationSummary": {
       "additionalProperties": false,
       "properties": {
+        "checklist_version_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checklist Version Id"
+        },
         "conversation": {
           "$ref": "#/$defs/Conversation"
+        },
+        "detected_flag": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detected Flag"
         },
         "evaluation_status": {
           "enum": [
@@ -1162,11 +1188,66 @@
           "default": null,
           "title": "Latest Evaluation Id"
         },
+        "open_appeals": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Open Appeals",
+          "type": "integer"
+        },
+        "profile_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profile Id"
+        },
+        "result_scope": {
+          "default": "automatic",
+          "enum": [
+            "automatic",
+            "effective"
+          ],
+          "title": "Result Scope",
+          "type": "string"
+        },
+        "review_reasons": {
+          "items": {
+            "enum": [
+              "incomplete",
+              "conflict",
+              "open_appeal",
+              "evaluation_failed"
+            ],
+            "type": "string"
+          },
+          "title": "Review Reasons",
+          "type": "array"
+        },
         "schema_version": {
           "const": "1.0",
           "default": "1.0",
           "title": "Schema Version",
           "type": "string"
+        },
+        "total_score": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Total Score"
         }
       },
       "required": [
@@ -3785,6 +3866,11 @@
         },
         "configured": {
           "title": "Configured",
+          "type": "boolean"
+        },
+        "preferred": {
+          "default": false,
+          "title": "Preferred",
           "type": "boolean"
         },
         "profile": {

@@ -96,12 +96,28 @@ def list_conversations(
     flag_criterion_id: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
     flag_status: h.FlagStatus | None = None,
     flag_scope: h.FlagScope = "automatic",
+    q: Annotated[str | None, Query(max_length=200)] = None,
+    work_queue: h.WorkQueue | None = None,
+    sort: h.ConversationSort = "newest",
+    max_score: Annotated[float | None, Query(ge=0, le=100, allow_inf_nan=False)] = None,
+    result_scope: h.FlagScope = "automatic",
 ) -> Page[h.ConversationSummary]:
     selection = conversation_flag_query(
         checklist_version_id, flag_criterion_id, flag_status, flag_scope
     )
     items, total = conversations.list_conversations(
-        _services(request), limit, offset, language, channel, status, selection
+        _services(request),
+        limit,
+        offset,
+        language,
+        channel,
+        status,
+        selection,
+        q=q,
+        work_queue=work_queue,
+        sort=sort,
+        max_score=max_score,
+        result_scope=result_scope,
     )
     return Page[h.ConversationSummary](items=items, total=total, limit=limit, offset=offset)
 
@@ -287,7 +303,9 @@ def export_batch(
 
 
 @router.get(
-    "/evaluator-profiles", operation_id="listEvaluatorProfiles", response_model=Page[h.ProfileSummary]
+    "/evaluator-profiles",
+    operation_id="listEvaluatorProfiles",
+    response_model=Page[h.ProfileSummary],
 )
 def list_profiles(
     request: Request, limit: Limit = 50, offset: Offset = 0

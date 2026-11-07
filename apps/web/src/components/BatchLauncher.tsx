@@ -8,15 +8,25 @@ import { ErrorPanel, Loading } from './States';
 import { Modal } from './Modal';
 import { Icon } from './Icon';
 
-type LaunchProps = { conversationIds: string[]; initialChecklistId?: string | null; initialVersionId?: string | null };
+type LaunchProps = {
+  conversationIds: string[];
+  initialChecklistId?: string | null;
+  initialVersionId?: string | null;
+};
 
 export function BatchLauncher(props: LaunchProps) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className="primary" disabled={!props.conversationIds.length} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className="primary"
+        disabled={!props.conversationIds.length}
+        onClick={() => setOpen(true)}
+      >
         <Icon name="play" />
-        Оценить выбранные{props.conversationIds.length ? ` (${props.conversationIds.length})` : ''}
+        Оценить выбранные
+        {props.conversationIds.length ? ` (${props.conversationIds.length})` : ''}
       </button>
       <Modal open={open} title="Запуск оценки" onClose={() => setOpen(false)}>
         <LaunchForm {...props} />
@@ -33,8 +43,14 @@ export function BatchLauncher(props: LaunchProps) {
 function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: LaunchProps) {
   const navigate = useNavigate();
   const ids = { checklist: useId(), version: useId(), profile: useId() };
-  const checklists = useQuery({ queryKey: ['checklists'], queryFn: ({ signal }) => api.listChecklists(signal) });
-  const profiles = useQuery({ queryKey: ['profiles'], queryFn: ({ signal }) => api.listProfiles(signal) });
+  const checklists = useQuery({
+    queryKey: ['checklists'],
+    queryFn: ({ signal }) => api.listChecklists(signal),
+  });
+  const profiles = useQuery({
+    queryKey: ['profiles'],
+    queryFn: ({ signal }) => api.listProfiles(signal),
+  });
   const [checklistId, setChecklistId] = useState(initialChecklistId ?? '');
   const [versionId, setVersionId] = useState(initialVersionId ?? '');
   const [profileId, setProfileId] = useState('');
@@ -44,8 +60,9 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
     if (!checklistId && checklists.data?.items.length) setChecklistId(checklists.data.items[0].checklist_id);
   }, [checklists.data, checklistId]);
   useEffect(() => {
-    const configured = profiles.data?.items.find((p) => p.configured);
-    if (!profileId && configured) setProfileId(configured.profile.id);
+    const defaultProfile =
+      profiles.data?.items.find((p) => p.preferred) ?? profiles.data?.items.find((p) => p.configured);
+    if (!profileId && defaultProfile) setProfileId(defaultProfile.profile.id);
   }, [profiles.data, profileId]);
 
   const versions = useQuery({
@@ -64,7 +81,10 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
 
   const payload: CreateBatch | null = useMemo(
     () =>
-      versionId && profileId && conversationIds.length
+      versionId &&
+      profileId &&
+      profiles.data?.items.some((p) => p.profile.id === profileId && p.configured) &&
+      conversationIds.length
         ? {
             schema_version: '1.0',
             conversation_ids: conversationIds,
@@ -73,12 +93,13 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
             mode,
           }
         : null,
-    [conversationIds, versionId, profileId, mode],
+    [conversationIds, versionId, profileId, mode, profiles.data],
   );
   const keyRef = useRef<{ payload: string; key: string } | null>(null);
   function keyFor(body: CreateBatch): string {
     const serialized = JSON.stringify(body);
-    if (keyRef.current?.payload !== serialized) keyRef.current = { payload: serialized, key: newIdempotencyKey() };
+    if (keyRef.current?.payload !== serialized)
+      keyRef.current = { payload: serialized, key: newIdempotencyKey() };
     return keyRef.current.key;
   }
 
@@ -108,7 +129,9 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
         Выбрано разговоров: <strong data-testid="selected-count">{conversationIds.length}</strong>
       </p>
       {checklists.isPending || profiles.isPending ? <Loading /> : null}
-      {checklists.isError ? <ErrorPanel error={checklists.error} onRetry={() => checklists.refetch()} /> : null}
+      {checklists.isError ? (
+        <ErrorPanel error={checklists.error} onRetry={() => checklists.refetch()} />
+      ) : null}
       {profiles.isError ? <ErrorPanel error={profiles.error} onRetry={() => profiles.refetch()} /> : null}
       {checklists.data && checklists.data.items.length === 0 ? (
         <p className="notice">Нет чек-листов. Создайте чек-лист в разделе «Чек-листы».</p>
@@ -140,9 +163,14 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
         <label htmlFor={ids.profile}>Профиль оценщика</label>
         <select id={ids.profile} value={profileId} onChange={(e) => setProfileId(e.target.value)}>
           {profiles.data?.items.map((p) => (
-            <option key={`${p.profile.id}-${p.profile.version}`} value={p.profile.id} disabled={!p.configured}>
+            <option
+              key={`${p.profile.id}-${p.profile.version}`}
+              value={p.profile.id}
+              disabled={!p.configured}
+            >
               {p.profile.id} · {p.profile.version} · {p.profile.mode === 'test' ? 'тестовый' : 'production'}
               {p.configured ? '' : ' · не настроен'}
+              {p.preferred ? ' · по умолчанию' : ''}
             </option>
           ))}
         </select>
@@ -152,8 +180,13 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
         <fieldset className="segmented">
           <legend>Режим</legend>
           <label>
-            <input type="radio" name="batch-mode" checked={mode === 'fresh'} onChange={() => setMode('fresh')} /> Новый
-            анализ (fresh)
+            <input
+              type="radio"
+              name="batch-mode"
+              checked={mode === 'fresh'}
+              onChange={() => setMode('fresh')}
+            />{' '}
+            Новый анализ (fresh)
             <small className="hint">Модель заново оценит разговор. Будет создан отдельный запуск.</small>
           </label>
           <label>
@@ -164,7 +197,9 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
               onChange={() => setMode('reuse_if_compatible')}
             />{' '}
             Совместимый результат (reuse_if_compatible)
-            <small className="hint">Сервер проверит версии и переиспользует результат, если он совместим.</small>
+            <small className="hint">
+              Сервер проверит версии и переиспользует результат, если он совместим.
+            </small>
           </label>
         </fieldset>
         <div className="row">

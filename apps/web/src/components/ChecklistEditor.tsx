@@ -47,6 +47,12 @@ function ChoicesEditor({
 }) {
   const base = `c${index}`;
   const isFlag = criterion.response_type === 'flag';
+  const [advanced, setAdvanced] = useState(false);
+  const showAdvanced =
+    advanced ||
+    Object.keys(errors).some(
+      (key) => key.startsWith(`criterion.${index}.choice.`) && (key.endsWith('.raw') || key.endsWith('.fraction')),
+    );
   function setChoice(j: number, patch: Partial<Choice>) {
     onChange({ ...criterion, choices: criterion.choices.map((x, k) => (k === j ? { ...x, ...patch } : x)) });
   }
@@ -60,14 +66,25 @@ function ChoicesEditor({
   return (
     <fieldset>
       <legend>Варианты ответа</legend>
+      <button type="button" className="link" aria-pressed={showAdvanced} onClick={() => setAdvanced(!advanced)}>
+        {showAdvanced ? 'Скрыть технические настройки' : 'Настроить значения и доли'}
+      </button>
       <div className="table-wrap" tabIndex={0} aria-label={`Варианты ответа критерия ${index + 1}`}>
         <table className="table compact choices-editor">
           <thead>
             <tr>
               <th scope="col">Подпись</th>
-              <th scope="col">raw_value</th>
-              <th scope="col">Смысл ступени (anchor)</th>
-              {isFlag ? <th scope="col">Означает нарушение</th> : <th scope="col">Доля score_fraction (0–1)</th>}
+              <th scope="col" hidden={!showAdvanced && criterion.response_type !== 'scale'}>
+                {showAdvanced ? 'raw_value' : 'Баллы'}
+              </th>
+              <th scope="col">Когда выбирать этот ответ</th>
+              {isFlag ? (
+                <th scope="col">Означает нарушение</th>
+              ) : (
+                <th scope="col" hidden={!showAdvanced}>
+                  Доля score_fraction (0–1)
+                </th>
+              )}
               <th scope="col">Действия</th>
             </tr>
           </thead>
@@ -86,9 +103,11 @@ function ChoicesEditor({
                       aria-describedby={`${base}-ch${j}-err`}
                     />
                   </td>
-                  <td>
+                  <td hidden={!showAdvanced && criterion.response_type !== 'scale'}>
                     <input
-                      aria-label={`raw_value варианта ${n}`}
+                      aria-label={`${showAdvanced ? 'raw_value' : 'Баллы'} варианта ${n}`}
+                      readOnly={!showAdvanced}
+                      title={showAdvanced ? undefined : 'Для изменения шкалы откройте «Настроить значения и доли»'}
                       value={rawValueText(x.raw_value === '' ? null : x.raw_value).replace('—', '')}
                       onChange={(e) => setChoice(j, { raw_value: parseRaw(criterion.response_type, e.target.value) })}
                       aria-invalid={errors[`${q}.raw`] ? true : undefined}
@@ -104,7 +123,7 @@ function ChoicesEditor({
                       aria-describedby={`${base}-ch${j}-err`}
                     />
                   </td>
-                  <td>
+                  <td hidden={!showAdvanced && !isFlag}>
                     {isFlag ? (
                       <input
                         type="checkbox"
@@ -287,9 +306,12 @@ function CriterionEditor({
           </button>
         </div>
       </header>
-      <p className="muted">
-        ID <code>{criterion.id}</code> {existing ? '· существующий (ID сохраняется)' : '· новый'}
-      </p>
+      <details>
+        <summary>Техническая информация</summary>
+        <p className="muted">
+          ID <code>{criterion.id}</code> {existing ? '· существующий (ID сохраняется)' : '· новый'}
+        </p>
+      </details>
       <div className="grid-2">
         <div>
           <label htmlFor={`${uid}-title`}>Название</label>
@@ -586,6 +608,7 @@ export function ChecklistEditor({
   const uid = useId();
   const [draft, setDraft] = useState<ChecklistDraft>(initial);
   const [activeCriterion, setActiveCriterion] = useState(initial.criteria[0]?.id ?? '');
+  const [showAll, setShowAll] = useState(false);
   const [errors, setErrors] = useState<Fields>({});
   // Pinned at draft creation; only an explicit conflict resolution moves it.
   const [expectedLatest, setExpectedLatest] = useState(expectedLatestVersionId);
@@ -641,6 +664,10 @@ export function ChecklistEditor({
     const found = validateDraft(draft, confirmed);
     setErrors(found);
     if (Object.keys(found).length) {
+      const invalid = Object.keys(found)
+        .map((key) => /^criterion\.(\d+)\./.exec(key))
+        .find(Boolean);
+      if (invalid) setActiveCriterion(draft.criteria[Number(invalid[1])]?.id ?? activeCriterion);
       requestAnimationFrame(() => document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
       return;
     }
@@ -653,7 +680,9 @@ export function ChecklistEditor({
   const preview = draft.criteria.find((c) => c.id === activeCriterion) ?? draft.criteria[0];
   function focusCriterion(id: string) {
     setActiveCriterion(id);
-    document.querySelector<HTMLElement>(`.editor-criterion[data-criterion-id="${CSS.escape(id)}"]`)?.focus();
+    requestAnimationFrame(() =>
+      document.querySelector<HTMLElement>(`.editor-criterion[data-criterion-id="${CSS.escape(id)}"]`)?.focus(),
+    );
   }
 
   return (
@@ -722,6 +751,10 @@ export function ChecklistEditor({
           <h2>
             Критерии <span className="muted">{draft.criteria.length}</span>
           </h2>
+          <label className="hint">
+            <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Показать все
+            критерии
+          </label>
           {draft.criteria.map((c, i) => (
             <button type="button" key={c.id} aria-pressed={preview?.id === c.id} onClick={() => focusCriterion(c.id)}>
               <span>{i + 1}</span>
@@ -739,23 +772,29 @@ export function ChecklistEditor({
             if (id) setActiveCriterion(id);
           }}
         >
-          {draft.criteria.map((c, i) => (
-            <CriterionEditor
-              key={c.id}
-              criterion={c}
-              index={i}
-              total={draft.criteria.length}
-              sections={sections}
-              errors={errors}
-              existing={existingIds.has(c.id)}
-              confirmed={isMappingConfirmed(c, confirmed)}
-              onConfirm={(v) => confirm(c, v)}
-              onChange={(next) => setCriterion(i, next)}
-              onMove={(dir) => move(i, dir)}
-              onRemove={() => setDraft((d) => ({ ...d, criteria: d.criteria.filter((_, k) => k !== i) }))}
-              onReplace={() => setCriterion(i, { ...c, id: newCriterionId() })}
-            />
-          ))}
+          {draft.criteria.map((c, i) =>
+            showAll || c.id === preview?.id ? (
+              <CriterionEditor
+                key={c.id}
+                criterion={c}
+                index={i}
+                total={draft.criteria.length}
+                sections={sections}
+                errors={errors}
+                existing={existingIds.has(c.id)}
+                confirmed={isMappingConfirmed(c, confirmed)}
+                onConfirm={(v) => confirm(c, v)}
+                onChange={(next) => setCriterion(i, next)}
+                onMove={(dir) => move(i, dir)}
+                onRemove={() => setDraft((d) => ({ ...d, criteria: d.criteria.filter((_, k) => k !== i) }))}
+                onReplace={() => {
+                  const id = newCriterionId();
+                  setCriterion(i, { ...c, id });
+                  setActiveCriterion(id);
+                }}
+              />
+            ) : null,
+          )}
         </div>
         <aside className="editor-preview">
           <p className="eyebrow">ПРЕДПРОСМОТР</p>
@@ -776,7 +815,14 @@ export function ChecklistEditor({
       </div>
       <FieldError id={`${uid}-crit-e`} error={errors.criteria} />
       <div className="row">
-        <button type="button" onClick={() => setDraft((d) => ({ ...d, criteria: [...d.criteria, blankCriterion()] }))}>
+        <button
+          type="button"
+          onClick={() => {
+            const next = blankCriterion();
+            setDraft((d) => ({ ...d, criteria: [...d.criteria, next] }));
+            setActiveCriterion(next.id);
+          }}
+        >
           + Критерий
         </button>
       </div>

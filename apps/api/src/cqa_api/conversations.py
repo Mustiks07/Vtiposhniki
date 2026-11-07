@@ -15,9 +15,12 @@ from typing import Any
 from cqa_contracts.http_models import (
     ConversationFlagQuery,
     ConversationFlagSummary,
+    ConversationSort,
     ConversationSummary,
     FlagScope,
     FlagStatus,
+    ReviewReason,
+    WorkQueue,
 )
 from cqa_contracts.models import Conversation, ErrorDetail, FlagResult
 from sqlalchemy import Connection, RowMapping
@@ -49,7 +52,7 @@ FLAG_STATUS_SQL: dict[FlagStatus, str] = {
 }
 
 
-def _selected_sql(selection: ConversationFlagQuery) -> str:
+def _selected_sql(selection: ConversationFlagQuery, result_scope: FlagScope = "automatic") -> str:
     """One row per conversation. COUNT and the page both read this same statement."""
     version = (
         ""
@@ -67,11 +70,31 @@ def _selected_sql(selection: ConversationFlagQuery) -> str:
         ) END
         """
     )
+    score_column = SCORE_COLUMN[result_scope]
+    usable = "j.state = 'succeeded' AND e.status IN ('complete', 'partial')"
     return f"""
         SELECT c.seq AS seq, r.document_json AS document_json,
                r.language AS language, r.channel AS channel,
                j.id AS job_id, e.id AS evaluation_id,
-               {STATUS_SQL} AS status, {flag} AS flag_json
+               {STATUS_SQL} AS status, {flag} AS flag_json,
+               j.checklist_version_id AS checklist_version_id, j.profile_id AS profile_id,
+               CASE WHEN {usable} THEN json_extract({score_column}, '$.total_score') END AS total_score,
+               CASE WHEN {usable} THEN
+                 CASE
+                   WHEN EXISTS (SELECT 1 FROM json_each({score_column}, '$.flags') f
+                                WHERE json_extract(f.value, '$.detected') = 1) THEN 1
+                   WHEN json_array_length({score_column}, '$.flags') > 0
+                     AND NOT EXISTS (SELECT 1 FROM json_each({score_column}, '$.flags') f
+                                     WHERE json_extract(f.value, '$.detected') IS NULL) THEN 0
+                 END
+               END AS detected_flag,
+               CASE WHEN {usable} AND json_extract({score_column}, '$.status') = 'incomplete_evaluation'
+                    THEN 1 ELSE 0 END AS incomplete,
+               CASE WHEN {usable} AND EXISTS (
+                   SELECT 1 FROM json_each(e.artifact_json, '$.reviews') review
+                   WHERE json_extract(review.value, '$.outcome') = 'conflicted'
+               ) THEN 1 ELSE 0 END AS conflict,
+               (SELECT COUNT(*) FROM appeals a WHERE a.evaluation_id = e.id AND a.state = 'open') AS open_appeals
         FROM conversations c
         JOIN conversation_revisions r
           ON r.conversation_id = c.id AND r.revision = c.latest_revision
@@ -183,6 +206,12 @@ def list_conversations(
     channel: str | None,
     status: str | None,
     selection: ConversationFlagQuery,
+    *,
+    q: str | None = None,
+    work_queue: WorkQueue | None = None,
+    sort: ConversationSort = "newest",
+    max_score: float | None = None,
+    result_scope: FlagScope = "automatic",
 ) -> tuple[list[ConversationSummary], int]:
     clauses = []
     params: dict[str, Any] = {"limit": limit, "offset": offset}
@@ -196,8 +225,27 @@ def list_conversations(
         params["flag_criterion_id"] = selection.flag_criterion_id
     if selection.flag_status is not None:
         clauses.append(FLAG_STATUS_SQL[selection.flag_status])
+    if q is not None and q.strip():
+        params["q"] = q.strip()
+        clauses.append("""(instr(cqa_casefold(json_extract(document_json, '$.external_id')), cqa_casefold(:q)) > 0
+            OR EXISTS (SELECT 1 FROM json_each(document_json, '$.messages') m
+                       WHERE instr(cqa_casefold(json_extract(m.value, '$.text')), cqa_casefold(:q)) > 0))""")
+    if max_score is not None:
+        clauses.append("total_score IS NOT NULL AND CAST(total_score AS REAL) <= :max_score")
+        params["max_score"] = max_score
+    if work_queue == "flagged":
+        clauses.append("detected_flag = 1")
+    elif work_queue == "needs_review":
+        clauses.append("(incomplete = 1 OR conflict = 1 OR open_appeals > 0 OR status = 'failed')")
+    elif work_queue == "open_appeals":
+        clauses.append("open_appeals > 0")
     where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
-    selected = f"WITH selected AS ({_selected_sql(selection)})"
+    selected = f"WITH selected AS ({_selected_sql(selection, result_scope)})"
+    order = {
+        "newest": "seq DESC",
+        "score_asc": "total_score IS NULL, CAST(total_score AS REAL) ASC, seq DESC",
+        "score_desc": "total_score IS NULL, CAST(total_score AS REAL) DESC, seq DESC",
+    }[sort]
     # One read transaction: the page and its total describe the same snapshot.
     with services.db.read() as conn:
         _check_selection(conn, selection)
@@ -205,7 +253,7 @@ def list_conversations(
         page = rows(
             conn,
             f"{selected} SELECT * FROM selected {where} "
-            "ORDER BY seq DESC LIMIT :limit OFFSET :offset",
+            f"ORDER BY {order} LIMIT :limit OFFSET :offset",
             params,
         )
     return (
@@ -215,8 +263,28 @@ def list_conversations(
                 latest_evaluation_id=r["evaluation_id"],
                 evaluation_status=r["status"],
                 flag_summary=_flag_summary(r, selection),
+                total_score=r["total_score"],
+                result_scope=result_scope,
+                detected_flag=None if r["detected_flag"] is None else bool(r["detected_flag"]),
+                checklist_version_id=r["checklist_version_id"],
+                profile_id=r["profile_id"],
+                open_appeals=r["open_appeals"],
+                review_reasons=_review_reasons(r),
             )
             for r in page
         ],
         int(total["n"]) if total else 0,
     )
+
+
+def _review_reasons(found: RowMapping) -> list[ReviewReason]:
+    result: list[ReviewReason] = []
+    if found["incomplete"]:
+        result.append("incomplete")
+    if found["conflict"]:
+        result.append("conflict")
+    if found["open_appeals"]:
+        result.append("open_appeal")
+    if found["status"] == "failed":
+        result.append("evaluation_failed")
+    return result

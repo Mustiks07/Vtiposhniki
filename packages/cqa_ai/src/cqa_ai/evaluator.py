@@ -158,7 +158,9 @@ class Evaluator:
             id_factory=self.id_factory,
         )
         requested = [c.id for c in checklist.criteria]
-        messages = build_messages("primary", conversation, checklist, retrieved)
+        messages = build_messages(
+            "primary", conversation, checklist, retrieved, prompt_version=profile.prompt_version
+        )
 
         def artifact(**fields: object) -> EvaluationArtifact:
             calls = runner.calls
@@ -363,7 +365,14 @@ class Evaluator:
             return records("skipped", "review_budget_exhausted", []), list(initial)
 
         # Blind: built without any initial proposal content.
-        messages = build_messages("review", conversation, checklist, retrieved, set(selected))
+        messages = build_messages(
+            "review",
+            conversation,
+            checklist,
+            retrieved,
+            set(selected),
+            prompt_version=profile.prompt_version,
+        )
         before = len(runner.calls)
         try:
             response = await runner.call("review", reviewer, self._transport(reviewer), messages)

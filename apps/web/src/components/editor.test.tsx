@@ -15,7 +15,12 @@ const v1: ChecklistVersion = {
   created_at: '2026-11-07T00:00:00Z',
   // A plain increasing scale raw 2,1,0 → fractions 1,0.5,0 (no confirmation needed as saved).
 };
-const v2: ChecklistVersion = { ...v1, version_id: 'v2', created_at: '2026-11-07T01:00:00Z', title: 'Изменено другим автором' };
+const v2: ChecklistVersion = {
+  ...v1,
+  version_id: 'v2',
+  created_at: '2026-11-07T01:00:00Z',
+  title: 'Изменено другим автором',
+};
 
 function json(body: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => body } as Response;
@@ -29,10 +34,27 @@ function setup(versionsRef: { items: ChecklistVersion[] }, posts: unknown[], sta
         const body = JSON.parse(String(init.body));
         posts.push(body);
         if (status === 409)
-          return json({ schema_version: '1.0', code: 'revision_conflict', message: 'conflict', details: [], retryable: false, correlation_id: 'c-1' }, 409);
+          return json(
+            {
+              schema_version: '1.0',
+              code: 'revision_conflict',
+              message: 'conflict',
+              details: [],
+              retryable: false,
+              correlation_id: 'c-1',
+            },
+            409,
+          );
         return json({ ...v2, version_id: `v-saved-${posts.length}` }, 201);
       }
-      if (url.includes('/versions')) return json({ schema_version: '1.0', items: versionsRef.items, total: versionsRef.items.length, limit: 200, offset: 0 });
+      if (url.includes('/versions'))
+        return json({
+          schema_version: '1.0',
+          items: versionsRef.items,
+          total: versionsRef.items.length,
+          limit: 200,
+          offset: 0,
+        });
       return json({ schema_version: '1.0', items: [], total: 0, limit: 200, offset: 0 });
     }),
   );
@@ -50,7 +72,19 @@ function setup(versionsRef: { items: ChecklistVersion[] }, posts: unknown[], sta
 }
 
 function scaleBlock() {
-  return screen.getAllByTestId('editor-criterion').find((b) => b.getAttribute('data-criterion-id') === 'synthetic-scale')!;
+  const title = v1.criteria.find((c) => c.id === 'synthetic-scale')!.title;
+  const nav = screen.getByRole('navigation', { name: 'Критерии в редакторе' });
+  fireEvent.click(
+    within(nav)
+      .getAllByRole('button')
+      .find((b) => b.textContent?.includes(title))!,
+  );
+  const block = screen
+    .getAllByTestId('editor-criterion')
+    .find((b) => b.getAttribute('data-criterion-id') === 'synthetic-scale')!;
+  const advanced = within(block).queryByRole('button', { name: 'Настроить значения и доли' });
+  if (advanced) fireEvent.click(advanced);
+  return block;
 }
 
 test('defect 3: a refetch that reveals v2 does not move the draft onto v2; the save still expects v1', async () => {
@@ -65,7 +99,9 @@ test('defect 3: a refetch that reveals v2 does not move the draft onto v2; the s
   await act(async () => {
     await client.invalidateQueries({ queryKey: ['checklist-versions', 'cl-1'] });
   });
-  await waitFor(() => expect(client.getQueryData<{ items: ChecklistVersion[] }>(['checklist-versions', 'cl-1'])?.items.length).toBe(2));
+  await waitFor(() =>
+    expect(client.getQueryData<{ items: ChecklistVersion[] }>(['checklist-versions', 'cl-1'])?.items.length).toBe(2),
+  );
 
   expect((screen.getByLabelText('Название чек-листа') as HTMLInputElement).value).toBe('Мой черновик на v1');
   fireEvent.click(screen.getByRole('button', { name: 'Сохранить как новую версию' }));
@@ -97,7 +133,9 @@ test('defect 3: after 409 the expected version changes only through the explicit
     return json({ schema_version: '1.0', items: versions.items, total: 2, limit: 200, offset: 0 });
   });
   expect(conflict).toBeTruthy();
-  fireEvent.click(within(await screen.findByTestId('version-conflict')).getByRole('button', { name: 'Сверить с последней версией' }));
+  fireEvent.click(
+    within(await screen.findByTestId('version-conflict')).getByRole('button', { name: 'Сверить с последней версией' }),
+  );
   expect(await screen.findByTestId('version-diff')).toBeTruthy();
   fireEvent.click(within(screen.getByTestId('version-conflict')).getByRole('button', { name: /Изменения учтены/ }));
   expect(await screen.findByTestId('rebased-note')).toBeTruthy();

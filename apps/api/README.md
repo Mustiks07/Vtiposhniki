@@ -57,6 +57,7 @@ curl -s -X POST localhost:8000/api/v1/imports -H 'content-type: application/json
 | `CQA_DATA_DIR` | `data/private` | Приватные данные |
 | `CQA_DATABASE_URL` | `sqlite:///data/private/cqa.sqlite3` | Только файл SQLite на локальном диске |
 | `CQA_CONFIG_DIR` | `<data_dir>/config` | Каталоги `profiles/*.json`, `corpora/*.json` |
+| `CQA_DEFAULT_EVALUATOR_PROFILE` | пусто | ID профиля, предварительно выбранного в форме запуска; API возвращает `preferred=true` |
 | `CQA_DATASET_URL` | пусто | Секретный адрес организаторов; `{group_id}` в нём подставляется, иначе добавляется query-параметр |
 | `CQA_IMPORT_MAX_BYTES`, `CQA_IMPORT_MAX_RECORDS` | 10 MiB, 1000 | Лимиты тела запроса и записей |
 | `CQA_ORGANIZER_TIMEOUT_SECONDS` | 30 | Таймаут скачивания |
@@ -69,7 +70,7 @@ curl -s -X POST localhost:8000/api/v1/imports -H 'content-type: application/json
 | `CQA_WORKER_POLL_SECONDS`, `CQA_LEASE_SECONDS` | 0.5, 60 | Опрос очереди и срок lease |
 | `CQA_DEADLINE_GRACE_SECONDS` | 10 | Сколько ждать оценщика после `deadline_at`, прежде чем отменить его. Новые вызовы в это время запрещены |
 | `CQA_RETRY_BASE_SECONDS`, `CQA_RETRY_MAX_SECONDS` | 5, 60 | Экспоненциальная пауза между попытками |
-| `GEMINI_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY` | пусто | Ключи читает только сервер |
+| `GEMINI_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`, `XEROSHARC_API_KEY` | пусто | Ключи читает только сервер |
 
 ## Проверки
 
@@ -88,10 +89,9 @@ uv run mypy
   `migrations/`. Миграция выполняется при старте API и исполнителя.
 - `ports.py` — единственный вход в `cqa_domain`/`cqa_ai`. Сервер не считает баллы и
   не канонизирует hash сам.
-- `testmode.py` — только `CQA_MODE=test`. Пока функция `cqa_domain` не реализована,
-  используется явная заглушка: `score` без арифметики (`total_score=null`), hash с
-  отдельным префиксом, заведомо не канонический. Реализованная функция A сразу
-  получает приоритет. `business_ready` остаётся `false`, пока домена нет.
+- `testmode.py` — только `CQA_MODE=test`: синтетические ответы и настоящие
+  функции domain для scoring, валидации и hash. Исторические foundation-заглушки
+  остаются только защитой для отсутствующей реализации; текущий domain их заменяет.
 - `importing.py`, `organizer.py` — атомарный импорт и приватный адаптер организаторов.
 - `conversations.py` — список разговоров и поиск по флагу. Правило: текущая ревизия →
   последний запуск выбранной версии → только его оценка. `COUNT` и страница читают один
@@ -109,6 +109,12 @@ Production-профили и снимки корпуса читаются при
 `<CQA_CONFIG_DIR>/profiles/*.json` (`EvaluatorProfile`) и `corpora/*.json`
 (`CorpusSnapshot`). Зарегистрированная версия неизменяема: файл с другим содержимым
 той же версии отклоняется, ошибка пишется в журнал. Ключи в профиль не входят.
+
+Для нового локального запуска выбран `live-xerosharc-quality-v1` с инструкциями
+`cqa-eval-v4`. Предпочтение задаётся явно в `.env`; оно не меняет историю и не
+подменяет профиль в запросе. Если предпочтительный профиль не настроен, форма
+не запускает другой провайдер автоматически. Примеры — в
+[xerosharc-config](../../examples/xerosharc-config/README.md).
 
 ## Резервная копия
 

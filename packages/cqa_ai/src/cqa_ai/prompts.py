@@ -21,8 +21,8 @@ from .retrieval import RetrievedChunk
 from .transport import ChatMessage
 
 # v2: known conversation date and per-source date applicability are part of the request.
-PROMPT_VERSION = "cqa-eval-v2"
-SUPPORTED_PROMPT_VERSIONS = frozenset({PROMPT_VERSION})
+PROMPT_VERSION = "cqa-eval-v4"
+SUPPORTED_PROMPT_VERSIONS = frozenset({"cqa-eval-v2", "cqa-eval-v3", PROMPT_VERSION})
 PREPROCESSING_VERSION = "identity-v1"
 SUPPORTED_PREPROCESSING_VERSIONS = frozenset({PREPROCESSING_VERSION})
 # Explicit limit instead of silently cutting the start, end or middle of a dialog.
@@ -79,6 +79,55 @@ listed answer_choice_id; "not_applicable" only when allow_na is true and na_cond
 (reason code "not_applicable"); "undetermined" when evidence is insufficient. Cite whole \
 messages or inclusive message ranges by id; source evidence only by provided chunk ids. \
 reason_codes only from the allowed list. Return ONLY a JSON object."""
+
+# v2 stays byte-for-byte available for pinned profiles and existing artifacts.
+# These instructions apply to arbitrary criteria; no conversation IDs or expected
+# DEV answers are injected into a request.
+DECISION_DISCIPLINE_V3 = """
+DECISION ORDER, independently for each criterion:
+1. APPLICABILITY FIRST. Read allow_na and na_condition before choosing an answer.
+If allow_na is true and the conversation meets na_condition, return not_applicable,
+not a positive answer. An action that was unnecessary is not an action performed.
+If the condition cannot be established, do not invent N/A. Distinguish an observed
+missing action from insufficient information; use undetermined only for the latter.
+2. CONDITIONS. Apply the definition, choice anchors and channel instructions exactly.
+Respect AND, OR, timing and ordering requirements. A positive conclusion requires
+evidence for every required component. Courtesy or acknowledgement is not evidence
+of a substantive summary. Clarifying an instruction is not necessarily clarifying
+the customer's need. Never assume authentication outside the recorded conversation.
+Do not introduce extra prerequisites absent from the rubric, such as third-party
+disclosure, harm, payment or intent. Each criterion is independent: an event may
+support both a process failure and a separate violation flag when their rules say so.
+3. EVIDENCE. Locate the actual operator action, contextual system confirmation, or
+checked range with the missing action. For timing conditions inspect the full order,
+including disconnections and any subsequent messages; a disconnect does not prove
+there was no earlier opportunity to finish. Do not equate consent with identity proof.
+4. CONSISTENCY CHECK BEFORE RETURNING JSON. Ensure the selected applicability, choice,
+rationale and evidence support the same conclusion. A rationale saying that the
+action was unnecessary must not accompany a positive answer when na_condition holds.
+Do not claim an action happened unless cited messages show it. Explain briefly which
+rule condition the evidence satisfies or fails, including the basis for N/A.
+If competing interpretations remain, preserve the uncertainty and use an allowed
+review flag; do not silently invent a missing fact or a new rubric exception.
+Return concise conclusions and evidence, not a step-by-step reasoning transcript.
+"""
+
+CONSISTENCY_V4 = """
+Before finalizing, compare factual claims across your criterion results. Reuse the
+same facts consistently, while applying each criterion's own conditions separately.
+When a criterion concerns confidential information, distinguish general product
+instructions from facts obtained about a particular customer's account. Account
+status and restrictions can themselves be confidential; a disclosure need not include
+an account number, balance or recipient explicitly described as a third party.
+Repeating information volunteered by the client is not proof of a new disclosure.
+An operator reporting an account lookup is different: inspect what was revealed and
+whether identity had been established beforehand. If another conclusion already says
+protected account information was disclosed without verification, a claim of no such
+disclosure must not contradict that evidence. Apply this only when the rubric's
+violation definition includes disclosure; do not invent additional flag categories.
+Use the same standard across languages. When a real ambiguity remains, state it and
+mark potential_violation or observed_contradiction rather than asserting certainty.
+"""
 
 OUTPUT_SHAPE: dict[str, Any] = {
     "criteria": [
@@ -176,7 +225,11 @@ def build_messages(
     checklist: ChecklistDraft,
     sources: Sequence[RetrievedChunk],
     criterion_ids: set[str] | None = None,
+    *,
+    prompt_version: str = PROMPT_VERSION,
 ) -> tuple[ChatMessage, ...]:
+    if prompt_version not in SUPPORTED_PROMPT_VERSIONS:
+        raise ValueError("Unsupported prompt_version")
     payload = {
         "task": "Assess the operator against every rubric criterion."
         if mode == "primary"
@@ -190,6 +243,10 @@ def build_messages(
         "sources": _sources(sources),
     }
     system = SYSTEM_PRIMARY if mode == "primary" else SYSTEM_REVIEW
+    if prompt_version in {"cqa-eval-v3", "cqa-eval-v4"}:
+        system += "\n" + DECISION_DISCIPLINE_V3
+    if prompt_version == "cqa-eval-v4":
+        system += "\n" + CONSISTENCY_V4
     user = json.dumps(payload, ensure_ascii=False, indent=1)
     return (ChatMessage("system", system), ChatMessage("user", user))
 

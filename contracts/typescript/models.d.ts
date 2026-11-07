@@ -187,9 +187,16 @@ export type Language1 = "RU" | "KZ" | "EN";
 export type Messages1 = ContentMessage[];
 export type OccurredAt1 = string | null;
 export type SchemaVersion25 = "1.0";
+export type ChecklistVersionId2 = string | null;
+export type DetectedFlag = boolean | null;
 export type EvaluationStatus = "unevaluated" | "complete" | "partial" | "failed" | "pending";
 export type LatestEvaluationId = string | null;
+export type OpenAppeals = number;
+export type ProfileId = string | null;
+export type ResultScope = "automatic" | "effective";
+export type ReviewReasons = ("incomplete" | "conflict" | "open_appeal" | "evaluation_failed")[];
 export type SchemaVersion26 = "1.0";
+export type TotalScore = string | null;
 export type ApplicabilityPolicy = string;
 export type ChunkId = string;
 export type ContentHash2 = string;
@@ -228,14 +235,14 @@ export type Comment1 = string;
 export type CriterionId2 = string;
 export type ExpectedRevision = number;
 export type SchemaVersion31 = "1.0";
-export type ChecklistVersionId2 = string;
+export type ChecklistVersionId3 = string;
 /**
  * @minItems 1
  * @maxItems 1000
  */
 export type ConversationIds = [string, ...string[]];
 export type Mode1 = "fresh" | "reuse_if_compatible";
-export type ProfileId = string;
+export type ProfileId1 = string;
 export type SchemaVersion32 = "1.0";
 export type ExpectedLatestVersionId = string;
 export type SchemaVersion33 = "1.0";
@@ -276,7 +283,7 @@ export type ReasonCode =
   | "other"
   | "human_confirmed"
   | "human_changed";
-export type ReviewReasons = string[];
+export type ReviewReasons1 = string[];
 export type SchemaVersion35 = "1.0";
 export type SchemaVersion36 = "1.0";
 export type AppealId = string;
@@ -318,7 +325,7 @@ export type SchemaVersion41 = "1.0";
 export type SchemaVersion42 = "1.0";
 export type SourceFragments = SourceFragment[];
 export type Status1 = "complete" | "partial" | "failed";
-export type ChecklistVersionId3 = string;
+export type ChecklistVersionId4 = string;
 export type CorpusSnapshotId = string;
 export type CreatedAt4 = string;
 export type Id9 = string;
@@ -358,7 +365,7 @@ export type SchemaVersion46 = "1.0";
 export type State2 = "queued" | "running" | "succeeded" | "retry_wait" | "failed" | "cancelled";
 export type Jobs = Job[];
 export type Mode2 = "fresh" | "reuse_if_compatible";
-export type ProfileId1 = string;
+export type ProfileId2 = string;
 export type ProfileVersion = string;
 export type SchemaVersion47 = "1.0";
 export type Calls1 = CallRecord[];
@@ -386,8 +393,8 @@ export type SectionId1 = string;
 export type SectionPercent = string | null;
 export type SectionResults = SectionResult[];
 export type Status2 = "complete" | "no_applicable_weight" | "incomplete_evaluation";
-export type TotalScore = string | null;
-export type ChecklistVersionId4 = string;
+export type TotalScore1 = string | null;
+export type ChecklistVersionId5 = string;
 export type ConversationId1 = string;
 export type ConversationRevision1 = number;
 export type CorpusSnapshotId1 = string;
@@ -395,7 +402,7 @@ export type CreatedAt5 = string;
 export type EffectiveProposals = CriterionProposal[];
 export type HumanDecisions = Decision[];
 export type Id11 = string;
-export type ProfileId2 = string;
+export type ProfileId3 = string;
 export type ProfileVersion1 = string;
 export type Mode3 = "fresh" | "reuse_if_compatible";
 export type ReuseKey = string;
@@ -544,6 +551,7 @@ export type Offset3 = number;
 export type SchemaVersion69 = "1.0";
 export type Total4 = number;
 export type Configured = boolean;
+export type Preferred = boolean;
 export type SchemaVersion70 = "1.0";
 export type AnswerChoiceId3 = string | null;
 export type Applicability2 = "applicable" | "not_applicable" | "undetermined";
@@ -573,7 +581,7 @@ export type Revision4 = number;
 export type SchemaVersion73 = "1.0";
 export type BatchId1 = string | null;
 export type GeneratedAt = string;
-export type ChecklistVersionId5 = string;
+export type ChecklistVersionId6 = string;
 export type ConversationId5 = string;
 export type ConversationRevision2 = number;
 export type CorpusSnapshotId3 = string;
@@ -596,11 +604,11 @@ export type LimitationCodes = (
   | "cost_unknown"
   | "other"
 )[];
-export type ProfileId3 = string;
+export type ProfileId4 = string;
 export type ProfileVersion2 = string;
 export type SchemaVersion74 = "1.0";
 export type ScoreStatus = ("complete" | "no_applicable_weight" | "incomplete_evaluation") | null;
-export type TotalScore1 = string | null;
+export type TotalScore2 = string | null;
 export type Items5 = SafeExportItem[];
 export type SchemaVersion75 = "1.0";
 export type Scope1 = "automatic" | "effective";
@@ -632,8 +640,8 @@ export type SchemaVersion80 = "1.0";
 export type Title6 = string;
 export type Criteria6 = SemanticCriterion[];
 export type SchemaVersion81 = "1.0";
-export type ChecklistVersionId6 = string;
-export type ProfileId4 = string;
+export type ChecklistVersionId7 = string;
+export type ProfileId5 = string;
 export type ProfileVersion3 = string;
 export type Redactions = string[];
 export type SchemaVersion82 = "1.0";
@@ -1085,11 +1093,18 @@ export interface ConversationHashInput {
  * via the `definition` "ConversationSummary".
  */
 export interface ConversationSummary {
+  checklist_version_id?: ChecklistVersionId2;
   conversation: Conversation;
+  detected_flag?: DetectedFlag;
   evaluation_status: EvaluationStatus;
   flag_summary?: ConversationFlagSummary | null;
   latest_evaluation_id?: LatestEvaluationId;
+  open_appeals?: OpenAppeals;
+  profile_id?: ProfileId;
+  result_scope?: ResultScope;
+  review_reasons?: ReviewReasons;
   schema_version?: SchemaVersion26;
+  total_score?: TotalScore;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1164,10 +1179,10 @@ export interface CreateAppeal {
  * via the `definition` "CreateBatch".
  */
 export interface CreateBatch {
-  checklist_version_id: ChecklistVersionId2;
+  checklist_version_id: ChecklistVersionId3;
   conversation_ids: ConversationIds;
   mode: Mode1;
-  profile_id: ProfileId;
+  profile_id: ProfileId1;
   schema_version?: SchemaVersion32;
 }
 /**
@@ -1192,7 +1207,7 @@ export interface CriterionProposal {
   origin?: Origin;
   rationale: Rationale;
   reason_codes: ReasonCodes;
-  review_reasons?: ReviewReasons;
+  review_reasons?: ReviewReasons1;
   schema_version?: SchemaVersion35;
 }
 /**
@@ -1300,13 +1315,13 @@ export interface SourceFragment {
  * via the `definition` "EvaluationBatch".
  */
 export interface EvaluationBatch {
-  checklist_version_id: ChecklistVersionId3;
+  checklist_version_id: ChecklistVersionId4;
   corpus_snapshot_id: CorpusSnapshotId;
   created_at: CreatedAt4;
   id: Id9;
   jobs: Jobs;
   mode: Mode2;
-  profile_id: ProfileId1;
+  profile_id: ProfileId2;
   profile_version: ProfileVersion;
   progress: BatchProgress;
   schema_version?: SchemaVersion47;
@@ -1394,7 +1409,7 @@ export interface EvaluationRun {
 export interface EvaluationView {
   artifact: EvaluationArtifact;
   automatic_score: ScoreSummary;
-  checklist_version_id: ChecklistVersionId4;
+  checklist_version_id: ChecklistVersionId5;
   conversation_id: ConversationId1;
   conversation_revision: ConversationRevision1;
   corpus_snapshot_id: CorpusSnapshotId1;
@@ -1403,7 +1418,7 @@ export interface EvaluationView {
   effective_score: ScoreSummary;
   human_decisions: HumanDecisions;
   id: Id11;
-  profile_id: ProfileId2;
+  profile_id: ProfileId3;
   profile_version: ProfileVersion1;
   reuse: ReuseProvenance;
   revision: Revision2;
@@ -1421,7 +1436,7 @@ export interface ScoreSummary {
   schema_version?: SchemaVersion50;
   section_results: SectionResults;
   status: Status2;
-  total_score: TotalScore;
+  total_score: TotalScore1;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1728,6 +1743,7 @@ export interface PageSourceVersion {
 export interface ProfileSummary {
   configuration_error?: APIError | null;
   configured: Configured;
+  preferred?: Preferred;
   profile: EvaluatorProfile;
   schema_version?: SchemaVersion70;
 }
@@ -1791,7 +1807,7 @@ export interface SafeExport {
  * via the `definition` "SafeExportItem".
  */
 export interface SafeExportItem {
-  checklist_version_id: ChecklistVersionId5;
+  checklist_version_id: ChecklistVersionId6;
   conversation_id: ConversationId5;
   conversation_revision: ConversationRevision2;
   corpus_snapshot_id: CorpusSnapshotId3;
@@ -1807,11 +1823,11 @@ export interface SafeExportItem {
   job_id: JobId;
   job_state: JobState;
   limitation_codes: LimitationCodes;
-  profile_id: ProfileId3;
+  profile_id: ProfileId4;
   profile_version: ProfileVersion2;
   schema_version?: SchemaVersion74;
   score_status: ScoreStatus;
-  total_score: TotalScore1;
+  total_score: TotalScore2;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1885,8 +1901,8 @@ export interface SemanticHashInput {
  * via the `definition` "SubmissionConfig".
  */
 export interface SubmissionConfig {
-  checklist_version_id: ChecklistVersionId6;
-  profile_id: ProfileId4;
+  checklist_version_id: ChecklistVersionId7;
+  profile_id: ProfileId5;
   profile_version: ProfileVersion3;
   redactions?: Redactions;
   schema_version?: SchemaVersion82;

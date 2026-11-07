@@ -119,13 +119,17 @@ export function AppealsPage() {
   const [params, setParams] = useSearchParams();
   const state = params.get('state') ?? 'open';
   const openId = params.get('appeal');
+  const evaluationId = params.get('evaluation_id');
   const offset = Math.max(0, Number(params.get('offset') ?? 0) || 0);
   const filterId = useId();
   const [lastDecision, setLastDecision] = useState<Decision | null>(null);
   const list = useQuery({
-    queryKey: ['appeals', { state, offset }],
+    queryKey: ['appeals', { state, offset, evaluationId }],
     queryFn: ({ signal }) =>
-      api.listAppeals({ state: state === 'all' ? null : state, offset, limit: PAGE_SIZE }, signal),
+      api.listAppeals(
+        { state: state === 'all' ? null : state, evaluation_id: evaluationId, offset, limit: PAGE_SIZE },
+        signal,
+      ),
     placeholderData: keepPreviousData,
   });
   function update(changes: Record<string, string | null>) {
@@ -150,6 +154,18 @@ export function AppealsPage() {
         </div>
       </header>
       <DecisionSavedNotice decision={lastDecision} onClose={() => setLastDecision(null)} />
+      {evaluationId ? (
+        <p className="notice">
+          Апелляции оценки {shortId(evaluationId)}.{' '}
+          <button
+            type="button"
+            className="link"
+            onClick={() => update({ evaluation_id: null, offset: null, appeal: null })}
+          >
+            Показать все
+          </button>
+        </p>
+      ) : null}
       <div className="filters">
         <div>
           <label htmlFor={filterId}>Состояние</label>

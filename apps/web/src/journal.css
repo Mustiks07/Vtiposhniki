@@ -67,6 +67,7 @@ select {
 }
 input:not([type]),
 input[type='text'],
+input[type='search'],
 input[type='number'],
 select,
 textarea {
@@ -1256,5 +1257,129 @@ summary {
     scroll-behavior: auto !important;
     animation: none !important;
     transition: none !important;
+  }
+}
+
+.worklist-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.worklist-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.worklist-search input {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  margin: 0;
+  font: inherit;
+  border: 1px solid var(--control);
+}
+.worklist-select {
+  display: grid;
+  gap: 5px;
+  min-width: 175px;
+  font-size: 12px;
+}
+.worklist-select select {
+  margin: 0;
+}
+.quick-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.quick-filters button {
+  border-radius: 20px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+.quick-filters button[aria-pressed='true'] {
+  background: var(--accent-soft, #e5f1eb);
+  border-color: var(--accent, #2c6e60);
+  color: #205749;
+}
+.score-cell strong {
+  display: block;
+  font-size: 21px;
+  font-variant-numeric: tabular-nums;
+}
+.score-cell small {
+  display: block;
+  white-space: nowrap;
+  margin-top: 4px;
+  font-size: 11px;
+}
+.review-reason {
+  display: block;
+  color: #8c542a;
+  margin-bottom: 4px;
+}
+.review-cell {
+  max-width: 160px;
+}
+.comparison-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.comparison-controls label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+.comparison-controls select {
+  max-width: 100%;
+}
+.comparison-totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.comparison-score {
+  font-size: 40px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.comparison-table {
+  min-width: 760px;
+  table-layout: fixed;
+}
+.comparison-table th:first-child {
+  width: 22%;
+}
+.comparison-table th small {
+  display: block;
+  color: #8c542a;
+  margin-top: 8px;
+}
+.comparison-table p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+.comparison-changed {
+  background: #faf6ec;
+}
+@media (max-width: 760px) {
+  .comparison-controls,
+  .comparison-totals {
+    grid-template-columns: 1fr;
+  }
+  .worklist-search {
+    flex-basis: 100%;
+  }
+  .worklist-select {
+    flex: 1 1 145px;
+    min-width: 0;
+  }
+  .quick-filters {
+    gap: 6px;
   }
 }

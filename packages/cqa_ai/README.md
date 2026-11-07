@@ -15,7 +15,14 @@ rubric rules, scoring and hashing come from `cqa_domain`. No ORM, routes or UI.
 | `cqa_ai.corpus.build_corpus_snapshot`, `load_corpus_manifest`, `empty_corpus` | Pinned `CorpusSnapshot` with real chunk/corpus hashes. |
 | `python -m cqa_ai.experiments` | Baseline vs B-light replay report (see below). |
 
-## Pipeline (prompt `cqa-eval-v2`, preprocessing `identity-v1`)
+## Pipeline (versioned prompt, preprocessing `identity-v1`)
+
+Profiles pin their prompt version: `cqa-eval-v2` preserves the original instructions,
+`cqa-eval-v3` adds applicability → conditions → evidence → answer discipline, and
+`cqa-eval-v4` adds consistency across criteria, including account-specific disclosure
+and identification order. Both primary and blind-review calls use that pinned
+version. Older profile hashes and saved results do not change. No conversation IDs,
+expected labels or rubric weights are added to the instructions.
 
 1. Preconditions without calls: supported prompt/preprocessing versions, profile
    pinned to the given corpus id, transports exist, `validate_checklist`,

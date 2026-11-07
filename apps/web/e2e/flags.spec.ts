@@ -1,5 +1,16 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { createChecklist, criterion, decideChoice, draft, evaluation, importViaApi, record, runBatchApi, servers, uid } from './support';
+import {
+  createChecklist,
+  criterion,
+  decideChoice,
+  draft,
+  evaluation,
+  importViaApi,
+  record,
+  runBatchApi,
+  servers,
+  uid,
+} from './support';
 
 // U01–U04 (organizer addendum): flag search on «Диалоги» through the real API (contract 1.1.0).
 // Answers come from the explicit test evaluator (first choice) and real human decisions.
@@ -7,16 +18,21 @@ import { createChecklist, criterion, decideChoice, draft, evaluation, importViaA
 function flag(id: string, title: string, firstIsViolation: boolean) {
   const yes = { id: 'viol', label: 'Есть', raw_value: true, anchor: 'Нарушение обнаружено', score_fraction: null };
   const no = { id: 'clean', label: 'Нет', raw_value: false, anchor: 'Нарушения нет', score_fraction: null };
-  return criterion(id, { response_type: 'flag', title, weight: '0', choices: firstIsViolation ? [yes, no] : [no, yes], flag_when_choice_ids: ['viol'] });
+  return criterion(id, {
+    response_type: 'flag',
+    title,
+    weight: '0',
+    choices: firstIsViolation ? [yes, no] : [no, yes],
+    flag_when_choice_ids: ['viol'],
+  });
 }
 
 /** Require the real server implementation before asserting the search behaviour. */
 async function requireFlagFilter(request: APIRequestContext, base: string, versionId: string, flagId: string) {
-  const res = await request.get(`${base}/api/v1/conversations?checklist_version_id=${versionId}&flag_criterion_id=${flagId}&limit=1`);
-  expect(
-    res.status(),
-    `Flag search must answer contract 1.1.0 (HTTP ${res.status()}).`,
-  ).toBe(200);
+  const res = await request.get(
+    `${base}/api/v1/conversations?checklist_version_id=${versionId}&flag_criterion_id=${flagId}&limit=1`,
+  );
+  expect(res.status(), `Flag search must answer contract 1.1.0 (HTTP ${res.status()}).`).toBe(200);
 }
 
 async function selectScope(page: Page, scope: 'automatic' | 'effective') {
@@ -27,8 +43,18 @@ async function selectScope(page: Page, scope: 'automatic' | 'effective') {
   await expect(page.getByTestId('search-scope')).toContainText(`результат ${scope}`);
 }
 
-async function search(page: Page, opts: { checklistTitle: string; versionId: string; flagTitle: string; status?: string; scope?: 'automatic' | 'effective' }) {
+async function search(
+  page: Page,
+  opts: {
+    checklistTitle: string;
+    versionId: string;
+    flagTitle: string;
+    status?: string;
+    scope?: 'automatic' | 'effective';
+  },
+) {
   await page.goto('/#/conversations');
+  await page.getByText('Версия чек-листа и поиск по флагу', { exact: true }).click();
   await page.getByLabel('Чек-лист для поиска').selectOption({ label: opts.checklistTitle });
   await page.getByLabel('Версия для поиска').selectOption(opts.versionId);
   await page.getByLabel('Флаговый критерий').selectOption({ label: opts.flagTitle });
@@ -37,12 +63,19 @@ async function search(page: Page, opts: { checklistTitle: string; versionId: str
   await expect(page.getByTestId('search-scope')).toContainText(`флаг «${opts.flagTitle}»`);
 }
 
-test('U01+U03: the only detected record beyond the first page is found; total and paging are server-side; explanation opens real messages', async ({ page, request }) => {
+test('U01+U03: the only detected record beyond the first page is found; total and paging are server-side; explanation opens real messages', async ({
+  page,
+  request,
+}) => {
   test.setTimeout(180_000);
   const base = servers.complete;
   const checklistTitle = uid('U01 чек-лист');
   const flagTitle = 'Обещание вне регламента'; // arbitrary flag: never called «грубая ошибка»
-  const v = await createChecklist(request, base, draft(checklistTitle, [criterion('u-main', { weight: '10' }), flag('u-flag-7Q', flagTitle, false)]));
+  const v = await createChecklist(
+    request,
+    base,
+    draft(checklistTitle, [criterion('u-main', { weight: '10' }), flag('u-flag-7Q', flagTitle, false)]),
+  );
   await requireFlagFilter(request, base, v.version_id, 'u-flag-7Q');
 
   // 30 conversations; the oldest one is the only effective "detected" → it is beyond page 1.
@@ -92,7 +125,10 @@ test('U01+U03: the only detected record beyond the first page is found; total an
   await expect(detail.getByRole('heading', { name: flagTitle })).toBeVisible();
   await expect(detail).toContainText('Действующий ответ (решение проверяющего)');
   await expect(detail).toContainText('Ответ оценщика (automatic)');
-  await detail.getByRole('button', { name: /включительно/ }).first().click();
+  await detail
+    .getByRole('button', { name: /включительно/ })
+    .first()
+    .click();
   await expect(page.locator('[data-highlighted="true"]').first()).toContainText('Синтетический вопрос клиента.');
   const ev = await evaluation(request, base, target.evaluation_id!);
   expect(ev.human_decisions.length).toBe(1);
@@ -100,17 +136,30 @@ test('U01+U03: the only detected record beyond the first page is found; total an
 
 test.describe('partial scenario server', () => {
   test.use({ baseURL: servers.partial });
-  test('U02: confirmed flag with other criteria undetermined is found; undetermined/unevaluated are unknown, not negative', async ({ page, request }) => {
+  test('U02: confirmed flag with other criteria undetermined is found; undetermined/unevaluated are unknown, not negative', async ({
+    page,
+    request,
+  }) => {
     const base = servers.partial;
     const checklistTitle = uid('U02 чек-лист');
     const flagTitle = 'Раскрытие данных третьим лицам';
-    const v = await createChecklist(request, base, draft(checklistTitle, [criterion('p-main', { weight: '10' }), flag('p-flag', flagTitle, true)]));
+    const v = await createChecklist(
+      request,
+      base,
+      draft(checklistTitle, [criterion('p-main', { weight: '10' }), flag('p-flag', flagTitle, true)]),
+    );
     await requireFlagFilter(request, base, v.version_id, 'p-flag');
     const ext = [uid('u02-flag'), uid('u02-undetermined'), uid('u02-unevaluated')];
-    const imp = await importViaApi(request, base, ext.map((e) => record(e)));
+    const imp = await importViaApi(
+      request,
+      base,
+      ext.map((e) => record(e)),
+    );
     const [flagged, undetermined] = imp.items.map((i) => i.conversation_id);
     const batch = await runBatchApi(request, base, [flagged, undetermined], v.version_id);
-    const flaggedJob = batch.jobs.find((j) => (j as unknown as { conversation_id: string }).conversation_id === flagged)!;
+    const flaggedJob = batch.jobs.find(
+      (j) => (j as unknown as { conversation_id: string }).conversation_id === flagged,
+    )!;
     await decideChoice(request, base, flaggedJob.evaluation_id!, 'p-flag', 'viol');
 
     await search(page, { checklistTitle, versionId: v.version_id, flagTitle, status: 'обнаружен', scope: 'effective' });
@@ -141,7 +190,11 @@ test.describe('failed scenario server', () => {
     const base = servers.failed;
     const checklistTitle = uid('U02 ошибки');
     const flagTitle = 'Флаг для сбоя';
-    const v = await createChecklist(request, base, draft(checklistTitle, [criterion('f-main'), flag('f-flag', flagTitle, false)]));
+    const v = await createChecklist(
+      request,
+      base,
+      draft(checklistTitle, [criterion('f-main'), flag('f-flag', flagTitle, false)]),
+    );
     await requireFlagFilter(request, base, v.version_id, 'f-flag');
     const ext = uid('u02-failed');
     const imp = await importViaApi(request, base, [record(ext)]);
@@ -156,7 +209,10 @@ test.describe('failed scenario server', () => {
   });
 });
 
-test('U04: new arbitrary flag ID from the editor works; re-evaluation and a new revision never duplicate the row or reuse an old true', async ({ page, request }) => {
+test('U04: new arbitrary flag ID from the editor works; re-evaluation and a new revision never duplicate the row or reuse an old true', async ({
+  page,
+  request,
+}) => {
   const base = servers.complete;
   const checklistTitle = uid('U04 чек-лист');
   const flagTitle = uid('Новый флаг');
@@ -170,7 +226,7 @@ test('U04: new arbitrary flag ID from the editor works; re-evaluation and a new 
   await first.getByLabel('Смысл ступени варианта 1').fill('Нарушение есть');
   await first.getByLabel('Смысл ступени варианта 2').fill('Нарушения нет');
   await page.getByRole('button', { name: '+ Критерий' }).click();
-  const second = page.getByTestId('editor-criterion').nth(1);
+  const second = page.getByTestId('editor-criterion').first();
   await second.getByLabel('Название', { exact: true }).fill('Обычный критерий');
   await second.getByLabel('Определение').fill('Синтетическое определение.');
   await second.getByLabel('Смысл ступени варианта 1').fill('Да');
@@ -191,14 +247,17 @@ test('U04: new arbitrary flag ID from the editor works; re-evaluation and a new 
 
   await search(page, { checklistTitle, versionId, flagTitle, status: 'обнаружен' });
   await expect(page.getByTestId('conversation-row').filter({ hasText: externalId })).toHaveCount(1);
-  const latest = (await (await request.get(`${base}/api/v1/evaluations?conversation_id=${conversationId}&limit=1`)).json()).items[0].id;
-  await expect(page.getByTestId('conversation-row').filter({ hasText: externalId }).getByTestId('flag-explain')).toHaveAttribute(
-    'href',
-    new RegExp(`#/evaluations/${latest}\\?`),
-  );
+  const latest = (
+    await (await request.get(`${base}/api/v1/evaluations?conversation_id=${conversationId}&limit=1`)).json()
+  ).items[0].id;
+  await expect(
+    page.getByTestId('conversation-row').filter({ hasText: externalId }).getByTestId('flag-explain'),
+  ).toHaveAttribute('href', new RegExp(`#/evaluations/${latest}\\?`));
 
   // New revision (changed text) without a new run: the old true is not carried over.
-  await importViaApi(request, base, [record(externalId, { messages: [{ speaker: 'client', text: 'Изменённый текст.', timestamp_original: '00:02' }] })]);
+  await importViaApi(request, base, [
+    record(externalId, { messages: [{ speaker: 'client', text: 'Изменённый текст.', timestamp_original: '00:02' }] }),
+  ]);
   await page.reload();
   await expect(page.getByTestId('conversation-row').filter({ hasText: externalId })).toHaveCount(0);
   await page.getByLabel('Состояние флага').selectOption({ label: 'неизвестно' });
