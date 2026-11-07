@@ -55,7 +55,7 @@ function FlagList({ flags, criterionTitle, scope }: {
               <span className={`flag-icon ${f.detected ? 'flag-on' : ''}`} aria-hidden="true">
                 {f.detected ? '⚑' : '⚐'}
               </span>{' '}
-              {criterionTitle.get(f.criterion_id) ?? f.criterion_id}:{' '}
+              {criterionTitle.get(f.criterion_id) ?? 'Нарушение'}:{' '}
               <strong>
                 {f.detected === true
                   ? 'нарушение обнаружено'
@@ -63,10 +63,7 @@ function FlagList({ flags, criterionTitle, scope }: {
                     ? 'нарушение не обнаружено'
                     : 'не определено'}
               </strong>
-              <span className="hint">
-                {' '}
-                · флаг без баллов, не меняет итог · {scope === 'automatic' ? 'оценка AI' : 'после пересмотра'}
-              </span>
+              <span className="visually-hidden"> · {scope === 'automatic' ? 'оценка AI' : 'после пересмотра'}</span>
             </li>
           ))}
         </ul>
@@ -99,7 +96,6 @@ export function ScorePanel({
         : [];
     }),
   );
-  const sectionFlagIds = new Set([...flagSections.values()].flat().map((f) => f.criterion_id));
   const humanCompleted =
     hasDecisions && evaluation.automatic_score.status !== 'complete' && effective.status === 'complete';
 
@@ -121,13 +117,13 @@ export function ScorePanel({
       ) : null}
       <div className="score-grid">
         <ScoreBlock
-          title="Оценка AI · automatic"
+          title="Оценка AI"
           score={evaluation.automatic_score}
           testId="automatic-total"
-          note="Не изменяется решениями проверяющего."
+          note="Исходный результат"
         />
         <ScoreBlock
-          title="После пересмотра · effective"
+          title="После пересмотра"
           score={effective}
           testId="effective-total"
           note={
@@ -135,11 +131,12 @@ export function ScorePanel({
               ? 'Итог стал полным благодаря решениям проверяющего; автоматическая оценка остаётся неполной.'
               : hasDecisions
                 ? `Учтено решений: ${evaluation.human_decisions.length}.`
-                : 'Решений проверяющего нет — совпадает с automatic.'
+                : 'Решений проверяющего нет.'
           }
         />
       </div>
-
+      <FlagList flags={displayed.flags} criterionTitle={criterionTitle} scope={scope} />
+      <details className="score-breakdown"><summary>Разделы чек-листа и состав итога</summary>
       {displayed.contributions.length ? (
         <div className="composition" aria-label="Состав итога: вес и набранная доля каждого критерия">
           {displayed.contributions
@@ -181,7 +178,7 @@ export function ScorePanel({
                   <th scope="row">{sectionTitle.get(s.section_id) ?? s.section_id}</th>
                   {flagSections.has(s.section_id) ? (
                     <td colSpan={2}>
-                      <FlagList flags={flagSections.get(s.section_id) ?? []} criterionTitle={criterionTitle} scope={scope} />
+                      {(flagSections.get(s.section_id) ?? []).map((f) => <p key={f.criterion_id}>{criterionTitle.get(f.criterion_id) ?? 'Нарушение'}: {f.detected === true ? 'обнаружено' : f.detected === false ? 'не обнаружено' : 'не определено'}</p>)}
                     </td>
                   ) : (
                     <>
@@ -196,11 +193,7 @@ export function ScorePanel({
         </div>
       ) : null}
 
-      <FlagList
-        flags={displayed.flags.filter((f) => !sectionFlagIds.has(f.criterion_id))}
-        criterionTitle={criterionTitle}
-        scope={scope}
-      />
+      </details>
     </section>
   );
 }

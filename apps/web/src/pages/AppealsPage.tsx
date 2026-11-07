@@ -7,11 +7,19 @@ import { DecisionComparison, DecisionForm, DecisionSavedNotice } from '../compon
 import { answerText, EvidenceList, ScaleTable } from '../components/CriterionDetail';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { Transcript } from '../components/Transcript';
-import { serverTime, shortId } from '../lib/format';
+import { serverTime } from '../lib/format';
+import { ConversationName } from '../components/DisplayNames';
 import { evidenceMessageIds } from '../lib/evidence';
 import { useState } from 'react';
 
 const PAGE_SIZE = 25;
+
+function AppealLabel({ appeal }: { appeal: Appeal }) {
+  const evaluation = useQuery({ queryKey: ['evaluation', appeal.evaluation_id], queryFn: ({ signal }) => api.getEvaluation(appeal.evaluation_id, signal), staleTime: 30_000 });
+  const versionId = evaluation.data?.checklist_version_id;
+  const checklist = useQuery({ queryKey: ['checklist-version', versionId], queryFn: ({ signal }) => api.getChecklistVersion(versionId!, signal), enabled: Boolean(versionId), staleTime: Infinity });
+  return <strong>{checklist.data?.criteria.find((c) => c.id === appeal.criterion_id)?.title ?? 'Пересмотр критерия'}</strong>;
+}
 
 function AppealReview({ appeal, onDecided }: { appeal: Appeal; onDecided: (d: Decision) => void }) {
   const evaluation = useQuery({
@@ -48,12 +56,13 @@ function AppealReview({ appeal, onDecided }: { appeal: Appeal; onDecided: (d: De
 
   return (
     <div className="appeal-review">
+      <p className="appeal-conversation"><ConversationName id={e.conversation_id} revision={e.conversation_revision} /></p>
       {checklist.isError ? <ErrorPanel error={checklist.error} onRetry={() => checklist.refetch()} /> : null}
       {criterion ? (
         <>
           <h3>{criterion.title}</h3>
-          <p className="definition">{criterion.definition}</p>
-          <ScaleTable criterion={criterion} selected={current?.answer_choice_id} />
+          <details className="criterion-rule"><summary>Правило и шкала</summary><p className="definition">{criterion.definition}</p>
+          <ScaleTable criterion={criterion} selected={current?.answer_choice_id} /></details>
           <dl className="meta">
             <dt>Исходный ответ оценщика</dt>
             <dd data-testid="appeal-ai-answer">{answerText(criterion, ai)}</dd>
@@ -145,10 +154,9 @@ export function AppealsPage() {
   const setOffset = (value: number) => update({ offset: value > 0 ? String(value) : null, appeal: null });
   const toggleAppeal = (id: string | null) => update({ appeal: id });
   return (
-    <div className="page">
+    <div className="page appeals-page">
       <header className="page-heading">
         <div>
-          <p className="eyebrow">ПЕРЕСМОТР РЕШЕНИЙ</p>
           <h1>Апелляции</h1>
           <p className="page-intro">Проверьте основания, примите решение и сохраните историю.</p>
         </div>
@@ -156,7 +164,7 @@ export function AppealsPage() {
       <DecisionSavedNotice decision={lastDecision} onClose={() => setLastDecision(null)} />
       {evaluationId ? (
         <p className="notice">
-          Апелляции оценки {shortId(evaluationId)}.{' '}
+          Показаны обращения по выбранной оценке.{' '}
           <button
             type="button"
             className="link"
@@ -189,9 +197,10 @@ export function AppealsPage() {
           Апелляция подаётся из карточки оценки по конкретному критерию.
         </Empty>
       ) : null}
+      <div className="appeals-workspace">
       <ul className="appeal-queue">
         {list.data?.items.map((a) => (
-          <li key={a.id} data-testid="queue-appeal" data-state={a.state}>
+          <li key={a.id} data-testid="queue-appeal" data-state={a.state} className={openId === a.id ? 'appeal-selected' : undefined}>
             <button
               type="button"
               className="appeal-head"
@@ -199,14 +208,17 @@ export function AppealsPage() {
               onClick={() => toggleAppeal(openId === a.id ? null : a.id)}
             >
               <Badge status={a.state}>{a.state === 'open' ? 'Открыта' : 'Рассмотрена'}</Badge>{' '}
-              <span>критерий {a.criterion_id}</span> · <span>оценка {shortId(a.evaluation_id)}</span> ·{' '}
+              <AppealLabel appeal={a} />{' '}
               <span className="muted">{serverTime(a.created_at)}</span>
               <span className="clamp">{a.comment}</span>
             </button>
-            {openId === a.id ? <AppealReview appeal={a} onDecided={setLastDecision} /> : null}
           </li>
         ))}
       </ul>
+      <section className="panel appeal-detail-pane" aria-label="Рассмотрение обращения">
+        {list.data?.items.find((a) => a.id === openId) ? <AppealReview key={openId} appeal={list.data.items.find((a) => a.id === openId)!} onDecided={setLastDecision} /> : <Empty title="Выберите обращение">Откройте апелляцию, чтобы проверить доказательства и принять решение.</Empty>}
+      </section>
+      </div>
       {list.data && list.data.total > PAGE_SIZE ? (
         <nav className="pager" aria-label="Страницы">
           <button type="button" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>

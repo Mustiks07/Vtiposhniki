@@ -4,7 +4,8 @@ import { api } from '../api/client';
 import type { EvaluationBatch, EvaluationView, Job } from '../api/types';
 import { ExportLinks } from '../components/ExportLinks';
 import { Badge, ErrorPanel, Loading } from '../components/States';
-import { serverTime, shortId } from '../lib/format';
+import { serverTime } from '../lib/format';
+import { ChecklistName, ConversationName, ProfileName } from '../components/DisplayNames';
 import { artifactStatusLabel, errorCodeLabel, jobStateLabel } from '../lib/labels';
 
 const ACTIVE = new Set(['queued', 'running', 'retry_wait']);
@@ -30,9 +31,9 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
     <tr data-testid="job-row" data-state={job.state}>
       <td>
         <Link to={`/conversations/${encodeURIComponent(job.conversation_id)}?revision=${job.conversation_revision}`}>
-          {shortId(job.conversation_id)}
+          <ConversationName id={job.conversation_id} revision={job.conversation_revision} />
         </Link>
-        <div className="muted">revision {job.conversation_revision}</div>
+        <div className="muted">Версия текста {job.conversation_revision}</div>
       </td>
       <td>
         <Badge status={job.state}>{jobStateLabel[job.state] ?? job.state}</Badge>
@@ -52,9 +53,7 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
         {job.error ? (
           <span>
             {errorCodeLabel[job.error.code] ?? job.error.code}
-            <div className="muted">
-              correlation_id: <code>{job.error.correlation_id}</code>
-            </div>
+            <details className="technical-details"><summary>Код для поддержки</summary><code>{job.error.correlation_id}</code></details>
           </span>
         ) : (
           '—'
@@ -63,7 +62,7 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
       <td>
         {job.evaluation_id ? (
           <Link to={`/evaluations/${encodeURIComponent(job.evaluation_id)}`}>
-            карточка{evaluation ? ` · ${artifactStatusLabel[evaluation.artifact.status]}` : ''}
+            Открыть оценку{evaluation ? ` · ${artifactStatusLabel[evaluation.artifact.status]}` : ''}
           </Link>
         ) : null}
         {job.state === 'failed' ? (
@@ -98,40 +97,29 @@ export function BatchPage() {
   if (batch.isError && !batch.data) return <ErrorPanel error={batch.error} onRetry={() => batch.refetch()} />;
   const b = batch.data!;
   const p = b.progress;
+  const finished = p.succeeded + p.failed + p.cancelled;
 
   return (
-    <div className="page">
+    <div className="page batch-page">
       <p className="crumbs">
         <Link to="/conversations">Диалоги</Link> / Пакет
       </p>
-      <h1>
-        Пакет <code>{shortId(b.id)}</code>
-      </h1>
-      <dl className="meta">
-        <dt>Создан</dt>
-        <dd>{serverTime(b.created_at)}</dd>
-        <dt>Версия чек-листа</dt>
-        <dd>
-          <code>{b.checklist_version_id}</code>
-        </dd>
-        <dt>Профиль</dt>
-        <dd>
-          {b.profile_id} · {b.profile_version}
-        </dd>
-        <dt>Режим</dt>
-        <dd>{b.mode}</dd>
-      </dl>
+      <header className="page-heading"><div><h1>Запуск оценки</h1><p className="page-intro">{serverTime(b.created_at)} · {p.total} диалогов</p></div></header>
+      <section className="panel batch-overview">
+        <div><h2>{finished} из {p.total} обработаны</h2><progress value={finished} max={Math.max(p.total, 1)} aria-label="Обработано диалогов" /><p className="hint">{active ? 'Результаты появляются по мере обработки.' : 'Обработка завершена. Ошибки и неполные оценки доступны ниже.'}</p></div>
+        <div className="batch-counts"><Badge status="succeeded">{p.succeeded} с результатом</Badge><Badge status="running">{p.running} выполняется</Badge><Badge status="failed">{p.failed} с ошибкой</Badge>{p.queued ? <Badge status="queued">{p.queued} в очереди</Badge> : null}{p.retry_wait ? <Badge status="retry_wait">{p.retry_wait} ожидает повтора</Badge> : null}{p.cancelled ? <Badge status="cancelled">{p.cancelled} отменено</Badge> : null}</div>
+        <dl className="batch-settings"><div><dt>Чек-лист</dt><dd><Link to={`/checklists/version/${encodeURIComponent(b.checklist_version_id)}`}><ChecklistName id={b.checklist_version_id} /></Link></dd></div><div><dt>Профиль</dt><dd><ProfileName id={b.profile_id} version={b.profile_version} /></dd></div><div><dt>Режим</dt><dd>{b.mode === 'fresh' ? 'Новый анализ' : 'Переиспользование при совместимости'}</dd></div></dl>
+      </section>
       {batch.isError ? (
         <ErrorPanel error={batch.error} onRetry={() => batch.refetch()}>
           <p>Показано последнее полученное состояние. Пакет не создаётся заново.</p>
         </ErrorPanel>
       ) : null}
-      <p role="status" aria-live="polite" className="progress-line" data-testid="batch-progress">
+      <p role="status" aria-live="polite" className="visually-hidden" data-testid="batch-progress">
         Всего {p.total}: в очереди {p.queued}, выполняется {p.running}, ожидает повтора {p.retry_wait}, завершено{' '}
         {p.succeeded}, с ошибкой {p.failed}
         {p.cancelled ? `, отменено ${p.cancelled}` : ''}.{active ? ' Обновляется…' : ' Все задания в финальном состоянии.'}
       </p>
-      {active ? <div className="indeterminate" role="progressbar" aria-label="Обработка разговоров продолжается"><span /></div> : null}
       <div className="table-wrap" tabIndex={0} aria-label="Задания пакета">
         <table className="table">
           <thead>
@@ -151,6 +139,7 @@ export function BatchPage() {
         </table>
       </div>
       <ExportLinks kind="batch" id={b.id} />
+      <details className="technical-details"><summary>Технические сведения о запуске</summary><dl className="meta"><dt>ID запуска</dt><dd><code>{b.id}</code></dd><dt>Версия правил</dt><dd><code>{b.checklist_version_id}</code></dd><dt>Профиль</dt><dd><code>{b.profile_id}</code> · {b.profile_version}</dd></dl></details>
     </div>
   );
 }

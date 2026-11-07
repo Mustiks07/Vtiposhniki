@@ -22,7 +22,9 @@ import {
   type SideCell,
 } from '../lib/comparison';
 import { evidenceMessageIds, evidenceRefText } from '../lib/evidence';
-import { approxRu, decimalRu, serverTime, shortId, totalRu } from '../lib/format';
+import { approxRu, decimalRu, serverTime, totalRu } from '../lib/format';
+import { profileLabel } from '../lib/presentation';
+import { ChecklistName, ProfileName } from '../components/DisplayNames';
 import { applicabilityLabel, scoreStatusExplanation, speakerLabel } from '../lib/labels';
 import { reusedRunCallsText } from '../lib/runSummary';
 
@@ -40,8 +42,8 @@ function evaluationHref(view: EvaluationView, cid: string, scope: Scope, evidenc
 
 function originText(view: EvaluationView): string {
   return view.reuse.reused_from_evaluation_id
-    ? `Ответы переиспользованы из оценки ${shortId(view.reuse.reused_from_evaluation_id)}. ${reusedRunCallsText(view.run)} Баллы пересчитаны сервером по своей версии.`
-    : `Новый вызов оценщика (режим ${view.reuse.mode})`;
+    ? `Ответы переиспользованы. ${reusedRunCallsText(view.run)} Баллы пересчитаны по выбранным правилам.`
+    : 'Новый вызов оценщика';
 }
 
 function flagText(detected: boolean | null | undefined): string {
@@ -122,7 +124,7 @@ function SideResult({
             return (
               <li key={i}>
                 <Link to={evaluationHref(view, c.id, scope, i)} data-testid="cmp-evidence-link">
-                  {ev.kind === 'source' ? `Источник ${evidenceRefText(ev)}` : `Реплики ${evidenceRefText(ev)}`}
+                  {ev.kind === 'source' ? 'Открыть источник' : `Реплики ${evidenceRefText(ev, messages)}`}
                 </Link>
                 {quoted[0] ? (
                   <span className="muted cmp-quote">
@@ -162,7 +164,7 @@ function RuleChange({ row }: { row: ComparisonRow }) {
       JSON.stringify([y?.label, y?.raw_value, y?.anchor, y?.score_fraction]);
   });
   const choiceText = (c: Criterion['choices'][number] | undefined) =>
-    c ? `${c.label} · raw ${String(c.raw_value)} · доля ${c.score_fraction ?? '—'}${c.anchor ? ` · ${c.anchor}` : ''}` : 'нет';
+    c ? `${c.label} · значение ${String(c.raw_value)} · доля ${c.score_fraction ?? '—'}${c.anchor ? ` · ${c.anchor}` : ''}` : 'нет';
   return (
     <div className="rule-changes" data-testid="rule-change">
       <p className="muted">Изменено в правиле: {row.fields.map(fieldLabel).join(', ')}.</p>
@@ -179,7 +181,7 @@ function RuleChange({ row }: { row: ComparisonRow }) {
       {changedChoices.map((id) => (
         <div className="rule-change" key={id}>
           <span className="rule-change-label">
-            Вариант <code>{id}</code>
+            Вариант «{b.choices.find((c) => c.id === id)?.label ?? a.choices.find((c) => c.id === id)?.label ?? 'Без названия'}»
           </span>
           <del>{choiceText(a.choices.find((c) => c.id === id))}</del>
           <ins>{choiceText(b.choices.find((c) => c.id === id))}</ins>
@@ -213,6 +215,7 @@ function TotalDelta({ left, right }: { left: ScoreSummary; right: ScoreSummary }
 
 export function ComparisonPage() {
   const { id = '' } = useParams();
+  const profiles = useQuery({ queryKey: ['profiles'], queryFn: ({ signal }) => api.listProfiles(signal), staleTime: 60_000 });
   const [params, setParams] = useSearchParams();
   const scope: Scope = params.get('scope') === 'effective' ? 'effective' : 'automatic';
   const onlyChanges = params.get('changes') === '1';
@@ -270,7 +273,7 @@ export function ComparisonPage() {
     return (
       <Empty title="Выбранная оценка не найдена у этого разговора">
         <p>
-          Не найдены: <code>{missing.join(', ')}</code>. Другая оценка не подставляется.
+          Одна из выбранных оценок недоступна. Выберите сохранённые оценки из истории разговора.
         </p>
         <Link to={`/conversations/${encodeURIComponent(id)}/compare`}>Открыть сравнение без выбора</Link>
       </Empty>
@@ -308,7 +311,6 @@ export function ComparisonPage() {
       </p>
       <header className="page-heading">
         <div>
-          <p className="eyebrow">ДО И ПОСЛЕ</p>
           <h1>Сравнение оценок</h1>
           <p className="page-intro">Что изменилось в правилах, ответах и расчёте — и почему изменился итог.</p>
         </div>
@@ -318,10 +320,9 @@ export function ComparisonPage() {
           <label key={side}>
             {side === 'left' ? 'Было (левая сторона)' : 'Стало (правая сторона)'}
             <select value={(side === 'left' ? left : right).id} onChange={(e) => update({ [side]: e.target.value })}>
-              {items.map((e) => (
+              {items.map((e, index) => (
                 <option key={e.id} value={e.id}>
-                  {serverTime(e.created_at)} · {e.profile_id} · текст v{e.conversation_revision} · чек-лист{' '}
-                  {shortId(e.checklist_version_id)}
+                  Запуск {items.length - index} · {serverTime(e.created_at)} · {(() => { const p = profiles.data?.items.find((p) => p.profile.id === e.profile_id && p.profile.version === e.profile_version); return p ? profileLabel(p.profile) : 'Сохранённая оценка'; })()} · текст v{e.conversation_revision}
                 </option>
               ))}
             </select>
@@ -334,8 +335,8 @@ export function ComparisonPage() {
           <label>
             Источник результата
             <select value={scope} onChange={(e) => update({ scope: e.target.value })}>
-              <option value="automatic">Исходный AI (automatic)</option>
-              <option value="effective">С учётом решений человека (effective)</option>
+              <option value="automatic">Оценка AI</option>
+              <option value="effective">После пересмотра</option>
             </select>
           </label>
           <label className="inline-check">
@@ -362,8 +363,7 @@ export function ComparisonPage() {
         <>
           {profileChanged ? (
             <p className="notice notice-warn" data-testid="profile-changed">
-              Профили оценщика отличаются ({left.profile_id} · {left.profile_version} → {right.profile_id} ·{' '}
-              {right.profile_version}). Разница может быть вызвана моделью, инструкциями и настройками, а не только
+              Профили оценщика отличаются. Разница может быть вызвана моделью, инструкциями и настройками, а не только
               чек-листом.
             </p>
           ) : null}
@@ -379,6 +379,7 @@ export function ComparisonPage() {
                 <div className="comparison-score">
                   <TotalValue score={score} />
                 </div>
+                {score.flags.length ? <Badge status={score.flags.some((f) => f.detected) ? 'failed' : score.flags.some((f) => f.detected === null) ? 'partial' : 'complete'}>{score.flags.some((f) => f.detected) ? 'Обнаружено нарушение' : score.flags.some((f) => f.detected === null) ? 'Нарушения: не определено' : 'Нарушений не обнаружено'}</Badge> : null}
                 {score.status !== 'complete' ? (
                   <p className="hint">{scoreStatusExplanation[score.status]}</p>
                 ) : null}
@@ -386,12 +387,12 @@ export function ComparisonPage() {
                   <dt>Чек-лист</dt>
                   <dd>
                     <Link to={`/checklists/version/${encodeURIComponent(view.checklist_version_id)}`}>
-                      <code>{shortId(view.checklist_version_id)}</code>
+                      <ChecklistName id={view.checklist_version_id} />
                     </Link>
                   </dd>
                   <dt>Профиль</dt>
                   <dd>
-                    {view.profile_id} · {view.profile_version}
+                    <ProfileName id={view.profile_id} version={view.profile_version} />
                   </dd>
                   <dt>Происхождение</dt>
                   <dd data-testid="cmp-origin">{originText(view)}</dd>
@@ -481,7 +482,7 @@ export function ComparisonPage() {
                             className={row.kinds.length ? 'comparison-changed' : ''}
                           >
                             <th scope="row">
-                              {row.title} <code className="muted">{row.id}</code>
+                              {row.title}
                               <span className="cmp-kinds">
                                 {row.kinds.length ? (
                                   row.kinds.map((k) => (

@@ -76,7 +76,7 @@ export const AudioPanel = forwardRef<HTMLAudioElement, { conversation: Conversat
           </>
         ) : audio.availability === 'unavailable' ? (
           <p className="notice" data-testid="audio-unavailable">
-            Запись недоступна для этой revision. Оценка выполнена по тексту; ограничения анализа звука указаны в
+            Запись недоступна для этой версии. Оценка выполнена по тексту; ограничения анализа звука указаны в
             критериях.
           </p>
         ) : (

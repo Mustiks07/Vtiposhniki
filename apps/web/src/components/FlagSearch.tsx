@@ -3,7 +3,7 @@ import { useId, useState } from 'react';
 import { api } from '../api/client';
 import type { ChecklistVersion, ConversationFlagSummary } from '../api/types';
 import { flagScopeLabel, flagStatusLabel, type ParsedQuery } from '../lib/conversationQuery';
-import { serverTime, shortId } from '../lib/format';
+import { serverTime } from '../lib/format';
 import { Badge } from './States';
 
 /** Flag criteria of a version, named by their own titles (no "gross error" guessing). */
@@ -49,8 +49,7 @@ export function FlagFilters({
       <fieldset className="flag-filters" aria-describedby={`${ids.cl}-hint`}>
         <legend>Поиск по результату оценки</legend>
         <small id={`${ids.cl}-hint`} className="hint">
-          Сервер фильтрует все разговоры до пагинации. Для каждого разговора берётся последний запуск выбранной версии
-          чек-листа по текущей revision.
+          Поиск по последней оценке текущего текста. Выберите чек-лист и его версию, чтобы сравнивать разговоры по одним правилам.
         </small>
         <div className="filters">
           <div>
@@ -80,13 +79,13 @@ export function FlagFilters({
               onChange={(e) => onChange('checklist_version_id', e.target.value || null)}
             >
               <option value="">—</option>
-              {versions.data?.items.map((v) => (
+              {versions.data?.items.map((v, index) => (
                 <option key={v.version_id} value={v.version_id}>
-                  {shortId(v.version_id)} · {serverTime(v.created_at)}
+                  Версия {versions.data!.total - versions.data!.offset - index} · {serverTime(v.created_at)}
                 </option>
               ))}
               {parsed.versionId && !versions.data?.items.some((v) => v.version_id === parsed.versionId) ? (
-                <option value={parsed.versionId}>{shortId(parsed.versionId)}</option>
+                <option value={parsed.versionId}>Версия из открытой ссылки</option>
               ) : null}
             </select>
           </div>
@@ -163,14 +162,13 @@ export function SearchScope({ parsed, total }: { parsed: ParsedQuery; total: num
   }
   return (
     <p className="search-scope" data-testid="search-scope" aria-live="polite">
-      Последний запуск по текущей версии разговора · чек-лист <code>{shortId(parsed.versionId)}</code>
-      {version.data ? ` («${version.data.title}»)` : ''}
+      Последний запуск по текущей версии разговора · {version.data ? `«${version.data.title}»` : 'Выбранный чек-лист'}
       {flag ? (
         <>
           {' '}
           · флаг «{flag.title}» ·{' '}
           {parsed.flagStatus ? `состояние: ${flagStatusLabel[parsed.flagStatus]}` : 'все состояния'} · результат{' '}
-          {parsed.flagScope}
+          {flagScopeLabel[parsed.flagScope]}
         </>
       ) : (
         ' · без отбора по флагу'
@@ -200,7 +198,7 @@ export function FlagCell({
       <Badge status={flagTone[summary.status]}>
         {title}: {flagStatusLabel[summary.status]}
       </Badge>
-      <div className="muted">{summary.scope}</div>
+      <div className="muted">{flagScopeLabel[summary.scope]}</div>
       {evaluationId ? (
         <a
           href={`#/evaluations/${encodeURIComponent(evaluationId)}?criterion=${encodeURIComponent(criterionId)}&scope=${summary.scope}`}

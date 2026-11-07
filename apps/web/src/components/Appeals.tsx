@@ -187,7 +187,7 @@ export function DecisionForm({
 
   if (mutation.isSuccess) {
     return (
-      <p className="notice notice-ok">Решение сохранено (revision {mutation.data.revision}).</p>
+      <p className="notice notice-ok">Решение сохранено (версия {mutation.data.revision}).</p>
     );
   }
 
@@ -254,7 +254,7 @@ export function DecisionForm({
                   <option value="">— выберите —</option>
                   {messages.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.id} · {m.timestamp_original} · {m.text.slice(0, 60)}
+                      №{m.source_index + 1}{m.timestamp_original ? ` · ${m.timestamp_original}` : ''} · {m.text.slice(0, 60)}
                     </option>
                   ))}
                 </select>
@@ -265,7 +265,7 @@ export function DecisionForm({
                   <option value="">— выберите —</option>
                   {messages.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.id} · {m.timestamp_original} · {m.text.slice(0, 60)}
+                      №{m.source_index + 1}{m.timestamp_original ? ` · ${m.timestamp_original}` : ''} · {m.text.slice(0, 60)}
                     </option>
                   ))}
                 </select>
@@ -295,7 +295,7 @@ export function DecisionForm({
       ) : null}
       {reloaded ? (
         <p className="notice" role="status">
-          Данные обновлены (revision {expectedRevision}). Проверьте актуальное состояние и отправьте решение повторно, если оно
+          Данные обновлены (версия {expectedRevision}). Проверьте актуальное состояние и отправьте решение повторно, если оно
           всё ещё нужно.
         </p>
       ) : null}
@@ -315,10 +315,7 @@ export function DecisionForm({
             Обновить данные
           </button>
           {mutation.error instanceof ApiError && mutation.error.correlationId ? (
-            <small className="muted">
-              {' '}
-              correlation_id: <code>{mutation.error.correlationId}</code>
-            </small>
+            <details className="technical-details"><summary>Код для поддержки</summary><code>{mutation.error.correlationId}</code></details>
           ) : null}
         </div>
       ) : mutation.isError ? (
@@ -336,8 +333,7 @@ export function DecisionSavedNotice({ decision, onClose }: { decision: Decision 
   return (
     <div className="notice notice-ok" role="status" data-testid="decision-saved">
       <p>
-        Решение «{decision.decision === 'confirmed' ? 'подтвердить' : 'изменить'}» по критерию <code>{decision.criterion_id}</code>{' '}
-        сохранено (revision {decision.revision}). Итог effective получен с сервера заново.
+        Решение «{decision.decision === 'confirmed' ? 'подтвердить' : 'изменить'}» сохранено. Версия оценки {decision.revision}; итог обновлён с учётом решения.
       </p>
       <div className="row">
         <a href={`#/evaluations/${encodeURIComponent(decision.evaluation_id)}?criterion=${encodeURIComponent(decision.criterion_id)}`}>
@@ -383,7 +379,7 @@ export function DecisionComparison({
           <li key={d.id} data-testid="decision-entry">
             <strong>{d.decision === 'confirmed' ? 'Подтверждено' : 'Изменено'}</strong>{' '}
             {d.decision === 'changed' && d.replacement ? `на «${answerText(criterion, d.replacement)}»` : ''} ·{' '}
-            {serverTime(d.created_at)} · revision {d.revision}
+            {serverTime(d.created_at)} · версия {d.revision}
             <div>Причина: {d.reason}</div>
             {appealById.get(d.appeal_id) ? (
               <div className="muted">Комментарий апелляции: {appealById.get(d.appeal_id)!.comment}</div>
@@ -403,8 +399,8 @@ export function DecisionComparison({
             <span className="muted" title={effC.normalized_contribution ?? undefined}> · вклад {approxRu(effC.normalized_contribution)}</span>
           ) : null}
           <div>
-            Итог: automatic {evaluation.automatic_score.total_score === null ? 'нет итога' : totalRu(evaluation.automatic_score.total_score)} →
-            effective {evaluation.effective_score.total_score === null ? 'нет итога' : totalRu(evaluation.effective_score.total_score)}
+            Итог AI: {evaluation.automatic_score.total_score === null ? 'нет итога' : totalRu(evaluation.automatic_score.total_score)} →
+            после пересмотра: {evaluation.effective_score.total_score === null ? 'нет итога' : totalRu(evaluation.effective_score.total_score)}
           </div>
         </li>
       </ol>

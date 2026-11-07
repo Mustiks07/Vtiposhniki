@@ -19,7 +19,8 @@ import { RunDetails } from '../components/RunDetails';
 import { ScorePanel } from '../components/ScorePanel';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { Transcript, verifiedMapping } from '../components/Transcript';
-import { decimalRu, serverTime, shortId } from '../lib/format';
+import { decimalRu, serverTime } from '../lib/format';
+import { conversationTitle, scopeLabel } from '../lib/presentation';
 import { evidenceMessageIds } from '../lib/evidence';
 import {
   applicabilityLabel,
@@ -70,7 +71,8 @@ function CriterionList({
             <li key={c.id}>
               <button
                 type="button"
-                className={`criterion-item${selected === c.id ? ' active' : ''}`}
+                className={`criterion-item ${p?.applicability === 'not_applicable' ? 'criterion-na' : p?.applicability === 'undetermined' ? 'criterion-unknown' : c.response_type === 'flag' && (c.flag_when_choice_ids ?? []).includes(p?.answer_choice_id ?? '') ? 'criterion-bad' : contribution?.score_fraction != null && Number(contribution.score_fraction) < 1 ? 'criterion-warn' : 'criterion-ok'}${selected === c.id ? ' active' : ''}`}
+                title={c.title}
                 aria-pressed={selected === c.id}
                 onClick={() => onSelect(c.id)}
                 data-testid="criterion-item"
@@ -247,21 +249,19 @@ export function EvaluationPage() {
       <p className="crumbs">
         <Link to="/conversations">Диалоги</Link> /{' '}
         <Link to={`/conversations/${encodeURIComponent(ev.conversation_id)}?revision=${ev.conversation_revision}`}>
-          {conversation.data?.external_id ?? shortId(ev.conversation_id)}
+          {conversation.data ? conversationTitle(conversation.data) : 'Разговор'}
         </Link>{' '}
         / Оценка
       </p>
-      <h1>
-        Карточка оценки <code>{shortId(ev.id)}</code>
-      </h1>
+      <h1>Основания оценки</h1>
       <p className="card-meta">
         <Badge status={ev.artifact.status}>{artifactStatusLabel[ev.artifact.status]}</Badge>{' '}
         {conversation.data ? `${channelLabel[conversation.data.channel]} · ${conversation.data.language} · ` : ''}
-        revision разговора {ev.conversation_revision} · {serverTime(ev.created_at)}
+        Версия текста {ev.conversation_revision} · {serverTime(ev.created_at)}
       </p>
       {params.get('scope') === 'automatic' || params.get('scope') === 'effective' ? (
         <p className="scope-note hint" data-testid="opened-scope">
-          Результат <strong>{params.get('scope')}</strong>
+          Результат: <strong>{scopeLabel(params.get('scope')!)}</strong>
           {params.get('scope') === 'effective'
             ? ' — с учётом решений проверяющего; исходная оценка сохранена.'
             : ' — исходный ответ оценщика.'}
@@ -277,8 +277,7 @@ export function EvaluationPage() {
           <p className="state-title">Оценка не получена</p>
           {ev.artifact.error ? (
             <p>
-              {errorCodeLabel[ev.artifact.error.code] ?? ev.artifact.error.code} · correlation_id:{' '}
-              <code>{ev.artifact.error.correlation_id}</code>
+              {errorCodeLabel[ev.artifact.error.code] ?? 'Не удалось получить ответ оценщика'}
             </p>
           ) : null}
         </div>
@@ -369,7 +368,6 @@ export function EvaluationPage() {
             }}
             onCriterion={selectCriterion}
           />
-          <RunDetails evaluation={ev} />
           {checklist.isError ? <ErrorPanel error={checklist.error} onRetry={() => checklist.refetch()} /> : null}
           {checklist.isPending ? <Loading label="Загрузка чек-листа…" /> : null}
           {criteria.length ? (
@@ -390,17 +388,18 @@ export function EvaluationPage() {
               aria-labelledby="crit-title"
               data-testid="criterion-detail"
             >
-              <h2 id="crit-title">{criterion.title}</h2>
+              <div className="criterion-detail-heading"><h2 id="crit-title"><span className="muted">{String(criteria.indexOf(criterion) + 1).padStart(2, '0')}</span> {criterion.title}</h2><Badge status={(scope === 'automatic' ? autoP : effP)?.applicability === 'undetermined' ? 'partial' : 'unevaluated'}>{answerText(criterion, scope === 'automatic' ? autoP : effP)}</Badge></div>
               <details className="criterion-rule">
                 <summary>Правило и шкала закреплённой версии</summary>
                 <p className="definition">{criterion.definition}</p>
                 <ScaleTable criterion={criterion} selected={(scope === 'automatic' ? autoP : effP)?.answer_choice_id} />
               </details>
-              <h3>Вклад ({scope})</h3>
+              <details className="criterion-calculation"><summary>Расчёт балла · {scopeLabel(scope)}</summary>
               <ContributionLine criterion={criterion} contribution={scope === 'automatic' ? autoC : effC} />
               {effC && autoC && effC.applicability !== autoC.applicability ? (
-                <p className="hint">Automatic: {applicabilityLabel[autoC.applicability]}.</p>
+                <p className="hint">Исходная оценка: {applicabilityLabel[autoC.applicability]}.</p>
               ) : null}
+              </details>
               <ReviewNote review={review} />
               {effP && effP.origin === 'human' ? (
                 <>
@@ -408,7 +407,7 @@ export function EvaluationPage() {
                   <ProposalView criterion={criterion} proposal={effP} {...proposalProps} />
                 </>
               ) : null}
-              <h3>Ответ оценщика (automatic)</h3>
+              <h3>Ответ AI</h3>
               {autoP ? (
                 <ProposalView criterion={criterion} proposal={autoP} {...proposalProps} />
               ) : (
@@ -429,7 +428,7 @@ export function EvaluationPage() {
                   <div key={a.id} className="appeal" data-testid="appeal" data-state={a.state}>
                     <p>
                       <Badge status={a.state}>{a.state === 'open' ? 'Открыта' : 'Рассмотрена'}</Badge> ·{' '}
-                      {serverTime(a.created_at)} · к revision {a.effective_revision}
+                      {serverTime(a.created_at)} · версия оценки {a.effective_revision}
                     </p>
                     <p className="rationale">{a.comment}</p>
                     {a.state === 'open' ? (
@@ -476,6 +475,7 @@ export function EvaluationPage() {
             </Empty>
           ) : null}
 
+          <RunDetails evaluation={ev} />
           <ExportLinks kind="evaluation" id={ev.id} />
         </div>
       </div>

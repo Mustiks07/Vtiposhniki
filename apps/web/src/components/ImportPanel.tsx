@@ -18,7 +18,7 @@ import { Icon } from './Icon';
 
 const dispositionLabel: Record<string, string> = {
   created: 'новый разговор',
-  new_revision: 'новая revision',
+  new_revision: 'новая версия текста',
   unchanged: 'без изменений',
 };
 
@@ -50,16 +50,16 @@ function ImportResultView({ result }: { result: ImportResult }) {
   return (
     <div className="notice notice-ok" role="status">
       <p>
-        Импорт выполнен атомарно: получено записей — {result.received_count}, свернуто дублей —{' '}
+        Импорт завершён: получено записей — {result.received_count}, объединено повторов —{' '}
         {result.deduplicated_count}.
       </p>
       <ul>
         {result.items.map((item) => (
           <li key={`${item.conversation_id}-${item.revision}`}>
             <Link to={`/conversations/${encodeURIComponent(item.conversation_id)}?revision=${item.revision}`}>
-              {item.conversation_id}
+              Открыть разговор
             </Link>{' '}
-            · revision {item.revision} · {dispositionLabel[item.disposition] ?? item.disposition} · записи №
+            · версия текста {item.revision} · {dispositionLabel[item.disposition] ?? item.disposition} · записи №
             {item.source_indices.map((i) => i + 1).join(', ')}
           </li>
         ))}
@@ -149,7 +149,7 @@ function ImportForm({ mode }: { mode: 'json' | 'organizer' }) {
     setLocalError(null);
     if (mode === 'organizer') {
       if (!groupId.trim()) {
-        setLocalError('Укажите group_id.');
+        setLocalError('Укажите номер группы организаторов.');
         return;
       }
       mutation.mutate({ schema_version: '1.0', source: 'organizer_api', group_id: groupId.trim() });
@@ -197,7 +197,7 @@ function ImportForm({ mode }: { mode: 'json' | 'organizer' }) {
           </>
         ) : (
           <>
-            <label htmlFor={ids.group}>group_id</label>
+            <label htmlFor={ids.group}>Номер группы организаторов</label>
             <input
               id={ids.group}
               value={groupId}
@@ -233,7 +233,7 @@ function ImportForm({ mode }: { mode: 'json' | 'organizer' }) {
 const pasteDisposition: Record<string, string> = {
   created: 'Создан новый разговор.',
   new_revision:
-    'Разговор с этим ID уже был: сохранена новая revision текста. Прежние оценки относятся к прежнему тексту.',
+    'Разговор с этим номером уже был: сохранена новая версия текста. Прежние оценки относятся к прежнему тексту.',
   unchanged: 'Разговор с этим ID и таким же текстом уже есть — новый не создан, используется существующий.',
 };
 
@@ -344,7 +344,8 @@ function PasteDialogForm() {
               <option value="voice_call">Расшифровка звонка</option>
             </select>
           </div>
-          <div className="paste-id">
+          <details className="paste-id">
+            <summary>Номер источника · заполняется автоматически</summary>
             <label htmlFor={ids.ext}>Внешний ID разговора</label>
             <div className="row nowrap">
               <input
@@ -362,9 +363,9 @@ function PasteDialogForm() {
             </div>
             <small id={`${ids.ext}-hint`} className="hint">
               {idProblem ??
-                'Создан автоматически и не меняется при повторе. Существующий ID создаст новую revision этого разговора.'}
+                'Создан автоматически и сохраняется при повторе. Укажите номер существующего разговора, чтобы обновить его текст.'}
             </small>
-          </div>
+          </details>
         </div>
 
         <label htmlFor={ids.text}>Текст диалога</label>
@@ -416,8 +417,8 @@ function PasteDialogForm() {
 
         {editedAfterImport ? (
           <p className="notice notice-warn" data-testid="paste-edited">
-            Текст изменён после импорта. Повторный импорт с тем же ID сохранит новую revision разговора. Чтобы
-            создать отдельный разговор, нажмите «Новый ID».
+            Текст изменён после импорта. Повтор сохранит новую версию разговора. Чтобы
+            создать отдельный разговор, откройте «Номер источника» и нажмите «Новый ID».
           </p>
         ) : null}
 
@@ -470,7 +471,6 @@ function PasteDialogForm() {
                 <div className="paste-message-head">
                   <span className="paste-number">№{m.number}</span>
                   <strong>{speakerLabel[m.speaker]}</strong>
-                  <code className="muted">{m.speaker}</code>
                   <span className={m.time ? 'paste-time' : 'paste-time muted'} data-testid="paste-time">
                     {m.time ?? 'время не указано'}
                   </span>
@@ -497,8 +497,7 @@ function PasteDialogForm() {
         >
           <div className="notice notice-ok" role="status">
             <p id={`${ids.text}-done`}>
-              <strong>Готово.</strong> {pasteDisposition[item.disposition] ?? item.disposition} ID{' '}
-              <code>{imported.externalId}</code>, revision {item.revision}, сообщений:{' '}
+              <strong>Готово.</strong> {pasteDisposition[item.disposition] ?? item.disposition} Версия текста {item.revision}, сообщений:{' '}
               {JSON.parse(imported.sent).messages.length}.
             </p>
             <p>

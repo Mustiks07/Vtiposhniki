@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { CallRecord, EvaluationView, Job } from '../api/types';
-import { decimalRu, durationText, serverTime, shortId } from '../lib/format';
+import { decimalRu, durationText, serverTime } from '../lib/format';
 import { costText, durations, modelPairs, reusedRunCallsText, tokenText, tokenTotals } from '../lib/runSummary';
 import { callOutcomeLabel, callPurposeLabel, errorCodeLabel, jobStateLabel } from '../lib/labels';
+import { ChecklistName, ProfileName } from './DisplayNames';
 
 function CallTable({ calls, attempts }: { calls: CallRecord[]; attempts?: Job['attempts'] }) {
   const numbers = new Map(attempts?.map((a) => [a.attempt_id, a.number]));
@@ -79,13 +80,13 @@ export function RunSummary({ evaluation }: { evaluation: EvaluationView }) {
             <strong>Переиспользован сохранённый результат</strong>. {reusedRunCallsText(run)} Ответы взяты из
             оценки{' '}
             <Link to={`/evaluations/${encodeURIComponent(reusedFrom)}`}>
-              <code>{shortId(reusedFrom)}</code>
+              предыдущего запуска
             </Link>
             , баллы пересчитаны сервером по версии этой карточки.
           </>
         ) : (
           <>
-            <strong>Новый вызов оценщика</strong> в этом запуске (режим {evaluation.reuse.mode}).
+            <strong>Новый вызов оценщика</strong> в этом запуске.
           </>
         )}
         {test ? <span className="run-test"> Тестовый оценщик — синтетический ответ, не настоящий AI.</span> : null}
@@ -99,14 +100,14 @@ export function RunSummary({ evaluation }: { evaluation: EvaluationView }) {
           <dt>Версия правил</dt>
           <dd>
             <Link to={`/checklists/version/${encodeURIComponent(evaluation.checklist_version_id)}`}>
-              <code>{shortId(evaluation.checklist_version_id)}</code>
+              <ChecklistName id={evaluation.checklist_version_id} />
             </Link>
           </dd>
         </div>
         <div>
           <dt>Профиль</dt>
           <dd>
-            {evaluation.profile_id} · {evaluation.profile_version}
+            <ProfileName id={evaluation.profile_id} version={evaluation.profile_version} />
           </dd>
         </div>
         <div>

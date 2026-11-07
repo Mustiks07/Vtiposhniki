@@ -87,6 +87,7 @@ export function Transcript({
         ) : null}
       </header>
       {(conversation.warnings ?? []).length ? (
+        <details className="source-notes"><summary>Особенности исходной записи ({conversation.warnings?.length})</summary>
         <ul className="annotations" aria-label="Предупреждения источника">
           {(conversation.warnings ?? []).map((w, i) => (
             <li key={i} lang="ru">
@@ -94,7 +95,7 @@ export function Transcript({
               {w}
             </li>
           ))}
-        </ul>
+        </ul></details>
       ) : null}
       <ol ref={listRef} className="messages">
         {conversation.messages.map((m: Message) => {
@@ -113,12 +114,12 @@ export function Transcript({
               aria-current={isHighlighted ? 'true' : undefined}
             >
               <div className="msg-head" lang="ru">
+                <span className="speaker-avatar" aria-hidden="true">{(speakerLabel[m.speaker] ?? m.speaker)[0]}</span>
                 <span className="msg-role">{speakerLabel[m.speaker] ?? m.speaker}</span>
-                <span className="msg-id">{m.id}</span>
+                <span className="msg-id" title={`Технический ID: ${m.id}`}>#{m.source_index + 1}</span>
                 <time className="msg-time" title="Исходная метка времени (без изменений)">
                   {m.timestamp_original || '—'}
                 </time>
-                {m.parsed_time ? <span className="muted msg-parsed">разобрано сервером: {m.parsed_time}</span> : null}
                 {isHighlighted ? <span className="visually-hidden">(выделено доказательством)</span> : null}
                 {canSeek && start !== undefined && onSeek ? (
                   <button type="button" className="link" onClick={() => onSeek(m.id)}>

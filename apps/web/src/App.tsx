@@ -25,16 +25,16 @@ function HealthLine() {
   if (health.isError) {
     return (
       <span className="health health-bad" role="status">
-        <span aria-hidden="true">✕ </span>API недоступен
+        <span aria-hidden="true">✕ </span>Нет связи с сервером
       </span>
     );
   }
-  if (!health.data) return <span className="health">Проверка API…</span>;
+  if (!health.data) return <span className="health">Подключение…</span>;
   return (
     <span className="health" data-testid="health">
       <span aria-hidden="true">● </span>
-      <strong>{health.data.evaluator_mode === 'test' ? 'Тестовый режим' : 'API подключён'}</strong>
-      <small>{health.data.evaluator_mode === 'test' ? 'Синтетические ответы' : 'Рабочий режим · production'}</small>
+      <strong>{health.data.evaluator_mode === 'test' ? 'Тестовый режим' : 'Сервер подключён'}</strong>
+      <small>{health.data.evaluator_mode === 'test' ? 'Синтетические ответы' : 'Локальное рабочее место'}</small>
     </span>
   );
 }
@@ -66,17 +66,13 @@ function Shell() {
       </a>
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            c
-          </span>
           <div>
             <b>CQA</b>
             <span>Контроль качества</span>
           </div>
         </div>
-        <p className="nav-caption">РАБОЧЕЕ ПРОСТРАНСТВО</p>
         <nav aria-label="Основные разделы">
-          <NavLink to="/conversations">
+          <NavLink to="/conversations" className={({ isActive }) => isActive || /^\/(evaluations|batches)\//.test(location.pathname) ? 'active' : undefined}>
             <Icon name="chat" />
             Диалоги
           </NavLink>
@@ -91,15 +87,9 @@ function Shell() {
         </nav>
         <div className="sidebar-foot">
           <HealthLine />
-          <p>Журнал доказательств</p>
-          <span>От разговора — к обоснованной оценке.</span>
         </div>
       </aside>
       <div className="workspace">
-        <header className="workspace-bar">
-          <span>Conversation Quality Analytics</span>
-          <span className="workspace-label">Локальное рабочее место</span>
-        </header>
         <main id="main" ref={mainRef} tabIndex={-1}>
           <Outlet />
         </main>

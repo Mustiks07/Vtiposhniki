@@ -20,8 +20,13 @@ export function evidenceMessageIds(evidence: Evidence, messages: Message[]): str
   return [];
 }
 
-export function evidenceRefText(evidence: Evidence): string {
-  if (evidence.kind === 'message') return (evidence.message_ids ?? []).join(', ');
-  if (evidence.kind === 'range') return `${evidence.start_message_id}–${evidence.end_message_id}`;
+export function evidenceRefText(evidence: Evidence, messages?: Message[]): string {
+  const ref = (id: string | null | undefined) => {
+    if (!messages) return id ?? '';
+    const message = messages.find((m) => m.id === id);
+    return message ? `№${message.source_index + 1}` : 'реплика недоступна';
+  };
+  if (evidence.kind === 'message') return (evidence.message_ids ?? []).map(ref).join(', ');
+  if (evidence.kind === 'range') return `${ref(evidence.start_message_id)}–${ref(evidence.end_message_id)}`;
   return evidence.source_chunk_id ?? '';
 }

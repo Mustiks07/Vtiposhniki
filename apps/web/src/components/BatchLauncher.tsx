@@ -3,7 +3,8 @@ import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'rea
 import { useNavigate } from 'react-router-dom';
 import { api, newIdempotencyKey } from '../api/client';
 import type { CreateBatch } from '../api/types';
-import { serverTime, shortId } from '../lib/format';
+import { serverTime } from '../lib/format';
+import { profileLabel } from '../lib/presentation';
 import { ErrorPanel, Loading } from './States';
 import { Modal } from './Modal';
 import { Icon } from './Icon';
@@ -80,7 +81,7 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
     if (!items?.length) return;
     if (!versionId || !items.some((v) => v.version_id === versionId)) {
       const latest = checklists.data?.items.find((c) => c.checklist_id === checklistId)?.latest_version_id;
-      setVersionId(latest ?? items[items.length - 1].version_id);
+      setVersionId(latest ?? items[0].version_id);
     }
   }, [versions.data, checklistId, checklists.data, versionId]);
 
@@ -159,9 +160,9 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
         </select>
         <label htmlFor={ids.version}>Версия чек-листа (закрепляется при запуске)</label>
         <select id={ids.version} value={versionId} onChange={(e) => setVersionId(e.target.value)}>
-          {versions.data?.items.map((v) => (
+          {versions.data?.items.map((v, index) => (
             <option key={v.version_id} value={v.version_id}>
-              {shortId(v.version_id)} · {serverTime(v.created_at)} · критериев: {v.criteria.length}
+              Версия {versions.data!.total - versions.data!.offset - index} · {serverTime(v.created_at)} · {v.criteria.length} критериев
             </option>
           ))}
         </select>
@@ -173,7 +174,7 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
               value={p.profile.id}
               disabled={!p.configured}
             >
-              {p.profile.id} · {p.profile.version} · {p.profile.mode === 'test' ? 'тестовый' : 'production'}
+              {profileLabel(p.profile)}
               {p.configured ? '' : ' · не настроен'}
               {p.preferred ? ' · по умолчанию' : ''}
             </option>
@@ -191,7 +192,7 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
               checked={mode === 'fresh'}
               onChange={() => setMode('fresh')}
             />{' '}
-            Новый анализ (fresh)
+            Новый анализ
             <small className="hint">Модель заново оценит разговор. Будет создан отдельный запуск.</small>
           </label>
           <label>
@@ -201,7 +202,7 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
               checked={mode === 'reuse_if_compatible'}
               onChange={() => setMode('reuse_if_compatible')}
             />{' '}
-            Совместимый результат (reuse_if_compatible)
+            Использовать совместимую оценку
             <small className="hint">
               Сервер проверит версии и переиспользует результат, если он совместим.
             </small>
@@ -219,7 +220,7 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
           onRetry={() => payload && mutation.mutate(payload)}
           retryLabel="Повторить тот же запрос"
         >
-          <p className="hint">Повтор использует тот же ключ идемпотентности: второй пакет не будет создан.</p>
+          <p className="hint">Повтор продолжит этот запуск и не создаст второй пакет.</p>
         </ErrorPanel>
       ) : null}
     </section>

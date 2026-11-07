@@ -7,7 +7,8 @@ import { BatchLauncher } from '../components/BatchLauncher';
 import { TotalValue } from '../components/ScorePanel';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { Transcript } from '../components/Transcript';
-import { serverTime, shortId } from '../lib/format';
+import { serverTime } from '../lib/format';
+import { conversationTitle } from '../lib/presentation';
 import { artifactStatusLabel, channelLabel, languageLabel } from '../lib/labels';
 
 export function ConversationPage() {
@@ -41,16 +42,17 @@ export function ConversationPage() {
   const shownRevision = conversation?.revision ?? revision ?? latestRevision;
 
   return (
-    <div className="page">
+    <div className="page conversation-page">
       <p className="crumbs">
-        <Link to="/conversations">Диалоги</Link> / {latest.data.external_id}
+        <Link to="/conversations">Диалоги</Link> / Разговор
       </p>
-      <h1>{latest.data.external_id}</h1>
+      <h1 className="conversation-heading">{conversationTitle(conversation ?? latest.data)}</h1>
       <p className="card-meta">
-        {channelLabel[latest.data.channel]} · {languageLabel[latest.data.language]} · ID <code>{id}</code>
+        {channelLabel[latest.data.channel]} · {languageLabel[latest.data.language]}
       </p>
+      <details className="technical-details"><summary>Сведения об источнике</summary><dl className="meta"><dt>Номер в источнике</dt><dd>{latest.data.external_id}</dd><dt>Технический ID</dt><dd><code>{id}</code></dd></dl></details>
       <div className="row">
-        <label htmlFor={revId}>Revision</label>
+        <label htmlFor={revId}>Версия текста</label>
         <select
           id={revId}
           value={shownRevision}
@@ -70,7 +72,7 @@ export function ConversationPage() {
         </select>
         {shownRevision !== latestRevision ? (
           <span className="notice notice-warn" data-testid="old-revision">
-            Показана не последняя revision: текст мог измениться.
+            Показана предыдущая версия: текст мог измениться.
           </span>
         ) : null}
       </div>
@@ -109,19 +111,19 @@ export function ConversationPage() {
               <Empty title="Оценок пока нет">Запустите оценку ниже.</Empty>
             ) : null}
             <ul className="eval-list">
-              {evaluations.data?.items.map((e) => (
+              {evaluations.data?.items.map((e, index) => (
                 <li key={e.id} data-testid="evaluation-item" data-revision={e.conversation_revision}>
-                  <Link to={`/evaluations/${encodeURIComponent(e.id)}`}>Карточка {shortId(e.id)}</Link>
+                  <Link to={`/evaluations/${encodeURIComponent(e.id)}`}>Оценка от {serverTime(e.created_at)}{evaluations.data.items.some((other, n) => n !== index && serverTime(other.created_at) === serverTime(e.created_at)) ? ` · запуск ${evaluations.data.items.length - index}` : ''}</Link>
                   <div>
-                    <Badge status={e.artifact.status}>{artifactStatusLabel[e.artifact.status]}</Badge> effective:{' '}
+                    <Badge status={e.artifact.status}>{artifactStatusLabel[e.artifact.status]}</Badge>{' '}
                     <TotalValue score={e.effective_score} />
                   </div>
                   <div className="muted">
-                    revision разговора {e.conversation_revision}
+                    Версия текста {e.conversation_revision}
                     {e.conversation_revision !== latestRevision
                       ? ' (не последняя — результат относится к старому тексту)'
                       : ''}{' '}
-                    · чек-лист {shortId(e.checklist_version_id)} · {serverTime(e.created_at)}
+                    · {e.reuse.reused_from_evaluation_id ? 'Результат переиспользован' : 'Новый анализ'}
                     {e.human_decisions.length ? ` · решений: ${e.human_decisions.length}` : ''}
                   </div>
                 </li>
@@ -131,7 +133,7 @@ export function ConversationPage() {
           {shownRevision === latestRevision ? (
             <BatchLauncher conversationIds={conversationIds} />
           ) : (
-            <p className="hint">Оценка запускается для последней revision разговора.</p>
+            <p className="hint">Для новой оценки выберите последнюю версию текста.</p>
           )}
         </aside>
       </div>

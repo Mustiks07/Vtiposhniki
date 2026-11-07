@@ -22,10 +22,10 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 export function describeError(error: unknown): { title: string; hint: string } {
   if (error instanceof ApiError) {
     if (error.network) {
-      return { title: 'Сервер недоступен', hint: 'Проверьте, что API запущен, и повторите.' };
+      return { title: 'Сервер недоступен', hint: 'Проверьте подключение и повторите попытку.' };
     }
     if (error.status === 404) {
-      return { title: 'Объект не найден', hint: 'Возможно, ссылка устарела или ID неизвестен.' };
+      return { title: 'Не удалось найти запись', hint: 'Возможно, ссылка устарела. Вернитесь к списку и выберите запись снова.' };
     }
     const label = error.code ? errorCodeLabel[error.code] : undefined;
     return {
@@ -75,9 +75,7 @@ export function ErrorPanel({
           </button>
         ) : null}
         {api?.correlationId ? (
-          <small className="muted">
-            correlation_id: <code>{api.correlationId}</code>
-          </small>
+          <details className="technical-details"><summary>Код для поддержки</summary><code>{api.correlationId}</code></details>
         ) : null}
       </div>
     </div>

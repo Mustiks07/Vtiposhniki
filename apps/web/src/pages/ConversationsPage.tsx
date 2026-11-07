@@ -2,14 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useId, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
-import type { ConversationSummary } from '../api/types';
 import { BatchLauncher } from '../components/BatchLauncher';
 import { FlagCell, FlagFilters, SearchScope, flagCriteria, useSelectedVersion } from '../components/FlagSearch';
 import { ImportPanel } from '../components/ImportPanel';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { FILTER_KEYS, PAGE_SIZE, parseConversationQuery, withFilter } from '../lib/conversationQuery';
 import { channelLabel, evaluationListStatusLabel, languageLabel } from '../lib/labels';
-import { shortId, totalRu } from '../lib/format';
+import { totalRu } from '../lib/format';
+import { conversationTitle } from '../lib/presentation';
 
 const reviewLabels = {
   incomplete: 'Неполная оценка',
@@ -17,13 +17,6 @@ const reviewLabels = {
   open_appeal: 'Открытая апелляция',
   evaluation_failed: 'Ошибка оценки',
 };
-
-function preview(summary: ConversationSummary): string {
-  const first =
-    summary.conversation.messages.find((m) => m.speaker === 'client' && m.text.trim()) ??
-    summary.conversation.messages.find((m) => m.text.trim());
-  return first ? first.text : '';
-}
 
 export function ConversationsPage() {
   const [params, setParams] = useSearchParams();
@@ -80,9 +73,8 @@ export function ConversationsPage() {
     <div className="page conversations-page">
       <header className="page-heading">
         <div>
-          <p className="eyebrow">ЖУРНАЛ ДОКАЗАТЕЛЬСТВ</p>
           <h1>Диалоги</h1>
-          <p className="page-intro">Разговор, оценка и основания для каждого решения.</p>
+          <p className="page-intro">Каждая оценка — с доказательством.</p>
         </div>
         <div className="page-actions">
           <ImportPanel />
@@ -118,7 +110,7 @@ export function ConversationsPage() {
                   type="search"
                   maxLength={200}
                   defaultValue={query.q ?? ''}
-                  placeholder="ID разговора или слова из диалога"
+                  placeholder="Поиск по тексту или номеру диалога"
                 />
                 <button type="submit">Найти</button>
                 {query.q ? (
@@ -291,18 +283,19 @@ export function ConversationsPage() {
                         <td>
                           <input
                             type="checkbox"
-                            aria-label={`Выбрать ${c.external_id}`}
+                            aria-label={`Выбрать: ${conversationTitle(c)}`}
                             checked={selected.includes(c.id)}
                             onChange={() => toggle(c.id)}
                           />
                         </td>
                         <td className="cell-main">
-                          <Link to={`/conversations/${encodeURIComponent(c.id)}`}>{c.external_id}</Link>
+                          <Link className="conversation-title" title={conversationTitle(c)} to={`/conversations/${encodeURIComponent(c.id)}`}>{conversationTitle(c)}</Link>
                           <div
                             className="muted clamp"
                             lang={c.language.toLowerCase() === 'kz' ? 'kk' : c.language.toLowerCase()}
                           >
-                            {preview(summary)}
+                            {c.messages.length} реплик · версия текста {c.revision}
+                            {query.q === c.external_id ? ` · номер источника ${c.external_id}` : ''}
                           </div>
                         </td>
                         <td>
@@ -311,9 +304,7 @@ export function ConversationsPage() {
                         <td className="score-cell">
                           <strong data-testid="row-score">{totalRu(summary.total_score)}</strong>
                           <small className="muted">
-                            {summary.checklist_version_id
-                              ? `Версия ${shortId(summary.checklist_version_id)}`
-                              : 'Нет запуска'}
+                            {summary.checklist_version_id ? (query.result_scope === 'effective' ? 'После пересмотра' : 'Оценка AI') : 'Нет запуска'}
                           </small>
                         </td>
                         <td>
@@ -323,7 +314,7 @@ export function ConversationsPage() {
                               evaluationId={summary.latest_evaluation_id}
                               title={
                                 flagTitle.get(summary.flag_summary.result.criterion_id) ??
-                                summary.flag_summary.result.criterion_id
+                                'Нарушение'
                               }
                             />
                           ) : (
@@ -352,7 +343,7 @@ export function ConversationsPage() {
                             <>
                               {' '}
                               <Link to={`/evaluations/${encodeURIComponent(summary.latest_evaluation_id)}`}>
-                                карточка
+                                Открыть оценку
                               </Link>
                             </>
                           ) : null}

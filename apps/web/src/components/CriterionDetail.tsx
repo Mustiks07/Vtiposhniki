@@ -26,7 +26,7 @@ export function answerText(criterion: Criterion | undefined, proposal: Criterion
   if (proposal.applicability === 'not_applicable') return 'N/A';
   if (proposal.applicability === 'undetermined') return 'не определено';
   const choice = criterion?.choices.find((c) => c.id === proposal.answer_choice_id);
-  return choice ? choice.label : (proposal.answer_choice_id ?? '—');
+  return choice ? choice.label : 'Ответ недоступен';
 }
 
 /** "7/10" for numeric scales: raw value of the chosen step over the raw value of the top step. */
@@ -75,9 +75,10 @@ function SourceView({ chunkId, fragments }: { chunkId: string; fragments: Source
   const fragment = fragments.find((f) => f.chunk.chunk_id === chunkId);
   if (!fragment) {
     return (
-      <p className="notice" data-testid="source-missing">
-        Фрагмент источника <code>{chunkId}</code> не найден среди сохранённых в карточке. Текст не подставляется.
-      </p>
+      <div className="notice" data-testid="source-missing">
+        Фрагмент источника не найден среди сохранённых в карточке. Текст не подставляется.
+        <details><summary>Номер фрагмента</summary><code>{chunkId}</code></details>
+      </div>
     );
   }
   const s = fragment.source;
@@ -131,7 +132,7 @@ export function EvidenceList({
           return (
             <li key={i} data-testid="evidence" data-kind="source">
               <button type="button" className="link" aria-expanded={openSource === chunk} onClick={() => onToggleSource(chunk)}>
-                Источник {chunk}
+                {fragments.find((f) => f.chunk.chunk_id === chunk)?.source.title ?? 'Открыть источник'}
               </button>{' '}
               <span className="muted">({relationLabel[ev.relation]})</span> — {ev.explanation}
               {openSource === chunk ? <SourceView chunkId={chunk} fragments={fragments} /> : null}
@@ -139,7 +140,7 @@ export function EvidenceList({
           );
         }
         const ids = evidenceMessageIds(ev, messages);
-        const label = ev.kind === 'range' ? `Диапазон ${evidenceRefText(ev)} (включительно)` : `Реплика ${evidenceRefText(ev)}`;
+        const label = ev.kind === 'range' ? `Реплики ${evidenceRefText(ev, messages)} (включительно)` : `Реплика ${evidenceRefText(ev, messages)}`;
         return (
           <li key={i} data-testid="evidence" data-kind={ev.kind}>
             {ids.length ? (
@@ -147,14 +148,14 @@ export function EvidenceList({
                 {label}
               </button>
             ) : (
-              <span className="field-error">{label}: ссылка не найдена в этой revision</span>
+              <span className="field-error">{label}: ссылка не найдена в этой версии текста</span>
             )}{' '}
             <span className="muted">({relationLabel[ev.relation]})</span> — {ev.explanation}
             {ev.kind === 'message' && ids.length ? (
               <blockquote className="quote">
                 {ids.map((id) => (
                   <span key={id} className="quote-line">
-                    <span className="msg-id">{id}</span> {byId.get(id)?.text}
+                    <span className="msg-id" title={id}>№{byId.get(id)!.source_index + 1}</span> {byId.get(id)?.text}
                   </span>
                 ))}
               </blockquote>
