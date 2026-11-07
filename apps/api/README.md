@@ -67,6 +67,7 @@ curl -s -X POST localhost:8000/api/v1/imports -H 'content-type: application/json
 | `CQA_SQLITE_SYNCHRONOUS` | `FULL` | Долговечность WAL: `FULL` или `NORMAL` |
 | `CQA_WORKER_ENABLED`, `CQA_WORKER_CONCURRENCY` | `true`, 2 | Исполнитель внутри API |
 | `CQA_WORKER_POLL_SECONDS`, `CQA_LEASE_SECONDS` | 0.5, 60 | Опрос очереди и срок lease |
+| `CQA_DEADLINE_GRACE_SECONDS` | 10 | Сколько ждать оценщика после `deadline_at`, прежде чем отменить его. Новые вызовы в это время запрещены |
 | `CQA_RETRY_BASE_SECONDS`, `CQA_RETRY_MAX_SECONDS` | 5, 60 | Экспоненциальная пауза между попытками |
 | `GEMINI_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY` | пусто | Ключи читает только сервер |
 
