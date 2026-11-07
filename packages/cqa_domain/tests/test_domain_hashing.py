@@ -324,3 +324,62 @@ def test_canonical_json_rejects_non_finite_numbers() -> None:
         canonical_json({"x": float("nan")})
     with pytest.raises(ValueError):
         canonical_json({"x": Decimal("Infinity")})
+
+
+# --- Context independence (integrator regression, delivery 93c7738) ------------
+
+LONG_A = "0.123456789012345678901234567891"
+LONG_B = "0.123456789012345678901234567892"
+
+
+@pytest.mark.parametrize("prec", [1, 3, 28, 100])
+def test_canonical_decimal_is_exact_under_any_precision(prec: int) -> None:
+    import decimal
+
+    with decimal.localcontext() as ctx:
+        ctx.prec = prec
+        ctx.rounding = decimal.ROUND_DOWN
+        a = canonical_decimal(Decimal(LONG_A))
+        b = canonical_decimal(Decimal(LONG_B))
+        big = canonical_decimal(Decimal("123456789012345678901234567890123.4500"))
+        tiny = canonical_decimal(Decimal("0.0000000000000000000000000000001000"))
+        exp = canonical_decimal(Decimal("12E+30"))
+        neg = canonical_decimal(Decimal("-0.50"))
+    assert a == LONG_A and b == LONG_B and a != b
+    assert big == "123456789012345678901234567890123.45"
+    assert tiny == "0.0000000000000000000000000000001"
+    assert exp == "12" + "0" * 30
+    assert neg == "-0.5"
+
+
+def test_long_decimals_produce_distinct_scoring_hashes() -> None:
+    a = checklist()
+    b = checklist()
+    _crit(a, "synthetic-scale")["choices"][1]["score_fraction"] = LONG_A
+    _crit(b, "synthetic-scale")["choices"][1]["score_fraction"] = LONG_B
+    assert scoring(a) != scoring(b)
+    assert (
+        json.loads(canonical_json(scoring_projection(ChecklistVersion.model_validate(a))))[
+            "criteria"
+        ][2]["choices"][2]["score_fraction"]
+        == LONG_A
+    )
+
+
+@pytest.mark.parametrize("prec", [1, 2, 5])
+def test_hashes_do_not_depend_on_caller_precision(prec: int) -> None:
+    import decimal
+
+    from cqa_domain import original_checklist
+
+    reference = original_checklist()
+    with decimal.localcontext() as ctx:
+        ctx.prec = prec
+        inside = original_checklist()
+        assert checklist_semantic_hash(inside) == reference.semantic_hash
+        assert checklist_scoring_hash(inside) == reference.scoring_config_hash
+        for kind in KINDS:
+            vector = VECTORS[kind]
+            model, hash_fn, _ = KINDS[kind]
+            assert hash_fn(model.model_validate(vector["input"])) == vector["sha256"]
+    assert inside == reference

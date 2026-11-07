@@ -7,7 +7,8 @@ threshold, tags and attachments are excluded from the original assessment.
 """
 
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import Context, Decimal
+from fractions import Fraction
 
 from cqa_contracts.models import (
     ChannelInstructions,
@@ -20,6 +21,7 @@ from cqa_contracts.models import (
 
 from .checklist import build_checklist_version
 
+_EXACT = Context(prec=60)
 ORIGINAL_CHECKLIST_ID = "cqa-original"
 ORIGINAL_VERSION_ID = "cqa-original-v1"
 ORIGINAL_CREATED_AT = datetime(2026, 11, 7, tzinfo=UTC)
@@ -91,6 +93,17 @@ SCALE_6 = [
 ]
 
 
+def _exact_fraction(raw: int, maximum: int) -> Decimal:
+    """raw/maximum as an exact Decimal, independent of the caller's decimal context."""
+    exact = Fraction(raw, maximum)
+    # Decimal(str) and integer scaling are exact; only terminating fractions are allowed.
+    for places in range(0, 30):
+        scaled = exact * 10**places
+        if scaled.denominator == 1:
+            return Decimal(scaled.numerator).scaleb(-places, context=_EXACT)
+    raise ValueError("Scale fraction does not terminate in decimal notation")
+
+
 def _scale(points: list[tuple[int, str]], maximum: int) -> list[Choice]:
     return [
         Choice(
@@ -98,7 +111,7 @@ def _scale(points: list[tuple[int, str]], maximum: int) -> list[Choice]:
             label=str(raw),
             raw_value=raw,
             anchor=anchor,
-            score_fraction=Decimal(raw) / Decimal(maximum),
+            score_fraction=_exact_fraction(raw, maximum),
         )
         for raw, anchor in points
     ]

@@ -8,11 +8,13 @@ reasoning_tokens ⊆ output_tokens.
 """
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Context, Decimal, localcontext
 
 from cqa_contracts.models import ProviderSelection, TokenUsage
 
 _MILLION = Decimal(1_000_000)
+# Fixed private precision: cost never depends on the caller's decimal context.
+_CONTEXT = Context(prec=60)
 
 
 @dataclass(frozen=True)
@@ -45,9 +47,10 @@ class PriceTable:
         else:
             cached_rate = price.cached_input_per_million or Decimal(0)
         uncached = max(usage.input_tokens - cached, 0)
-        total = (
-            Decimal(uncached) * price.input_per_million
-            + Decimal(cached) * cached_rate
-            + Decimal(usage.output_tokens) * price.output_per_million
-        ) / _MILLION
+        with localcontext(_CONTEXT):
+            total = (
+                Decimal(uncached) * price.input_per_million
+                + Decimal(cached) * cached_rate
+                + Decimal(usage.output_tokens) * price.output_per_million
+            ) / _MILLION
         return total, price.price_version

@@ -19,14 +19,30 @@ JSONValue = None | bool | int | float | str | list["JSONValue"] | dict[str, "JSO
 
 
 def canonical_decimal(value: Decimal) -> str:
+    """Exact fixed-point text, independent of any decimal context.
+
+    Works on the digit tuple: no normalize()/quantize(), so no rounding to the
+    caller's precision and no exponent notation. Zero (including -0) is "0".
+    """
     if not value.is_finite():
         raise ValueError("Canonical decimals must be finite")
     if value.is_zero():
         return "0"
-    text = format(value.normalize(), "f")
-    if "." in text:
-        text = text.rstrip("0").rstrip(".")
-    return text
+    sign, digit_tuple, exponent = value.as_tuple()
+    assert isinstance(exponent, int)
+    digits = "".join(str(d) for d in digit_tuple)
+    while exponent < 0 and digits.endswith("0"):
+        digits = digits[:-1]
+        exponent += 1
+    if exponent >= 0:
+        text = digits + "0" * exponent
+    else:
+        point = len(digits) + exponent
+        text = f"{digits[:point]}.{digits[point:]}" if point > 0 else f"0.{'0' * -point}{digits}"
+    text = text.lstrip("0") or "0"
+    if text.startswith("."):
+        text = "0" + text
+    return f"-{text}" if sign else text
 
 
 def _jsonable(value: Any) -> JSONValue:

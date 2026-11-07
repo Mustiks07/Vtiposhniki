@@ -37,7 +37,7 @@ def _clean(value: Decimal) -> Decimal:
 def round_final(value: Decimal, policy: RoundingPolicy) -> Decimal:
     if policy.mode != "ROUND_HALF_UP":  # pragma: no cover - guarded by the contract type
         raise ValueError("Unsupported rounding mode")
-    quantum = Decimal(1).scaleb(-policy.decimal_places)
+    quantum = Decimal(1).scaleb(-policy.decimal_places, context=_CONTEXT)
     return value.quantize(quantum, rounding=ROUND_HALF_UP, context=_CONTEXT)
 
 

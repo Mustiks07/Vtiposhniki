@@ -71,3 +71,27 @@ def test_rubric_is_deterministic_and_published_snapshot_is_current() -> None:
     assert snapshot == original_checklist_json(), (
         "Regenerate: uv run python -m cqa_domain rubric fixtures/evaluation/original-checklist.json"
     )
+
+
+def test_original_fractions_are_exact_under_low_precision() -> None:
+    import decimal
+    from fractions import Fraction
+
+    with decimal.localcontext() as ctx:
+        ctx.prec = 1
+        checklist = original_checklist()
+    by_id = {c.id: c for c in checklist.criteria}
+    expected = {
+        "c4_consultation": {"p20": "1", "p15": "0.75", "p10": "0.5", "p5": "0.25", "p0": "0"},
+        "c6_dialog_management": {"p10": "1", "p7": "0.7", "p4": "0.4", "p0": "0"},
+    }
+    for cid, fractions in expected.items():
+        for ch in by_id[cid].choices:
+            assert ch.score_fraction == Decimal(fractions[ch.id])
+            assert Fraction(ch.score_fraction) == Fraction(
+                ch.raw_value,
+                20
+                if cid  # type: ignore[arg-type]
+                == "c4_consultation"
+                else 10,
+            )

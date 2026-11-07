@@ -345,3 +345,35 @@ def test_score_is_deterministic_and_context_independent() -> None:
         second = score(original(), proposals)
     assert first == second
     assert first.model_dump_json() == second.model_dump_json()
+
+
+def test_master_references_hold_when_rubric_built_under_prec_1() -> None:
+    with decimal.localcontext() as ctx:
+        ctx.prec = 1
+        checklist = original()
+        summary = score(
+            checklist,
+            original_proposals(
+                {"c4_consultation": "p15", "c6_dialog_management": "p7"},
+                na=("c2_needs", "c3_identification"),
+            ),
+        )
+    assert total(summary) == "85.38"
+
+
+def test_long_fraction_contribution_is_not_rounded_to_caller_precision() -> None:
+    data = contract_fixture("checklist-custom")
+    data["criteria"] = [c for c in data["criteria"] if c["id"] != "synthetic-binary"]
+    for c in data["criteria"]:
+        if c["id"] == "synthetic-scale":
+            set_fraction(c, "middle", "0.123456789012345678901234567891")
+            c["weight"] = "1"
+    checklist = rehash(data)
+    proposals = [proposal("synthetic-scale", "middle"), proposal("synthetic-flag", "no")]
+    with decimal.localcontext() as ctx:
+        ctx.prec = 2
+        summary = score(checklist, proposals)
+    assert format(summary.contributions[0].earned_weight, "f") == (  # type: ignore[arg-type]
+        "0.123456789012345678901234567891"
+    )
+    assert total(summary) == "12.35"
