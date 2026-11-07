@@ -21,8 +21,10 @@ from .retrieval import RetrievedChunk
 from .transport import ChatMessage
 
 # v2: known conversation date and per-source date applicability are part of the request.
-PROMPT_VERSION = "cqa-eval-v4"
-SUPPORTED_PROMPT_VERSIONS = frozenset({"cqa-eval-v2", "cqa-eval-v3", PROMPT_VERSION})
+PROMPT_VERSION = "cqa-eval-v7"
+SUPPORTED_PROMPT_VERSIONS = frozenset(
+    {"cqa-eval-v2", "cqa-eval-v3", "cqa-eval-v4", "cqa-eval-v5", "cqa-eval-v6", PROMPT_VERSION}
+)
 PREPROCESSING_VERSION = "identity-v1"
 SUPPORTED_PREPROCESSING_VERSIONS = frozenset({PREPROCESSING_VERSION})
 # Explicit limit instead of silently cutting the start, end or middle of a dialog.
@@ -127,6 +129,102 @@ disclosure must not contradict that evidence. Apply this only when the rubric's
 violation definition includes disclosure; do not invent additional flag categories.
 Use the same standard across languages. When a real ambiguity remains, state it and
 mark potential_violation or observed_contradiction rather than asserting certainty.
+"""
+
+BOUNDARIES_V5 = """
+FACTUAL BOUNDARIES. Before evaluating identity or confidentiality, distinguish:
+(a) general product information, menu navigation, instructions for the customer to
+perform a later step, or a conditional description of a future procedure;
+(b) an actual disclosure of new information obtained about a particular customer;
+(c) a protected operation actually performed by the operator.
+The subject being personal data or an account does not by itself establish (b) or
+(c). A generic restriction of an account TYPE is not a lookup of this customer's
+account. Repeating facts supplied by the customer is not a new disclosure. A promise
+to check or delete later is not evidence of a completed check, deletion or disclosure.
+An unsupported guess about the cause of a problem is not proof of privileged access;
+assess the unsupported answer under the relevant consultation/discovery rules.
+Conversely, an operator explicitly reporting the result of an account lookup (even
+just a status or restriction) can disclose confidential information without stating
+an account number or balance. No third-party recipient or harm is required unless
+the rubric says so. Use the same facts consistently across criteria and languages.
+
+SAFE STOP. Establish what service was actually undertaken, including an explicitly
+revised or deferred request. If the operator requires verification and the customer
+declines or postpones it, without protected action or disclosure, do not invent an
+identity bypass or confidentiality violation. General instructions can still be
+given. Do not mark identity confirmed when it was not. Apply N/A only if the actual
+request served meets the rubric's na_condition (for example, general guidance).
+If an unfinished protected request has no defined outcome under the rubric, explain
+that precise applicability ambiguity and preserve undetermined with a review flag;
+do not fabricate a negative answer or expand the N/A condition to finish the export.
+If a protected action or disclosure DID occur, check explicit identity evidence and
+its order; a later verification does not cure an earlier bypass. A protected action
+alone is not a confidentiality disclosure: flag only categories named in the rubric.
+
+INSUFFICIENT INFORMATION. For each proposed undetermined, identify the exact missing
+fact and which rule choice would change if it were known. Missing background is not
+automatically a barrier to evaluating observable operator conduct. An appropriate
+question eliciting the customer's need before giving an answer is observable even
+if the customer leaves without replying. Do not invent a request, but distinguish
+eliciting it from failing to ask. Lack of a formulated request may satisfy a separate
+consultation N/A rule; it does not automatically make discovery N/A or undetermined.
+For a continuation of an earlier contact, do not assume either that all details were
+known earlier or that none were: use what the recording establishes. Retain genuine
+uncertainty when the missing prior context is necessary to choose a rubric answer.
+Do not propagate uncertainty from one criterion to unrelated observable criteria.
+For calls, separate customer-facing dialogue from internal consultation, using system
+hold/transfer events. Do not penalize ASR artifacts as operator speech mistakes.
+Use allowed review flags for remaining ambiguities; never complete an export by
+replacing undetermined with N/A or a default answer. Return concise rule-based reasons.
+"""
+
+OBSERVABLE_CONDUCT_V6 = """
+Evaluate the operator's conduct, not whether the customer cooperated or the task
+ultimately succeeded. For a criterion about eliciting missing needs before answering:
+if the operator appropriately asks for the missing request/details and gives no
+premature answer, the customer's departure without a reply is not a failure to ask.
+Judge the observed appropriate elicitation positively when that is what the rubric
+requires. Do not demand a completed customer response absent such a requirement.
+The need was NOT already known, so the 'enough information from the start' N/A
+condition does not hold. A separate criterion can still be N/A because no actual
+consultation was possible. Conversely, an answer given before essential missing
+details were solicited is a process failure, even if later corrected.
+
+For discovery, use all details recorded before the first operator answer, including
+what the customer told the bot. Do not demand extra facts that would not change the
+general instruction being requested. Separate misunderstanding/ignoring the request
+from giving an inaccurate or unclear instruction to a correctly understood request.
+Clarifying a menu path for the customer is not eliciting the customer's need.
+For dialogue clarity, inspect earlier turns as well as the final successful outcome.
+When the customer explicitly cannot follow the operator's misleading wording or
+sequence and has to ask again, use the rubric's corresponding anchor; later success
+does not erase that earlier failure. Do not confuse this with a new question or an
+ASR/hearing issue. Keep consultation and clarity independent of violation severity.
+For closure, a substantive recap or next-step reminder and farewell may be in
+separate operator turns. Inspect the actual closing sequence; do not require a
+special phrase or every component in the final message. A customer's confirmation
+or thanks is not an operator's substantive recap, and courtesy alone is not one.
+"""
+
+AUTHORIZATION_AND_CLOSURE_V7 = """
+CONFIDENTIALITY IS ABOUT UNAUTHORIZED DISCLOSURE. Information being confidential
+does not make every communication of it a violation. If explicit evidence confirms
+this customer's identity BEFORE the operator supplies that customer's account
+information in the same support session, that authorized response is not itself a
+confidentiality violation. Still check for any separate prohibited disclosure or
+other category named in the rubric. If the same information is supplied BEFORE
+identity confirmation, flag the unauthorized disclosure when the rubric requires
+it; later confirmation cannot repair its timing. Apply the same recorded identity
+confirmation consistently to both identification and confidentiality. Do not treat
+an authorized account lookup as a violation merely because its result is private.
+
+CLOSING SEQUENCE. Distinguish delivering the main answer from recapping the outcome
+or reminding the customer of a remaining next step when closing. An earlier ordinary
+instruction is not automatically a closing recap just because a farewell eventually
+follows. A final courtesy such as 'great' does not supply a substantive recap. Apply
+the rubric's alternatives literally: where it requires (summary OR offer of further
+help) AND farewell, establish one of those two alternatives as well as the farewell.
+They may occupy separate turns in the actual closing sequence.
 """
 
 OUTPUT_SHAPE: dict[str, Any] = {
@@ -243,10 +341,16 @@ def build_messages(
         "sources": _sources(sources),
     }
     system = SYSTEM_PRIMARY if mode == "primary" else SYSTEM_REVIEW
-    if prompt_version in {"cqa-eval-v3", "cqa-eval-v4"}:
+    if prompt_version != "cqa-eval-v2":
         system += "\n" + DECISION_DISCIPLINE_V3
     if prompt_version == "cqa-eval-v4":
         system += "\n" + CONSISTENCY_V4
+    if prompt_version in {"cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7"}:
+        system += "\n" + BOUNDARIES_V5
+    if prompt_version in {"cqa-eval-v6", "cqa-eval-v7"}:
+        system += "\n" + OBSERVABLE_CONDUCT_V6
+    if prompt_version == "cqa-eval-v7":
+        system += "\n" + AUTHORIZATION_AND_CLOSURE_V7
     user = json.dumps(payload, ensure_ascii=False, indent=1)
     return (ChatMessage("system", system), ChatMessage("user", user))
 

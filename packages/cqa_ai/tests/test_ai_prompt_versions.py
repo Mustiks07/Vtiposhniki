@@ -6,8 +6,11 @@ from pathlib import Path
 import pytest
 from _cqa_ai_helpers import conversation, make, profile, run
 from cqa_ai.prompts import (
+    AUTHORIZATION_AND_CLOSURE_V7,
+    BOUNDARIES_V5,
     CONSISTENCY_V4,
     DECISION_DISCIPLINE_V3,
+    OBSERVABLE_CONDUCT_V6,
     SYSTEM_PRIMARY,
     SYSTEM_REVIEW,
     build_messages,
@@ -17,7 +20,10 @@ from cqa_contracts.models import EvaluatorProfile
 from cqa_domain import original_checklist, profile_hash
 
 
-@pytest.mark.parametrize("version", ["cqa-eval-v2", "cqa-eval-v3", "cqa-eval-v4"])
+@pytest.mark.parametrize(
+    "version",
+    ["cqa-eval-v2", "cqa-eval-v3", "cqa-eval-v4", "cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7"],
+)
 async def test_primary_and_blind_review_use_pinned_prompt(version: str) -> None:
     checklist, conv = original_checklist(), conversation()
     initial = answer_all(checklist, conv, flags={"c8_gross_errors": ["potential_violation"]})
@@ -34,6 +40,12 @@ async def test_primary_and_blind_review_use_pinned_prompt(version: str) -> None:
         expected = legacy if version == "cqa-eval-v2" else legacy + "\n" + DECISION_DISCIPLINE_V3
         if version == "cqa-eval-v4":
             expected += "\n" + CONSISTENCY_V4
+        if version in {"cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7"}:
+            expected += "\n" + BOUNDARIES_V5
+        if version in {"cqa-eval-v6", "cqa-eval-v7"}:
+            expected += "\n" + OBSERVABLE_CONDUCT_V6
+        if version == "cqa-eval-v7":
+            expected += "\n" + AUTHORIZATION_AND_CLOSURE_V7
         assert request.messages[0].content == expected
     assert "INITIAL-ONLY-SENTINEL" not in transport.requests[1].messages[1].content
 

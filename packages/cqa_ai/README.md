@@ -20,7 +20,14 @@ rubric rules, scoring and hashing come from `cqa_domain`. No ORM, routes or UI.
 Profiles pin their prompt version: `cqa-eval-v2` preserves the original instructions,
 `cqa-eval-v3` adds applicability → conditions → evidence → answer discipline, and
 `cqa-eval-v4` adds consistency across criteria, including account-specific disclosure
-and identification order. Both primary and blind-review calls use that pinned
+and identification order. `cqa-eval-v5` separates general instructions, actual
+customer-specific disclosure and completed protected actions. It handles a safe
+stop before verification and requires a concrete missing fact for undetermined;
+it never patches incomplete answers for export. `cqa-eval-v6` adds explicit treatment
+of unanswered elicitation, earlier known details, corrected unclear instructions and
+closing components across turns. `cqa-eval-v7` distinguishes authorized account
+information after confirmed identification from unauthorized disclosure, and the
+main answer from a closing recap. Both primary and blind-review calls use that pinned
 version. Older profile hashes and saved results do not change. No conversation IDs,
 expected labels or rubric weights are added to the instructions.
 
