@@ -150,6 +150,33 @@ export async function evaluation(request: APIRequestContext, baseURL: string, id
   };
 }
 
+/** Human "changed" decision to a concrete choice through the real appeal workflow. */
+export async function decideChoice(request: APIRequestContext, baseURL: string, evaluationId: string, criterionId: string, choiceId: string) {
+  const ev = await evaluation(request, baseURL, evaluationId);
+  const appeal = await request.post(`${baseURL}/api/v1/evaluations/${evaluationId}/appeals`, {
+    data: { criterion_id: criterionId, comment: 'Синтетическая апелляция для проверки поиска.', expected_revision: ev.revision },
+  });
+  expect(appeal.status(), await appeal.text()).toBe(201);
+  const a = await appeal.json();
+  const res = await request.post(`${baseURL}/api/v1/appeals/${a.id}/decision`, {
+    data: {
+      expected_revision: ev.revision,
+      decision: 'changed',
+      reason: 'Синтетическое решение проверяющего.',
+      replacement: {
+        criterion_id: criterionId,
+        applicability: 'applicable',
+        answer_choice_id: choiceId,
+        rationale: 'Синтетическое обоснование проверяющего.',
+        reason_codes: ['human_changed'],
+        evidence: [{ kind: 'range', start_message_id: 'm0001', end_message_id: 'm0002', relation: 'support', explanation: 'Синтетическое основание.' }],
+        origin: 'human',
+      },
+    },
+  });
+  expect(res.status(), await res.text()).toBe(200);
+}
+
 /** Human N/A decision through the real appeal workflow (used to reach MASTER N/A examples). */
 export async function decideNa(request: APIRequestContext, baseURL: string, evaluationId: string, criterionId: string) {
   const ev = await evaluation(request, baseURL, evaluationId);

@@ -18,7 +18,7 @@ function Saved({ version, base }: { version: ChecklistVersion; base: ChecklistVe
       <div className="row">
         <Link
           className="button primary"
-          to={`/conversations?checklist=${encodeURIComponent(version.checklist_id)}&version=${encodeURIComponent(version.version_id)}`}
+          to={`/conversations?launch_checklist=${encodeURIComponent(version.checklist_id)}&launch_version=${encodeURIComponent(version.version_id)}`}
         >
           Запустить оценку с этой версией
         </Link>

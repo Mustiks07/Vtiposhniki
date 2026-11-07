@@ -63,7 +63,7 @@ export function ChecklistPage() {
           <div className="row">
             <Link
               className="button primary"
-              to={`/conversations?checklist=${encodeURIComponent(id)}&version=${encodeURIComponent(selected.version_id)}`}
+              to={`/conversations?launch_checklist=${encodeURIComponent(id)}&launch_version=${encodeURIComponent(selected.version_id)}`}
             >
               Запустить оценку с этой версией
             </Link>
