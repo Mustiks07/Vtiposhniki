@@ -68,10 +68,6 @@ def validation_failure(message: str, details: Iterable[ErrorDetail] = ()) -> Api
     return ApiFailure(make_error(ErrorCode.VALIDATION_ERROR, message, details=details))
 
 
-def not_implemented() -> ApiFailure:
-    return ApiFailure(make_error(ErrorCode.NOT_IMPLEMENTED, "Operation is not implemented yet"))
-
-
 def too_large(message: str = "Payload exceeds the configured limit") -> ApiFailure:
     return ApiFailure(
         make_error(

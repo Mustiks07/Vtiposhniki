@@ -37,7 +37,6 @@ from . import (
     organizer,
     registry,
 )
-from .errors import not_implemented
 from .services import Services
 
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
@@ -101,12 +100,8 @@ def list_conversations(
     selection = conversation_flag_query(
         checklist_version_id, flag_criterion_id, flag_status, flag_scope
     )
-    if selection.checklist_version_id is not None:
-        # Integration bridge: B replaces this guard with the documented read query.
-        # Never silently ignore a requested filter and return an unfiltered page.
-        raise not_implemented()
     items, total = conversations.list_conversations(
-        _services(request), limit, offset, language, channel, status
+        _services(request), limit, offset, language, channel, status, selection
     )
     return Page[h.ConversationSummary](items=items, total=total, limit=limit, offset=offset)
 
