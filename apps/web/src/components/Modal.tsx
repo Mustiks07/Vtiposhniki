@@ -37,6 +37,23 @@ export function Modal({
       ref={ref}
       className={wide ? 'modal modal-wide' : 'modal'}
       aria-labelledby={titleId}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        // Native dialog keeps the page inert, but Chromium can move the last Tab
+        // into browser chrome. Keep both keyboard edges inside the visible form.
+        const controls = [...event.currentTarget.querySelectorAll<HTMLElement>(
+          'button, input, select, textarea, a[href], summary, [tabindex]',
+        )].filter((element) => element.tabIndex >= 0 && !element.matches(':disabled') && element.getClientRects().length > 0);
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first && last) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last && first) {
+          event.preventDefault();
+          first.focus();
+        }
+      }}
       onCancel={(event) => {
         event.preventDefault();
         onClose();

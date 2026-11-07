@@ -105,6 +105,7 @@ test('E13: raw step 7/10 is separate from 10,5/15; sections labelled; flag does 
   const imp = await importViaApi(request, base, [record(uid('e13'))]);
   const batch = await runBatchApi(request, base, [imp.items[0].conversation_id], sectioned.version_id);
   await page.goto(`/#/evaluations/${batch.jobs[0].evaluation_id}`);
+  await page.getByText('Разделы чек-листа и состав итога', { exact: true }).click();
   const rows = page.getByTestId('section-row');
   await expect(rows).toHaveCount(2);
   await expect(rows.filter({ hasText: 'Начало разговора' })).toContainText('30 / 30');

@@ -280,7 +280,7 @@ export function ScaleTable({ criterion, selected }: { criterion: Criterion; sele
         <thead>
           <tr>
             <th scope="col">Ответ</th>
-            <th scope="col">raw_value</th>
+            {criterion.response_type === 'scale' ? <th scope="col">Значение шкалы</th> : null}
             <th scope="col">Смысл ступени</th>
             <th scope="col">Доля</th>
           </tr>
@@ -297,7 +297,7 @@ export function ScaleTable({ criterion, selected }: { criterion: Criterion; sele
                 {c.label}
                 {(criterion.flag_when_choice_ids ?? []).includes(c.id) ? ' ⚑' : ''}
               </td>
-              <td>{rawValueText(c.raw_value)}</td>
+              {criterion.response_type === 'scale' ? <td>{rawValueText(c.raw_value)}</td> : null}
               <td>{c.anchor}</td>
               <td>{c.score_fraction === null ? '—' : decimalRu(c.score_fraction)}</td>
             </tr>

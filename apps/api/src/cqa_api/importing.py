@@ -58,7 +58,7 @@ def normalize(services: Services, source: SourceRecord) -> Conversation:
     for position, message in enumerate(record.messages):
         message_id = f"m{position + 1:04d}"
         parsed, understood = parse_timestamp(message.timestamp_original)
-        if not understood:
+        if message.timestamp_original.strip() and not understood:
             warnings.append(f"{message_id}: source time not parsed; original preserved")
         messages.append(
             Message(

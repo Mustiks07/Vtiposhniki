@@ -91,6 +91,22 @@ async def test_missing_usage_is_unknown_not_zero() -> None:
 
 
 @pytest.mark.parametrize(
+    "code,kind",
+    [("pre_consume_token_quota_failed", "insufficient_quota"), ("invalid_token", "auth")],
+)
+async def test_gateway_403_distinguishes_quota_from_auth_without_leaking_body(
+    code: str, kind: str
+) -> None:
+    body = {"error": {"code": code, "message": f"token quota secret {KEY}"}}
+    async with client(lambda r: httpx.Response(403, json=body)) as c:
+        with pytest.raises(ProviderFailure) as info:
+            await XerosharcTransport(KEY, c).complete(REQUEST)
+    assert info.value.kind == kind
+    assert not info.value.retryable
+    assert KEY not in info.value.safe_message
+
+
+@pytest.mark.parametrize(
     ("status", "kind", "retryable"),
     [
         (401, "auth", False),

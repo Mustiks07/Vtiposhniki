@@ -32,6 +32,6 @@ test('shell shows navigation and the contract health endpoint state', async () =
 test('unreachable API is reported, not shown as empty data', async () => {
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
   render(<App />);
-  expect(await screen.findByText('API недоступен')).toBeTruthy();
+  expect(await screen.findByText(/Нет связи с сервером/)).toBeTruthy();
   await waitFor(() => expect(screen.getAllByText('Сервер недоступен').length).toBeGreaterThan(0), { timeout: 4000 });
 });

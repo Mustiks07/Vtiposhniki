@@ -1,3 +1,4 @@
+import { savedVersionId, selectConversation } from './support';
 import { expect, test, type Page } from '@playwright/test';
 import { createChecklist, criterion, draft, importViaApi, launchFromList, record, servers, uid } from './support';
 
@@ -32,14 +33,14 @@ test('E08: an unknown criterion created in the editor reaches the real API and t
   const id = uid('e08');
   await importViaApi(page.request, servers.complete, [record(id)]);
   await launchFromList(page, [id], title);
-  await page.getByRole('link', { name: /карточка/ }).click();
+  await page.getByRole('link', { name: /^Открыть оценку/ }).click();
   await expect(
     page.getByTestId('criterion-item').filter({ hasText: 'Неизвестный критерий: упомянут номер заявки' }),
   ).toBeVisible();
   await page.getByTestId('criterion-item').filter({ hasText: 'Неизвестный критерий' }).click();
   await expect(page.getByTestId('weighted')).toHaveText('70 / 70');
   // The appeal uses the new criterion too.
-  await page.getByRole('button', { name: 'Оспорить критерий' }).click();
+  await page.getByTestId('criterion-detail').getByRole('button', { name: 'Оспорить критерий', exact: true }).click();
   const comment = uid('Номер заявки не назван');
   await page.getByLabel('Комментарий к апелляции').fill(comment);
   await page.getByRole('button', { name: 'Подать апелляцию' }).click();
@@ -47,7 +48,7 @@ test('E08: an unknown criterion created in the editor reaches the real API and t
   await page.goto('/#/appeals');
   const queued = page.getByTestId('queue-appeal').filter({ hasText: comment });
   await queued.getByRole('button').first().click();
-  await expect(queued.getByRole('heading', { name: 'Неизвестный критерий: упомянут номер заявки' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Рассмотрение обращения' }).getByRole('heading', { name: 'Неизвестный критерий: упомянут номер заявки' })).toBeVisible();
 });
 
 test('E09: non-zero/reverse scale needs explicit mapping; invalid fraction is rejected, valid one saved', async ({
@@ -107,27 +108,27 @@ test('E10: batch stays pinned to the old version; a new run uses the new version
   const id = uid('e10');
   await importViaApi(request, servers.complete, [record(id)]);
   const batch1 = await launchFromList(page, [id], title);
-  const firstCard = await page.getByRole('link', { name: /карточка/ }).getAttribute('href');
+  const firstCard = await page.getByRole('link', { name: /^Открыть оценку/ }).getAttribute('href');
 
   await page.goto(`/#/checklists/${v1.checklist_id}`);
-  await page.getByRole('link', { name: 'Редактировать (новая версия)' }).click();
+  await page.getByRole('link', { name: 'Создать новую версию' }).click();
   await page.getByTestId('editor-criterion').first().getByLabel('Название', { exact: true }).fill('Новое название');
   await page.getByRole('button', { name: 'Сохранить как новую версию' }).click();
   await expect(page.getByTestId('version-saved')).toBeVisible();
   await expect(page.getByTestId('diff-item')).toContainText('название');
-  const v2 = (await page.getByTestId('version-saved').locator('code').textContent())!;
+  const v2 = await savedVersionId(page);
   expect(v2).not.toBe(v1.version_id);
 
   const b1 = await (await request.get(`${servers.complete}/api/v1/evaluation-batches/${batch1}`)).json();
   expect(b1.checklist_version_id).toBe(v1.version_id);
 
   await page.getByRole('link', { name: 'Запустить оценку с этой версией' }).click();
-  await page.getByRole('checkbox', { name: `Выбрать ${id}` }).check();
+  await selectConversation(page, id);
   await page.getByRole('button', { name: /Оценить выбранные/ }).click();
   await expect(page.getByLabel('Версия чек-листа (закрепляется при запуске)')).toHaveValue(v2);
   await page.getByRole('button', { name: 'Запустить пакет' }).click();
   await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии');
-  await expect(page.locator('.meta')).toContainText(v2);
+  await expect(page.getByRole('link', { name: title, exact: true })).toHaveAttribute('href', `#/checklists/version/${v2}`);
 
   await page.goto(`/${firstCard}`);
   await expect(page.getByTestId('criterion-item').first()).toContainText('Старое название');
@@ -154,14 +155,14 @@ test('E11: weight-only change shows server provenance for reuse; fresh is not ma
   await expect(page.getByTestId('version-saved')).toBeVisible();
 
   await launchFromList(page, [id], title, 'reuse_if_compatible');
-  await page.getByRole('link', { name: /карточка/ }).click();
+  await page.getByRole('link', { name: /^Открыть оценку/ }).click();
   await page.getByText('Детали запуска: версии, модели, стоимость').click();
   const reuse = page.getByTestId('reuse-provenance');
   await expect(reuse).toBeVisible();
   const reusedText = (await reuse.textContent()) ?? '';
 
   await launchFromList(page, [id], title, 'fresh');
-  await page.getByRole('link', { name: /карточка/ }).click();
+  await page.getByRole('link', { name: /^Открыть оценку/ }).click();
   await page.getByText('Детали запуска: версии, модели, стоимость').click();
   await expect(page.getByTestId('reuse-provenance')).toContainText('Результат получен в этом запуске (режим fresh)');
   // Record what the server reported for reuse (B decides whether reuse applied).

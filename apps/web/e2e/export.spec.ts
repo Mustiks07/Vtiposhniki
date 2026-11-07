@@ -9,7 +9,9 @@ const CSV_COLUMNS =
   'normalized_contribution,flag_detected,decisions,error_code,limitation_codes,cost,cost_complete,currency';
 
 async function download(page: Page, scope: 'automatic' | 'effective', format: 'json' | 'csv'): Promise<string> {
-  await page.getByRole('radio', { name: new RegExp(`${scope} —`) }).check();
+  await page.getByRole('radio', { name: scope === 'automatic'
+    ? 'Оценка AI — исходный результат оценщика'
+    : 'После пересмотра — с учётом решений проверяющего', exact: true }).check();
   const [file] = await Promise.all([page.waitForEvent('download'), page.getByTestId(`export-${format}`).click()]);
   return fs.readFileSync((await file.path())!, 'utf-8');
 }

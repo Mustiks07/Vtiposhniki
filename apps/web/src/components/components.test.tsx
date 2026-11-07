@@ -22,6 +22,17 @@ import { Transcript } from './Transcript';
 const checklist = checklistFixture as ChecklistVersion;
 const conversation = conversationFixture as Conversation;
 
+test('legacy untimed paste has no parse warning; a malformed supplied time remains explained', () => {
+  const conv = structuredClone(conversation);
+  conv.messages[0].timestamp_original = '';
+  conv.messages[1].timestamp_original = 'bad-time';
+  conv.warnings = conv.messages.slice(0, 2).map((m) => `${m.id}: source time not parsed; original preserved`);
+  render(<Transcript conversation={conv} highlighted={[]} focusToken={0} canSeek={false} />);
+  expect(screen.queryByText(/source time not parsed/)).toBeNull();
+  expect(screen.queryByText(/Время реплики 1 не распознано/)).toBeNull();
+  expect(screen.getByText(/Время реплики 2 не распознано/)).toBeTruthy();
+});
+
 test('score panel separates automatic and effective; human completion keeps automatic without total', () => {
   render(<ScorePanel evaluation={evaluationHuman as EvaluationView} checklist={checklist} />);
   const auto = screen.getByTestId('automatic-total');

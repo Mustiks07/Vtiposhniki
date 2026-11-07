@@ -51,6 +51,13 @@ export function Transcript({
   const handledFocusToken = useRef<number | null>(null);
   const mapping = verifiedMapping(conversation.audio);
   const highlightSet = new Set(highlighted);
+  const sourceWarnings = (conversation.warnings ?? []).flatMap((warning) => {
+    const time = /^(m\d+): source time not parsed; original preserved$/.exec(warning);
+    if (!time) return [warning];
+    const message = conversation.messages.find((m) => m.id === time[1]);
+    if (message && !message.timestamp_original.trim()) return [];
+    return [`Время реплики ${message?.ordinal ?? Number(time[1].slice(1))} не распознано; исходная метка сохранена.`];
+  });
 
   useEffect(() => {
     if (!focusReady || handledFocusToken.current === focusToken || !highlighted.length || !listRef.current) return;
@@ -86,11 +93,11 @@ export function Transcript({
           </div>
         ) : null}
       </header>
-      {(conversation.warnings ?? []).length ? (
+      {sourceWarnings.length ? (
         <details className="source-notes">
-          <summary>Особенности исходной записи ({conversation.warnings?.length})</summary>
+          <summary>Особенности исходной записи ({sourceWarnings.length})</summary>
           <ul className="annotations" aria-label="Предупреждения источника">
-            {(conversation.warnings ?? []).map((w, i) => (
+            {sourceWarnings.map((w, i) => (
               <li key={i} lang="ru">
                 <span aria-hidden="true">ⓘ </span>
                 {w}

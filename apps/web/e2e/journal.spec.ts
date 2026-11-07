@@ -23,14 +23,9 @@ test('journal: import dialog traps focus, Escape restores it, unsent text surviv
   await dialog.getByLabel('Или вставьте JSON').fill('unsent draft');
   await dialog.getByRole('button', { name: 'Импортировать', exact: true }).focus();
   await page.keyboard.press('Tab');
-  // The browser may briefly focus its chrome; one more Tab must remain in the dialog.
-  if (
-    !(await dialog
-      .getByRole('button', { name: 'Закрыть окно' })
-      .evaluate((element) => element === document.activeElement))
-  )
-    await page.keyboard.press('Tab');
   await expect(dialog.getByRole('button', { name: 'Закрыть окно' })).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(dialog.getByRole('button', { name: 'Импортировать', exact: true })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();
@@ -165,6 +160,6 @@ test('journal: required desktop and phone layouts keep the viewport readable', a
   await page.getByRole('button', { name: 'Закрыть окно' }).click();
   await page.goto(`/#/checklists/${version.checklist_id}/edit`);
   await expect(page.getByTestId('editor-criterion')).toHaveCount(1);
-  await expect(page.getByRole('navigation', { name: 'Критерии в редакторе' }).getByRole('button')).toHaveCount(8);
+  await expect(page.getByRole('navigation', { name: 'Критерии в редакторе' }).locator('button[aria-pressed]')).toHaveCount(8);
   await page.screenshot({ path: path.join(screenshots, 'editor-1440.png') });
 });

@@ -10,6 +10,21 @@ import { artifactStatusLabel, errorCodeLabel, jobStateLabel } from '../lib/label
 
 const ACTIVE = new Set(['queued', 'running', 'retry_wait']);
 
+export function providerNextStep(job: Job, evaluation: EvaluationView | undefined): string | null {
+  if (!job.error) return null;
+  const limitations = evaluation?.artifact.limitations ?? [];
+  if (limitations.includes('provider_insufficient_quota')) {
+    return 'Недостаточно квоты провайдера. Пополните её или выберите настроенный резерв для этого диалога. Готовые результаты сохранены.';
+  }
+  if (limitations.includes('provider_auth') || job.error.code === 'configuration_error') {
+    return 'Проверьте ключ и доступ к модели в настройках сервера. Затем повторите задание или выберите настроенный резерв.';
+  }
+  if (job.error.code === 'budget_exceeded') {
+    return 'Лимит этого задания исчерпан. Проверьте журнал перед отдельным запуском; успешные оценки повторять не нужно.';
+  }
+  return 'Проверьте подключение и доступность провайдера. Повтор задания сохранит историю попыток.';
+}
+
 export function batchIsActive(batch: EvaluationBatch | undefined): boolean {
   return Boolean(batch?.jobs.some((j) => ACTIVE.has(j.state)));
 }
@@ -37,6 +52,11 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
       </td>
       <td>
         <Badge status={job.state}>{jobStateLabel[job.state] ?? job.state}</Badge>
+        {job.state === 'running' ? (
+          <p className="hint" role="status">
+            Модель проверяет критерии. Можно уйти со страницы — обработка продолжится.
+          </p>
+        ) : null}
         {job.state === 'succeeded' && evaluation?.artifact.status === 'partial' ? (
           <p className="hint" data-testid="partial-note">
             Обработка завершена, оценка неполная: по части критериев ответ не определён, полного итога нет.
@@ -53,6 +73,7 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
         {job.error ? (
           <span>
             {errorCodeLabel[job.error.code] ?? job.error.code}
+            <p className="hint">{providerNextStep(job, evaluation)}</p>
             <details className="technical-details">
               <summary>Код для поддержки</summary>
               <code>{job.error.correlation_id}</code>

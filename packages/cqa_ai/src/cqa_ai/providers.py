@@ -36,7 +36,21 @@ FinishReason = Literal["stop", "length", "refusal", "error", "unknown"]
 def _status_failure(response: httpx.Response) -> ProviderFailure:
     status = response.status_code
     kind: FailureKind
-    if status in (401, 403):
+    # Some compatible gateways report reservation exhaustion as 403. Recognise
+    # its explicit machine code, never infer an auth/quota decision from free text.
+    try:
+        body = response.json()
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        body = None
+    error = body.get("error") if isinstance(body, dict) else None
+    quota_reservation = (
+        status == 403
+        and isinstance(error, dict)
+        and error.get("code") == "pre_consume_token_quota_failed"
+    )
+    if quota_reservation:
+        kind, message = "insufficient_quota", "Provider account has insufficient balance"
+    elif status in (401, 403):
         kind, message = "auth", "Provider rejected the configured credential"
     elif status == 402:
         kind, message = "insufficient_quota", "Provider account has insufficient balance"

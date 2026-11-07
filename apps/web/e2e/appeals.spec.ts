@@ -17,7 +17,7 @@ async function setup(request: Parameters<typeof importViaApi>[0], base = servers
 async function fileAppeal(page: Page, evaluationId: string, criterionTitle: string, comment: string) {
   await page.goto(`/#/evaluations/${evaluationId}`);
   await page.getByTestId('criterion-item').filter({ hasText: criterionTitle }).click();
-  await page.getByRole('button', { name: 'Оспорить критерий' }).click();
+  await page.getByTestId('criterion-detail').getByRole('button', { name: 'Оспорить критерий', exact: true }).click();
   await page.getByLabel('Комментарий к апелляции').fill(comment);
   await page.getByRole('button', { name: 'Подать апелляцию' }).click();
   await expect(page.getByTestId('appeal').filter({ hasText: comment })).toHaveAttribute('data-state', 'open');
@@ -27,7 +27,9 @@ async function openInQueue(page: Page, comment: string) {
   await page.goto('/#/appeals');
   const item = page.getByTestId('queue-appeal').filter({ hasText: comment });
   await item.getByRole('button').first().click();
-  return item;
+  const detail = page.getByRole('region', { name: 'Рассмотрение обращения', exact: true });
+  await expect(detail).toContainText(comment);
+  return detail;
 }
 
 test('E16: appeal → change and confirm → refresh; automatic unchanged, effective from server', async ({ page, request }) => {
@@ -73,7 +75,7 @@ test('E16: appeal → change and confirm → refresh; automatic unchanged, effec
   await expect(cmp).toContainText('Изменено на «Нет»');
   await expect(cmp).toContainText(reason);
   await expect(cmp).toContainText(commentChange);
-  await expect(cmp).toContainText('Итог: automatic 100,00 → effective 60,00');
+  await expect(cmp).toContainText('Итог AI: 100,00 → после пересмотра: 60,00');
   await expect(page.getByTestId('appeal').filter({ hasText: commentChange })).toHaveAttribute('data-state', 'resolved');
 
   await page.getByTestId('criterion-item').filter({ hasText: 'Помощь' }).click();

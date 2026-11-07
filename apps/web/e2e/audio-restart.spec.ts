@@ -1,3 +1,4 @@
+import { selectConversation } from './support';
 import { expect, test } from '@playwright/test';
 import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
@@ -101,7 +102,7 @@ test('E07: backend restart during a batch — UI recovers server state without c
     await importViaApi(page.request, origin, [record(id)]);
 
     await page.goto(`${origin}/#/conversations`);
-    await page.getByRole('checkbox', { name: `Выбрать ${id}` }).check();
+    await selectConversation(page, id);
     await page.getByRole('button', { name: /Оценить выбранные/ }).click();
     await page.getByLabel('Чек-лист', { exact: true }).selectOption({ label: title });
     await page.getByRole('button', { name: 'Запустить пакет' }).click();

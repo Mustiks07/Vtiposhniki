@@ -13,6 +13,16 @@ def conversations_total(client) -> int:
     return client.get("/api/v1/conversations").json()["total"]
 
 
+def test_optional_empty_time_is_preserved_without_a_parse_warning(client):
+    record = chat_record("paste-without-time")
+    for message in record["messages"]:
+        message["timestamp_original"] = ""
+    result = import_records(client, record)["items"][0]
+    body = client.get(f"/api/v1/conversations/{result['conversation_id']}").json()
+    assert all(m["timestamp_original"] == "" and m["parsed_time"] is None for m in body["messages"])
+    assert not any("source time not parsed" in warning for warning in body["warnings"])
+
+
 def test_new_identical_and_changed_records_get_correct_dispositions(client):
     first = import_records(client, chat_record("new-id-never-seen"))
     item = first["items"][0]
@@ -39,9 +49,7 @@ def test_new_identical_and_changed_records_get_correct_dispositions(client):
     ).json()
     assert old["messages"][1]["text"] == "Учебный ответ"
     assert old["content_hash"] != latest["content_hash"]
-    missing = client.get(
-        f"/api/v1/conversations/{item['conversation_id']}", params={"revision": 9}
-    )
+    missing = client.get(f"/api/v1/conversations/{item['conversation_id']}", params={"revision": 9})
     assert missing.status_code == 404
 
 
@@ -85,7 +93,11 @@ def test_languages_channels_times_and_duplicate_lines_are_preserved(client):
         "channel": "voice_call",
         "language": "KZ",
         "messages": [
-            {"speaker": "bot", "text": "Hello\n", "timestamp_original": "2026-01-02T03:04:05+05:00"},
+            {
+                "speaker": "bot",
+                "text": "Hello\n",
+                "timestamp_original": "2026-01-02T03:04:05+05:00",
+            },
             repeated,
             repeated,
             {"speaker": "system", "text": "", "timestamp_original": "not a time"},
@@ -100,10 +112,20 @@ def test_languages_channels_times_and_duplicate_lines_are_preserved(client):
     assert [m["ordinal"] for m in messages] == [1, 2, 3, 4, 5, 6]
     assert [m["source_index"] for m in messages] == [0, 1, 2, 3, 4, 5]
     assert [m["text"] for m in messages] == [
-        "Hello\n", "Сәлеметсіз бе", "Сәлеметсіз бе", "", " ?? ", "late",
+        "Hello\n",
+        "Сәлеметсіз бе",
+        "Сәлеметсіз бе",
+        "",
+        " ?? ",
+        "late",
     ]
     assert [m["timestamp_original"] for m in messages] == [
-        "2026-01-02T03:04:05+05:00", "00:05", "00:05", "not a time", "2026-01-02T03:04:05", "00:03",
+        "2026-01-02T03:04:05+05:00",
+        "00:05",
+        "00:05",
+        "not a time",
+        "2026-01-02T03:04:05",
+        "00:03",
     ]
     assert messages[0]["parsed_time"] is not None
     # MM:SS never becomes an invented calendar date; a zone is never guessed.
@@ -127,12 +149,16 @@ def test_list_filters_and_pagination(client):
     )
     assert client.get("/api/v1/conversations").json()["total"] == 3
     assert client.get("/api/v1/conversations", params={"language": "KZ"}).json()["total"] == 1
-    assert client.get("/api/v1/conversations", params={"channel": "voice_call"}).json()["total"] == 1
+    assert (
+        client.get("/api/v1/conversations", params={"channel": "voice_call"}).json()["total"] == 1
+    )
     page = client.get("/api/v1/conversations", params={"limit": 2, "offset": 2}).json()
     assert (page["total"], page["limit"], page["offset"], len(page["items"])) == (3, 2, 2, 1)
     assert client.get("/api/v1/conversations", params={"limit": 0}).status_code == 422
     assert client.get("/api/v1/conversations", params={"limit": 201}).status_code == 422
-    assert client.get("/api/v1/conversations", params={"status": "unevaluated"}).json()["total"] == 3
+    assert (
+        client.get("/api/v1/conversations", params={"status": "unevaluated"}).json()["total"] == 3
+    )
 
 
 def test_oversize_body_and_record_count_get_413(client_factory, tmp_path):

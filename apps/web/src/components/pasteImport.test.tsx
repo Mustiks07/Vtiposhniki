@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, expect, test, vi } from 'vitest';
-import { ImportPanel } from './ImportPanel';
+import { ImportPanel, PasteDraftProvider } from './ImportPanel';
 
 // Component test with a stubbed HTTP layer; the end-to-end acceptance runs on the real API
 // (e2e/product-ux.spec.ts).
@@ -20,7 +20,7 @@ function setup(importResponse: () => Response) {
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <ImportPanel />
+        <PasteDraftProvider><ImportPanel /></PasteDraftProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -78,7 +78,7 @@ test('paste: errors block import, preview follows the edited text, one request p
 
   // Editing after import keeps the same ID and warns that it will be a new revision.
   fireEvent.change(text, { target: { value: 'client: Здравствуйте!\noperator: Добрый день' } });
-  expect(screen.getByTestId('paste-edited').textContent).toContain('новую revision');
+  expect(screen.getByTestId('paste-edited').textContent).toContain('новую версию разговора');
 });
 
 test('paste: a failed request keeps the text and retries with the same external ID', async () => {
