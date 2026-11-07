@@ -135,7 +135,7 @@ test('E11: weight-only change shows server provenance for reuse; fresh is not ma
   await launchFromList(page, [id], title, 'fresh');
   await page.getByRole('link', { name: /карточка/ }).click();
   await page.getByText('Детали запуска: версии, модели, стоимость').click();
-  await expect(page.getByTestId('reuse-provenance')).toContainText('Новый вызов оценщика (режим fresh)');
+  await expect(page.getByTestId('reuse-provenance')).toContainText('Результат получен в этом запуске (режим fresh)');
   // Record what the server reported for reuse (B decides whether reuse applied).
   test.info().annotations.push({ type: 'reuse-provenance', description: reusedText.trim() });
 });

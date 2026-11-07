@@ -1,10 +1,13 @@
 """Audio: allowlist, redirect and address checks, ranges, limits, no signed URL leaks."""
 
+import json
 import logging
 
 import httpx
 import pytest
 from conftest import make_settings
+from cqa_api.audio import _record_state
+from cqa_api.db import row, run
 
 ALLOWED = "media.example.test"
 SIGNED = f"https://{ALLOWED}/a.mp3?signature=SIGNED-VALUE"
@@ -35,8 +38,9 @@ def organizer_payload(audio_url=SIGNED, external_id="call-1"):
     }
 
 
-def audio_client(client_factory, tmp_path, handler, *, resolver=public_resolver, audio_url=SIGNED,
-                 **overrides):
+def audio_client(
+    client_factory, tmp_path, handler, *, resolver=public_resolver, audio_url=SIGNED, **overrides
+):
     values = {
         "dataset_url": "https://organizer.invalid/d",
         "audio_allowed_hosts": ALLOWED,
@@ -96,6 +100,162 @@ def test_streams_bytes_and_confirms_availability(client_factory, tmp_path):
     assert after["audio"]["availability"] == "available"
     assert after["audio"]["media_type"] == "audio/mpeg"
     assert after["content_hash"] == before["content_hash"]  # metadata is not content
+
+
+def test_late_source_and_rotated_source_refresh_metadata_without_a_text_revision(
+    client_factory, tmp_path
+):
+    payload = [organizer_payload(None)]
+    client = client_factory(
+        make_settings(
+            tmp_path, dataset_url="https://organizer.invalid/d", audio_allowed_hosts=ALLOWED
+        ),
+        organizer_transport=httpx.MockTransport(lambda r: httpx.Response(200, json=payload[0])),
+        audio_transport=httpx.MockTransport(serve),
+        host_resolver=public_resolver,
+    )
+
+    def imported(url):
+        payload[0] = organizer_payload(url)
+        response = client.post("/api/v1/imports", json={"source": "organizer_api", "group_id": "g"})
+        assert response.status_code == 201
+        return response.json()["items"][0]
+
+    first = imported(None)
+    cid = first["conversation_id"]
+    endpoint = f"/api/v1/conversations/{cid}"
+    original = client.get(endpoint).json()
+    assert original["audio"]["access_path"] is None
+    for url in (SIGNED, f"https://{ALLOWED}/rotated.mp3?signature=ROTATED"):
+        result = imported(url)
+        assert result["disposition"] == "unchanged"
+        assert result["revision"] == 1
+        # Check persisted JSON too: read compatibility must not mask an import failure.
+        with client.app.state.services.db.read() as conn:
+            stored = row(
+                conn,
+                "SELECT document_json FROM conversation_revisions WHERE conversation_id=:id",
+                {"id": cid},
+            )
+        document = json.loads(stored["document_json"])
+        assert document["audio"]["access_path"] == endpoint + "/audio"
+        assert document["audio"]["availability"] == "unknown"
+        assert document["audio"]["alignment_status"] == "unverified"
+        assert document["audio"]["mapping"] is None
+        assert document["content_hash"] == original["content_hash"]
+        assert url not in stored["document_json"]
+        assert client.get(endpoint + "/audio").status_code == 200
+        assert client.get(endpoint).json()["audio"]["availability"] == "available"
+        if url == SIGNED:
+            verified = client.get(endpoint).json()
+            verified["audio"].update(
+                alignment_status="verified",
+                mapping=[
+                    {
+                        "schema_version": "1.0",
+                        "message_id": "m0001",
+                        "start_seconds": "0",
+                        "end_seconds": None,
+                    }
+                ],
+            )
+            with client.app.state.services.db.write() as conn:
+                run(
+                    conn,
+                    "UPDATE conversation_revisions SET document_json=:document WHERE conversation_id=:id",
+                    {"document": json.dumps(verified), "id": cid},
+                )
+        # Same source or an omitted source does not erase a known working recording.
+        imported(url)
+        imported(None)
+        assert client.get(endpoint).json()["audio"]["availability"] == "available"
+        if url == SIGNED:
+            assert client.get(endpoint).json()["audio"]["alignment_status"] == "verified"
+
+
+def test_source_policy_changes_do_not_retain_stale_paths_or_warnings(client_factory, tmp_path):
+    payload = [organizer_payload("https://not-allowed.example/a.mp3")]
+    client = client_factory(
+        make_settings(
+            tmp_path, dataset_url="https://organizer.invalid/d", audio_allowed_hosts=ALLOWED
+        ),
+        organizer_transport=httpx.MockTransport(lambda r: httpx.Response(200, json=payload[0])),
+        audio_transport=httpx.MockTransport(serve),
+        host_resolver=public_resolver,
+    )
+    for url, allowed in (
+        ("https://not-allowed.example/a.mp3", False),
+        (SIGNED, True),
+        ("https://not-allowed.example/other.mp3", False),
+    ):
+        payload[0] = organizer_payload(url)
+        response = client.post("/api/v1/imports", json={"source": "organizer_api", "group_id": "g"})
+        cid = response.json()["items"][0]["conversation_id"]
+        document = client.get(f"/api/v1/conversations/{cid}").json()
+        assert (document["audio"]["access_path"] is not None) is allowed
+        assert bool(document["warnings"]) is not allowed
+        assert url not in str(document)
+        assert document["revision"] == 1
+
+
+def test_old_late_source_record_is_readable_and_repaired_by_successful_stream(
+    client_factory, tmp_path
+):
+    client, cid = audio_client(client_factory, tmp_path, serve)
+    endpoint = f"/api/v1/conversations/{cid}"
+    original = client.get(endpoint).json()
+    # Simulate a database made by the old importer: private source present, public path absent.
+    broken = {
+        **original,
+        "audio": {
+            **original["audio"],
+            "access_path": None,
+            "availability": "unavailable",
+            "alignment_status": "unavailable",
+        },
+    }
+    with client.app.state.services.db.write() as conn:
+        run(
+            conn,
+            "UPDATE conversation_revisions SET document_json=:document WHERE conversation_id=:id",
+            {"document": json.dumps(broken), "id": cid},
+        )
+    offered = client.get(endpoint).json()
+    assert offered["audio"]["access_path"] == endpoint + "/audio"
+    assert offered["audio"]["availability"] == "unknown"
+    assert offered["audio"]["mapping"] is None
+    assert offered["content_hash"] == original["content_hash"]
+    assert SIGNED not in str(offered)
+    assert client.get(offered["audio"]["access_path"]).status_code == 200
+    with client.app.state.services.db.read() as conn:
+        stored = row(
+            conn,
+            "SELECT document_json FROM conversation_revisions WHERE conversation_id=:id",
+            {"id": cid},
+        )
+    repaired = json.loads(stored["document_json"])
+    assert repaired["audio"]["availability"] == "available"
+    assert repaired["audio"]["access_path"] == endpoint + "/audio"
+    assert repaired["audio"]["alignment_status"] == "unverified"
+
+
+def test_late_audio_response_cannot_overwrite_metadata_of_a_replaced_source(
+    client_factory, tmp_path
+):
+    client, cid = audio_client(client_factory, tmp_path, serve)
+    services = client.app.state.services
+    replacement = f"https://{ALLOWED}/replacement.mp3"
+    with services.db.write() as conn:
+        run(
+            conn,
+            "UPDATE conversation_revisions SET audio_source_url=:url WHERE conversation_id=:id",
+            {"url": replacement, "id": cid},
+        )
+    # An in-flight request for SIGNED completes after the replacement was stored.
+    _record_state(services, cid, 1, SIGNED, True, "audio/mpeg")
+    assert client.get(f"/api/v1/conversations/{cid}").json()["audio"]["availability"] == "unknown"
+    _record_state(services, cid, 1, replacement, True, "audio/mpeg")
+    assert client.get(f"/api/v1/conversations/{cid}").json()["audio"]["availability"] == "available"
 
 
 def test_range_requests(client_factory, tmp_path):
@@ -292,7 +452,9 @@ def test_safe_redirect_is_followed_and_loops_are_bounded(client_factory, tmp_pat
 def test_upstream_failures_never_prove_absence(client_factory, tmp_path):
     outcomes = [
         httpx.Response(403, text="SIGNED-VALUE expired"),
-        httpx.Response(200, text="<html>SIGNED-VALUE</html>", headers={"content-type": "text/html"}),
+        httpx.Response(
+            200, text="<html>SIGNED-VALUE</html>", headers={"content-type": "text/html"}
+        ),
         httpx.Response(500),
     ]
 

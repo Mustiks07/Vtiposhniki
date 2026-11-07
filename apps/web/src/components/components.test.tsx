@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import checklistFixture from '../../../../fixtures/contracts/checklist-custom.json';
 import conversationFixture from '../../../../fixtures/contracts/conversation-chat.json';
 import voiceUnverified from '../../../../fixtures/contracts/conversation-voice-unverified.json';
@@ -12,6 +13,7 @@ import scorePartial from '../../../../fixtures/contracts/score-partial.json';
 import type { ChecklistVersion, Conversation, Criterion, EvaluationView, ScoreSummary } from '../api/types';
 import { buildReplacement } from './Appeals';
 import { AudioPanel } from './AudioPanel';
+import { RunDetails } from './RunDetails';
 import { ContributionLine, EvidenceList, rawStepText } from './CriterionDetail';
 import { ScorePanel, TotalValue } from './ScorePanel';
 import { Transcript } from './Transcript';
@@ -184,4 +186,44 @@ test('audio: verified mapping offers seeking to the mapped message', () => {
   expect(onSeek).toHaveBeenCalledWith('m0002');
   const { container } = render(<AudioPanel conversation={verified} />);
   expect(container.querySelector('audio')?.getAttribute('src')).toBe(`${verified.audio.access_path}?revision=${verified.revision}`);
+});
+
+test('audio: an unknown recording with a proxy path loads on the first render and refreshes metadata', () => {
+  const onAvailable = vi.fn();
+  const unknown = voiceUnverified as Conversation;
+  const playable: Conversation = { ...unknown, audio: { ...unknown.audio,
+    access_path: `/api/v1/conversations/${unknown.id}/audio` } };
+  render(<AudioPanel conversation={playable} onAvailable={onAvailable} />);
+  const player = screen.getByTestId('audio-player');
+  expect(player.getAttribute('src')).toBe(`${playable.audio.access_path}?revision=${playable.revision}`);
+  expect(screen.queryByTestId('audio-unknown')).toBeNull();
+  fireEvent.loadedMetadata(player);
+  expect(onAvailable).toHaveBeenCalledOnce();
+  expect(screen.getByRole('status').textContent).toContain('готова');
+  expect(screen.getByTestId('audio-alignment').textContent).toContain('не подтверждена');
+});
+
+test('audio: a failed load has a retry action without a fabricated available state', () => {
+  const unknown = voiceUnverified as Conversation;
+  const playable: Conversation = { ...unknown, audio: { ...unknown.audio,
+    access_path: `/api/v1/conversations/${unknown.id}/audio` } };
+  const onAvailable = vi.fn();
+  render(<AudioPanel conversation={playable} onAvailable={onAvailable} />);
+  const player = screen.getByTestId('audio-player') as HTMLAudioElement;
+  const load = vi.spyOn(player, 'load').mockImplementation(() => undefined);
+  fireEvent.error(player);
+  expect(screen.getByRole('status').textContent).toContain('Не удалось');
+  expect(onAvailable).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Повторить загрузку записи' }));
+  expect(load).toHaveBeenCalledOnce();
+  expect(screen.getByRole('status').textContent).toContain('Загрузка');
+  load.mockRestore();
+});
+
+test('legacy evaluation without a job ledger never substitutes artifact costs for current spend', () => {
+  const legacy = { ...evaluationComplete } as EvaluationView;
+  delete legacy.run;
+  render(<MemoryRouter><RunDetails evaluation={legacy} /></MemoryRouter>);
+  expect(screen.getByTestId('total-cost').textContent).toContain('неизвестна');
+  expect(screen.getByText(/История текущего задания недоступна/)).toBeTruthy();
 });

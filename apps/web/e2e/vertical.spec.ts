@@ -205,7 +205,7 @@ test('E03: changed text under the same external_id becomes a new revision; old r
   await page.getByRole('link', { name: /карточка/ }).click();
   await expect(page.locator('.card-meta')).toContainText('revision разговора 2');
   await page.getByText('Детали запуска: версии, модели, стоимость').click();
-  await expect(page.getByTestId('reuse-provenance')).toContainText('Новый вызов оценщика');
+  await expect(page.getByTestId('reuse-provenance')).toContainText('Результат получен в этом запуске');
 });
 
 test('E14: list → card shows answer, weight, rationale and limitations per criterion', async ({ page, request }) => {

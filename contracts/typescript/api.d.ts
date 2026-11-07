@@ -986,6 +986,31 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /**
+         * EvaluationRun
+         * @description Current job ledger, separate from the immutable evaluation artifact.
+         */
+        EvaluationRun: {
+            /** Calls */
+            calls: components["schemas"]["CallRecord"][];
+            /** Cost */
+            cost: string | null;
+            /** Cost Complete */
+            cost_complete: boolean;
+            /**
+             * Currency
+             * @default USD
+             * @constant
+             */
+            currency: "USD";
+            job: components["schemas"]["Job"];
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
         /** EvaluationView */
         EvaluationView: {
             artifact: components["schemas"]["EvaluationArtifact"];
@@ -1017,6 +1042,7 @@ export interface components {
             reuse: components["schemas"]["ReuseProvenance"];
             /** Revision */
             revision: number;
+            run?: components["schemas"]["EvaluationRun"] | null;
             /**
              * Schema Version
              * @default 1.0

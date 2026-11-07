@@ -15,7 +15,7 @@ from cqa_contracts.models import (
 )
 from sqlalchemy import Connection
 
-from .audio import initial_audio_metadata
+from .audio import AUDIO_SOURCE_WARNING, initial_audio_metadata
 from .db import row, run, to_wire_time
 from .errors import validation_failure
 from .services import Services
@@ -102,9 +102,7 @@ def normalize_payload(services: Services, sources: list[SourceRecord]) -> list[N
             )
         elif known.conversation.content_hash != conversation.content_hash:
             details.append(
-                ErrorDetail(
-                    index=source.index, field="external_id", reason="conflicting_duplicate"
-                )
+                ErrorDetail(index=source.index, field="external_id", reason="conflicting_duplicate")
             )
         else:
             known.sources.append(source)
@@ -148,18 +146,43 @@ def _store(
         latest = int(existing["latest_revision"])
         current = row(
             conn,
-            "SELECT content_hash FROM conversation_revisions "
+            "SELECT content_hash, document_json, audio_source_url FROM conversation_revisions "
             "WHERE conversation_id = :id AND revision = :revision",
             {"id": conversation_id, "revision": latest},
         )
         if current is not None and current["content_hash"] == item.conversation.content_hash:
             if item.audio_url is not None:
-                # A rotated signed link is not new content; refresh only the private source.
+                document = Conversation.model_validate_json(current["document_json"])
+                if (
+                    current["audio_source_url"] != item.audio_url
+                    or document.audio.access_path is None
+                ):
+                    # A new/rotated source is not a text revision. Its availability and
+                    # alignment must be confirmed again; never retain the old recording's map.
+                    audio, audio_warnings = initial_audio_metadata(
+                        services.settings, item.audio_url
+                    )
+                    refreshed = document.model_copy(
+                        update={
+                            "audio": audio,
+                            "warnings": [
+                                *[w for w in document.warnings if w != AUDIO_SOURCE_WARNING],
+                                *audio_warnings,
+                            ],
+                        }
+                    )
+                    document = _with_identity(refreshed, conversation_id, latest)
                 run(
                     conn,
-                    "UPDATE conversation_revisions SET audio_source_url = :url "
+                    "UPDATE conversation_revisions SET audio_source_url = :url, "
+                    "document_json = :document "
                     "WHERE conversation_id = :id AND revision = :revision",
-                    {"url": item.audio_url, "id": conversation_id, "revision": latest},
+                    {
+                        "url": item.audio_url,
+                        "document": document.model_dump_json(),
+                        "id": conversation_id,
+                        "revision": latest,
+                    },
                 )
             return conversation_id, latest, "unchanged"
         revision, disposition = latest + 1, "new_revision"

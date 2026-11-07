@@ -23,6 +23,7 @@ from .services import Services
 from .settings import Settings
 
 PENDING_ACCESS_PATH = "/api/v1/conversations/pending/audio"
+AUDIO_SOURCE_WARNING = "Audio source not confirmed; evaluation uses the text only"
 MAX_REDIRECTS = 3
 SINGLE_RANGE = re.compile(r"^bytes=(\d+-\d*|-\d+)$")
 ALLOWED_PREFIXES = ("audio/", "application/octet-stream")
@@ -68,7 +69,7 @@ def initial_audio_metadata(
         )
     return (
         AudioMetadata(availability="unknown", alignment_status="unverified"),
-        ["Audio source not confirmed; evaluation uses the text only"],
+        [AUDIO_SOURCE_WARNING],
     )
 
 
@@ -99,20 +100,36 @@ def _check_target(url: str, services: Services) -> None:
 
 
 def _set_state(
-    conn: Connection, conversation_id: str, revision: int, availability: str, media_type: str | None
+    conn: Connection,
+    conversation_id: str,
+    revision: int,
+    source_url: str,
+    availability: str,
+    media_type: str | None,
 ) -> None:
     found = row(
         conn,
-        "SELECT document_json FROM conversation_revisions "
+        "SELECT document_json, audio_source_url FROM conversation_revisions "
         "WHERE conversation_id = :id AND revision = :revision",
         {"id": conversation_id, "revision": revision},
     )
-    if found is None:
+    if found is None or found["audio_source_url"] != source_url:
+        # A reimport may replace the source while an older request is in flight.
         return
     document = Conversation.model_validate_json(found["document_json"])
     audio = document.audio.model_copy(
         update={"availability": availability, "media_type": media_type}
     )
+    if availability == "available" and audio.access_path is None:
+        # Repair metadata left by an older import after a source was added later.
+        audio = audio.model_copy(
+            update={
+                "access_path": f"/api/v1/conversations/{conversation_id}/audio",
+                "alignment_status": "unverified",
+                "mapping": None,
+                "content_hash": None,
+            }
+        )
     if audio == document.audio:
         return
     run(
@@ -151,13 +168,19 @@ def _resolve_source(
 
 
 def _record_state(
-    services: Services, conversation_id: str, revision: int, available: bool, media_type: str | None
+    services: Services,
+    conversation_id: str,
+    revision: int,
+    source_url: str,
+    available: bool,
+    media_type: str | None,
 ) -> None:
     with services.db.write() as conn:
         _set_state(
             conn,
             conversation_id,
             revision,
+            source_url,
             "available" if available else "unknown",
             media_type if available else None,
         )
@@ -192,9 +215,7 @@ async def stream_audio(
         _resolve_source, services, conversation_id, revision
     )
     if range_header is not None and not SINGLE_RANGE.match(range_header.strip()):
-        raise ApiFailure(
-            make_error(ErrorCode.VALIDATION_ERROR, "Invalid byte range"), status=416
-        )
+        raise ApiFailure(make_error(ErrorCode.VALIDATION_ERROR, "Invalid byte range"), status=416)
     if source_url is None:
         raise _unavailable()
 
@@ -216,8 +237,10 @@ async def stream_audio(
             )
         media_type = upstream.headers.get("content-type", "").split(";")[0].strip().lower()
         declared = upstream.headers.get("content-length")
-        too_big = declared is not None and declared.isdigit() and (
-            int(declared) > settings.audio_max_bytes
+        too_big = (
+            declared is not None
+            and declared.isdigit()
+            and (int(declared) > settings.audio_max_bytes)
         )
         if (
             upstream.status_code not in (200, 206)
@@ -231,10 +254,12 @@ async def stream_audio(
         await client.aclose()
         if failure.error.code == ErrorCode.AUDIO_UNAVAILABLE:
             await run_in_threadpool(
-                _record_state, services, conversation_id, selected, False, None
+                _record_state, services, conversation_id, selected, source_url, False, None
             )
         raise
-    await run_in_threadpool(_record_state, services, conversation_id, selected, True, media_type)
+    await run_in_threadpool(
+        _record_state, services, conversation_id, selected, source_url, True, media_type
+    )
 
     assert upstream is not None
     opened = upstream

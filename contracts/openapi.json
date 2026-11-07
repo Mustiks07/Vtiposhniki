@@ -1660,6 +1660,58 @@
         "title": "EvaluationIdentity",
         "type": "object"
       },
+      "EvaluationRun": {
+        "additionalProperties": false,
+        "description": "Current job ledger, separate from the immutable evaluation artifact.",
+        "properties": {
+          "calls": {
+            "items": {
+              "$ref": "#/components/schemas/CallRecord"
+            },
+            "title": "Calls",
+            "type": "array"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "pattern": "^-?\\d+(\\.\\d+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "cost_complete": {
+            "title": "Cost Complete",
+            "type": "boolean"
+          },
+          "currency": {
+            "const": "USD",
+            "default": "USD",
+            "title": "Currency",
+            "type": "string"
+          },
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job",
+          "calls",
+          "cost",
+          "cost_complete"
+        ],
+        "title": "EvaluationRun",
+        "type": "object"
+      },
       "EvaluationView": {
         "additionalProperties": false,
         "properties": {
@@ -1739,6 +1791,16 @@
             "minimum": 1.0,
             "title": "Revision",
             "type": "integer"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "schema_version": {
             "const": "1.0",
@@ -4524,7 +4586,7 @@
   },
   "info": {
     "title": "CQA API",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "openapi": "3.1.0",
   "paths": {

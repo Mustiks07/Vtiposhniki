@@ -9,6 +9,7 @@ from cqa_contracts.models import (
     CriterionProposal,
     Decision,
     EvaluationArtifact,
+    EvaluationRun,
     EvaluationView,
     ReuseProvenance,
     ScoreSummary,
@@ -19,6 +20,7 @@ from sqlalchemy import Connection, RowMapping
 
 from .db import from_wire_time, row, rows
 from .errors import not_found
+from .jobs import _job_dto, call_records, job_cost
 from .registry import pinned_corpus
 from .services import Services
 
@@ -92,6 +94,12 @@ def view_from_row(conn: Connection, found: RowMapping) -> EvaluationView:
         )
     ]
     effective = PROPOSALS.validate_json(found["effective_proposals_json"])
+    job_row = row(conn, "SELECT * FROM jobs WHERE id = :id", {"id": found["job_id"]})
+    if job_row is None:
+        raise not_found("Evaluation job")
+    job = _job_dto(conn, job_row)
+    calls = call_records(conn, job.id)
+    cost, cost_complete = job_cost(calls, state=job.state)
     return EvaluationView(
         id=found["id"],
         conversation_id=found["conversation_id"],
@@ -103,6 +111,7 @@ def view_from_row(conn: Connection, found: RowMapping) -> EvaluationView:
         created_at=from_wire_time(found["created_at"]),
         revision=found["revision"],
         artifact=artifact,
+        run=EvaluationRun(job=job, calls=calls, cost=cost, cost_complete=cost_complete),
         automatic_score=ScoreSummary.model_validate_json(found["automatic_score_json"]),
         human_decisions=decisions,
         effective_proposals=effective,

@@ -32,6 +32,12 @@ def test_manifest_covers_all_fixture_json() -> None:
     }
 
 
+def test_legacy_evaluation_without_job_ledger_remains_readable() -> None:
+    payload = json.loads((FIXTURES / "evaluation-complete.json").read_text(encoding="utf-8"))
+    payload.pop("run")
+    assert models.EvaluationView.model_validate(payload).run is None
+
+
 def test_regeneration_is_deterministic(tmp_path: Path) -> None:
     subprocess.run(
         [sys.executable, str(ROOT / "scripts/build_fixtures.py"), "--output", str(tmp_path)],

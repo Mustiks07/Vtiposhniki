@@ -914,8 +914,12 @@ class JobQueue:
             return "retry_wait" if can_retry else "failed"
 
 
-def job_cost(records: Sequence[CallRecord]) -> tuple[Decimal | None, bool]:
+def job_cost(records: Sequence[CallRecord], *, state: str) -> tuple[Decimal | None, bool]:
     usage = summarize_usage(records)
+    if state not in ("succeeded", "failed", "cancelled"):
+        # No total while more calls may follow; no known spend before a call finishes.
+        completed = any(record.outcome != "started" for record in records)
+        return usage.cost if completed else None, False
     return usage.cost, usage.cost_complete
 
 

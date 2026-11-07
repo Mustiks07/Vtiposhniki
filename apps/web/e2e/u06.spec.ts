@@ -54,7 +54,7 @@ test('U06: definition changed in the UI → new version saved → fresh run appl
   await expect(page.getByTestId('criterion-item').filter({ hasText: 'Резюме разговора' })).toContainText('Нет');
   await expect(page.getByTestId('automatic-total')).toHaveText('30,00 из 100');
   await page.getByText('Детали запуска: версии, модели, стоимость').click();
-  await expect(page.getByTestId('reuse-provenance')).toContainText('Новый вызов оценщика (режим fresh)');
+  await expect(page.getByTestId('reuse-provenance')).toContainText('Результат получен в этом запуске (режим fresh)');
   await expect(page.getByTestId('run-details')).toContainText(v2);
 
   // The old card keeps the old version, definition and total.

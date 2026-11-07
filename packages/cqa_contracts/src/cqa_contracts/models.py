@@ -629,6 +629,16 @@ class ReuseProvenance(DTO):
     reuse_key: Hash
 
 
+class EvaluationRun(DTO):
+    """Current job ledger, separate from the immutable evaluation artifact."""
+
+    job: Job
+    calls: list[CallRecord]
+    cost: NonnegativeDecimal | None
+    cost_complete: bool
+    currency: Literal["USD"] = "USD"
+
+
 class EvaluationView(DTO):
     id: ID
     conversation_id: ID
@@ -646,6 +656,7 @@ class EvaluationView(DTO):
     effective_score: ScoreSummary
     reuse: ReuseProvenance
     source_fragments: list[SourceFragment]
+    run: EvaluationRun | None = None  # absent in legacy standalone fixtures/snapshots
 
 
 class SafeEvidenceRef(DTO):

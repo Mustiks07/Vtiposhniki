@@ -43,6 +43,23 @@ function server(scenario: keyof typeof ports) {
   };
 }
 
+function auditServer() {
+  const data = path.join(dataRoot, 'audit').replaceAll('\\', '/');
+  fs.mkdirSync(data, { recursive: true });
+  const port = ports.complete + 3;
+  const base = server('complete');
+  return {
+    ...base,
+    command: `"${python}" -m uvicorn audit_scenarios:create_audit_app --factory --app-dir "${path.join(apiRoot, 'apps/api/tests')}" --host 127.0.0.1 --port ${port}`,
+    url: `http://127.0.0.1:${port}/api/v1/health`,
+    env: {
+      ...base.env,
+      CQA_DATA_DIR: data,
+      CQA_DATABASE_URL: `sqlite:///${data}/test.sqlite3`,
+    },
+  };
+}
+
 export default defineConfig({
   testDir: './e2e',
   globalSetup: './e2e/global-setup.ts',
@@ -60,5 +77,5 @@ export default defineConfig({
     trace: 'off',
     screenshot: 'off',
   },
-  webServer: [server('complete'), server('partial'), server('failed')],
+  webServer: [server('complete'), server('partial'), server('failed'), auditServer()],
 });

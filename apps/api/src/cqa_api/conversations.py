@@ -22,6 +22,7 @@ from cqa_contracts.http_models import (
 from cqa_contracts.models import Conversation, ErrorDetail, FlagResult
 from sqlalchemy import Connection, RowMapping
 
+from .audio import AUDIO_SOURCE_WARNING, initial_audio_metadata
 from .checklists import pinned_checklist
 from .db import row, rows
 from .errors import not_found, validation_failure
@@ -134,7 +135,9 @@ def pinned_conversation(conn: Connection, conversation_id: str, revision: int) -
     return Conversation.model_validate_json(found["document_json"])
 
 
-def get_conversation(services: Services, conversation_id: str, revision: int | None) -> Conversation:
+def get_conversation(
+    services: Services, conversation_id: str, revision: int | None
+) -> Conversation:
     with services.db.read() as conn:
         if revision is None:
             latest = row(
@@ -145,7 +148,31 @@ def get_conversation(services: Services, conversation_id: str, revision: int | N
             if latest is None:
                 raise not_found("Conversation")
             revision = int(latest["latest_revision"])
-        return pinned_conversation(conn, conversation_id, revision)
+        conversation = pinned_conversation(conn, conversation_id, revision)
+        if conversation.audio.access_path is None:
+            source = row(
+                conn,
+                "SELECT audio_source_url FROM conversation_revisions "
+                "WHERE conversation_id = :id AND revision = :revision",
+                {"id": conversation_id, "revision": revision},
+            )
+            audio, _ = initial_audio_metadata(
+                services.settings, source["audio_source_url"] if source is not None else None
+            )
+            if audio.access_path is not None:
+                # Read compatibility for records imported before metadata refresh was fixed.
+                # Only offer the checked proxy route; do not claim the source is available.
+                conversation = conversation.model_copy(
+                    update={
+                        "audio": audio.model_copy(
+                            update={
+                                "access_path": f"/api/v1/conversations/{conversation_id}/audio",
+                            }
+                        ),
+                        "warnings": [w for w in conversation.warnings if w != AUDIO_SOURCE_WARNING],
+                    }
+                )
+        return conversation
 
 
 def list_conversations(

@@ -45,7 +45,6 @@ CSV_COLUMNS = (
     "cost_complete,currency"
 ).split(",")
 FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
-TERMINAL_STATES = ("succeeded", "failed", "cancelled")
 KNOWN_LIMITATIONS = {"test_evaluator", "review_unfinished", "cost_unknown"}
 
 
@@ -127,10 +126,7 @@ def _item(
     conn: Connection, scope: Scope, job_row: RowMapping, view: EvaluationView | None
 ) -> SafeExportItem:
     job = _job_dto(conn, job_row)
-    cost, complete = job_cost(call_records(conn, job.id))
-    if job.state not in TERMINAL_STATES:
-        complete = False  # more calls may follow
-        cost = cost if job.progress.completed_calls else None
+    cost, complete = job_cost(call_records(conn, job.id), state=job.state)
 
     score: ScoreSummary | None = None
     proposals: list[CriterionProposal] = []

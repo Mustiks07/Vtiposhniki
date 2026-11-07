@@ -2106,6 +2106,58 @@
       "title": "EvaluationIdentity",
       "type": "object"
     },
+    "EvaluationRun": {
+      "additionalProperties": false,
+      "description": "Current job ledger, separate from the immutable evaluation artifact.",
+      "properties": {
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/CallRecord"
+          },
+          "title": "Calls",
+          "type": "array"
+        },
+        "cost": {
+          "anyOf": [
+            {
+              "pattern": "^-?\\d+(\\.\\d+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cost"
+        },
+        "cost_complete": {
+          "title": "Cost Complete",
+          "type": "boolean"
+        },
+        "currency": {
+          "const": "USD",
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "job": {
+          "$ref": "#/$defs/Job"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "job",
+        "calls",
+        "cost",
+        "cost_complete"
+      ],
+      "title": "EvaluationRun",
+      "type": "object"
+    },
     "EvaluationView": {
       "additionalProperties": false,
       "properties": {
@@ -2185,6 +2237,17 @@
           "minimum": 1,
           "title": "Revision",
           "type": "integer"
+        },
+        "run": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvaluationRun"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "schema_version": {
           "const": "1.0",
@@ -5855,6 +5918,9 @@
     "EvaluationIdentity": {
       "$ref": "#/$defs/EvaluationIdentity"
     },
+    "EvaluationRun": {
+      "$ref": "#/$defs/EvaluationRun"
+    },
     "EvaluationView": {
       "$ref": "#/$defs/EvaluationView"
     },
@@ -6048,6 +6114,7 @@
     "EvaluationArtifact",
     "EvaluationBatch",
     "EvaluationIdentity",
+    "EvaluationRun",
     "EvaluationView",
     "EvaluatorProfile",
     "Evidence",

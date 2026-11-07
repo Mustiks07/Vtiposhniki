@@ -78,7 +78,8 @@ export function ConversationPage() {
           {revision !== null && selected.isPending ? <Loading /> : null}
           {conversation ? (
             <>
-              <AudioPanel ref={audioRef} conversation={conversation} />
+              <AudioPanel key={`${conversation.id}:${conversation.revision}`} ref={audioRef} conversation={conversation}
+                onAvailable={() => { void (revision === null ? latest : selected).refetch(); }} />
               <Transcript conversation={conversation} highlighted={[]} focusToken={0} canSeek={false} />
             </>
           ) : null}

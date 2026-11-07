@@ -312,7 +312,8 @@ export function EvaluationPage() {
 
       <div className={`card-layout view-${view}`}>
         <div className="card-transcript" id="transcript-pane">
-          {conversation.data ? <AudioPanel ref={audioRef} conversation={conversation.data} /> : null}
+          {conversation.data ? <AudioPanel key={`${conversation.data.id}:${conversation.data.revision}`}
+            ref={audioRef} conversation={conversation.data} onAvailable={() => { void conversation.refetch(); }} /> : null}
           {conversation.isPending ? <Loading label="Загрузка разговора…" /> : null}
           {conversation.isError ? (
             <ErrorPanel error={conversation.error} onRetry={() => conversation.refetch()} />

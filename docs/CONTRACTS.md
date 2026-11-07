@@ -1,5 +1,16 @@
 # Shared implementation decisions
 
+HTTP contract 1.3.0 adds optional `EvaluationView.run: EvaluationRun | null`.
+The live API fills it from the current job ledger: `job` (including every attempt),
+`calls`, server-calculated `cost`, `cost_complete` and `currency`. It is separate
+from immutable `artifact.calls`, which describe the artifact's producing attempt
+and remain unchanged when reused. A reused job with no calls costs exactly zero;
+an unknown tariff stays unknown. Pending jobs never claim a complete cost. The
+card and SafeExport share the same job-cost calculation. Legacy standalone
+fixtures without a ledger parse with `run=null`; clients must show unknown spend,
+not substitute artifact costs. No routes, DB migration, scoring or submission
+format changed. Contract 1.2.0 introduced provider `xerosharc`.
+
 HTTP contract 1.1.0 adds the scoped flag query and optional `flag_summary` documented
 in [FLAG_FILTER_CONTRACT.md](FLAG_FILTER_CONTRACT.md). Domain DTO schema_version stays
 1.0. The original decisions below continue to apply. The organizer/user clarification
