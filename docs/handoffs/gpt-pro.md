@@ -1,4 +1,4 @@
-# Интеграция и контракт фильтра — 2026-11-07
+# Интеграция поиска флагов и приёмка — 2026-11-07
 
 Промежуточная поставка, не финальный release в main. Исторический отчёт foundation:
 [foundation.md](foundation.md). Foundation `e526aef85ad9a368b7389488514f0d53ed531ef0`
@@ -10,9 +10,16 @@
 
 | Роль | Ветка | Проверенный head |
 |---|---|---|
-| A | claude/domain-ai | 36adbdb14ca65dd04dcc72761ad95c151e50086a |
-| B | claude/api-jobs | 923bbd83121584615cc5b459521d16ceccd99b5b |
-| C | claude/web-e2e | 8dfa5b3cb157cb8397a7238011e5c1bfb2fe03e4 |
+| A | claude/domain-ai | edc7c15f35009c373a89f2e5f18cdbd242ea7975 |
+| B | claude/api-jobs | 392a7130405ec819c93125ed2bc4b22f2a7dcb44 |
+| C | claude/web-e2e | f16957f1bb79f59ba1684473bb06136a442aadbd |
+
+Все три новые поставки происходят от общего
+`b9e69c94c373b1192b8b7694fa71049d4c3f48ef` (`integration-v1.1.1`).
+Совместная поставка поиска закрепляется тегом `integration-flags-v1`:
+`git rev-parse integration-flags-v1`. Публичные DTO, generated-файлы и lockfiles
+при этих поставках не менялись. Прежние поставки A 36adbdb, B 923bbd8 и C 8dfa5b3
+сохранены в истории вместе с исходным контрактом и исправлением часов.
 
 Три прежних замечания A, пять B и три C проверены и закрыты. Новые regression tests
 C дополнительно проверены на старом e67d4b1 (падают) и 8dfa5b3 (проходят): пагинация
@@ -23,9 +30,9 @@ C дополнительно проверены на старом e67d4b1 (па�
 [Дополнение пользователя](../specs/05_ORGANIZER_ADDENDUM.md) опубликовано дословно.
 Точный [HTTP-контракт фильтра](../FLAG_FILTER_CONTRACT.md) зафиксирован интегратором.
 Тег `contracts-v1.1.0` сохраняет исходный контрактный SHA
-`48f806fedb739d8d437e7ec1d1879e15c52d4a8d`. Продолжать ветки от тега
-`integration-v1.1.1`: `git rev-parse integration-v1.1.1` (включает исправление часов,
-описанное ниже). Теги не переписывались; это промежуточная поставка.
+`48f806fedb739d8d437e7ec1d1879e15c52d4a8d`. Тег `integration-v1.1.1` добавляет
+исправление часов, описанное ниже; новые поставки объединены поверх него.
+Теги не переписывались; это промежуточная интеграционная поставка.
 
 - HTTP 1.1.0, DTO schema_version 1.0, 23 операции; расширен listConversations.
 - checklist_version_id + один flag_criterion_id; flag_status; automatic/effective.
@@ -33,16 +40,39 @@ C дополнительно проверены на старом e67d4b1 (па�
 - ConversationFlagQuery/Summary используют существующий FlagResult; без новых
   вычислителей флагов, типов rationale/evidence или арифметики в API/web.
 - Pydantic, generated JSON Schema/OpenAPI/TypeScript и 6 новых synthetic fixtures.
-- Ограниченные изменения B: совпадающая сигнатура маршрута, общая API_VERSION,
-  проверка query и временный явный 501 вместо игнорирования нового фильтра.
+- API B: выбор newest job exact version по current revision, чтение существующих
+  domain flags, фильтр до COUNT/LIMIT/OFFSET; count/page в одной read transaction.
+  Общая валидация query сохранена, временный guard 501 удалён.
+- Web C: выбор версии/критерия/status/scope, серверные total и пагинация,
+  переход к существующей карточке и доказательствам; U01–U04 и новый U06.
+- A: 11 новых проверок tri-state, partial, произвольного ID и immutable automatic;
+  исходная рубрика, арифметика и prompt не менялись.
 - Обновлены README, .env.example, CI-названия и итог aggregate check.
 - python-dotenv 1.2.4 закреплён как прямая зависимость API (ранее был транзитивным);
   версии установленного набора не обновлялись, lock/sync и импорты проверены.
 
-**Выборка пока не реализована:** B заменяет guard501 запросом до пагинации; C добавляет
-UI и U01–U04. Старые сценарии работают. Контракт/fixtures не являются прохождением U01–U04.
+Выборка реализована и прошла совместные проверки. Ограниченные интеграционные правки
+в web: удалён keepPreviousData для списка разговоров, чтобы новые условия/страница
+не подписывали старые строки и total. Два теста с задержанным ответом воспроизвели
+ошибку до правки и прошли после неё. В flags.spec.ts click + ожидание checked/scope
+заменяют мгновенную проверку radio при асинхронной URL-навигации. U01 теперь сначала
+дожидается 25 строк первой страницы, затем проверяет отсутствие искомого разговора.
 
 ## Проверки
+
+Текущий совместный код: **557 Python-тестов**, импорты, reproducible generation,
+51 fixture, Ruff, mypy (56 files), **32 web unit-теста**, TypeScript/build и
+**34/34 браузерных сценария** без retries. Команды: `uv run python scripts/check.py`,
+`npm test`, `npm run build`, `npm run e2e` (из корня).
+Первый общий прогон завершился exit1: 32/34 E2E прошли, два упали на немедленном
+radio.check(), хотя сохранённый DOM уже показывал верный effective результат.
+После описанных web-правок повторно прошли все web unit/build/E2E. Python-код не
+менялся после успешных 557 тестов, повторный локальный Python-прогон не потребовался.
+Локальные журналы: `.tmp/flag-integration-check.log` (первый общий прогон),
+`.tmp/flag-stale-before.log` (воспроизведение дефекта), `.tmp/flag-web-final.log`
+(успешный полный web-прогон). CI точного опубликованного SHA проверяется отдельно.
+
+Предыдущая приёмка общего контракта (исторические результаты):
 
 Windows, Python 3.13.5, uv 0.13.7, Node 26.1.0, npm 11.13.0. В новой рабочей копии
 прошли `uv sync --locked --all-packages --dev` и `npm ci`.
@@ -75,18 +105,28 @@ AI-анализ и не измерение близости к Ground Truth.
 
 | Проверка | Фактическое покрытие / остаток |
 |---|---|
-| U01 | Не выполнена: server flag search, total, pagination — B/C |
-| U02 | Partial и tri-state домена покрыты; поиск true/false/unknown — B/C |
-| U03 | Evidence/appeals/immutable automatic покрыты; search scopes — B/C |
-| U04 | Произвольные критерии и повторные оценки покрыты; flag search без дублей — B/C |
+| U01 | Пройдено: 30 разговоров, единственный detected за первой страницей, total и две страницы; дополнительные API-тесты на 32 разговорах и snapshot |
+| U02 | Пройдено: true/false при partial, N/A/undetermined/null/missing flag и состояния jobs; API и UI разделяют unknown и negative |
+| U03 | Пройдено: automatic/effective после human decision, поиск по обоим scope, rationale и переход к исходным сообщениям |
+| U04 | Пройдено: произвольный флаг из UI, re-evaluation/new revision без дублей; API exact version/latest job/across profiles и отсутствие старого fallback |
 | U05 | E16–E18: подача, решение, refresh, история; API restart persistence |
-| U06 | E08–E11 и regressions: criterion/mapping/weight/reuse/версии; добавить definition edit → fresh run |
+| U06 | Пройдено: UI меняет definition/вес и добавляет критерий → новая версия → fresh run, итог 30 вместо 100; старая карточка сохраняет правила/итог |
 | U07 | Пройден настоящий fresh production smoke на новом выдуманном тексте: Gemini 3.5 Flash-Lite, 8/8 AI proposals, valid evidence, persist/restart; не проверка accuracy |
 | U08 | Не выполнена: нужен участник, который не писал приложение |
 | U09 | E04/E05/E07: refresh, restart, retry; API lease/cancel/persistence tests |
 | U10 | Частично: запуск и generation на этой Windows-машине подтверждены; целевой demo-ноутбук/запас квот не подтверждены; provenance покрыт E11 |
 
 ## Настоящий AI smoke
+
+После объединения фильтра проведено отдельное чтение уже сохранённой production
+оценки: API проверил все три состояния в обоих scope, UI нашёл запись как
+not_detected и открыл правильный флаг/обоснование. Дополнительно прошли 8 rationales,
+переход к evidence с фокусом, refresh и явная ошибка старого failed job.
+Worker отключён, новых provider calls и записей jobs/evaluations нет, сервер остановлен.
+Это проверка сохранённого настоящего результата, не новый fresh AI-прогон. Первое
+чтение evidence в приватном smoke опередило URL-навигацию; добавлено ожидание заголовка
+выбранного критерия, повторный smoke прошёл полностью. Оба локальных отчёта сохранены
+в ignored data/private/live, исходные тексты/ответы не опубликованы.
 
 Ключи предоставлены пользователем и записаны только в ignored .env. Один новый
 выдуманный разговор прошёл реальный production API/worker с исходной рубрикой,
@@ -110,23 +150,13 @@ Gemini 2.5 Flash-Lite 404 (дважды, второй запрос с безоп
 показывают ошибку и отсутствие итога. Worker был отключён; число calls/jobs/evaluations
 не менялось. API-процесс остановлен, скриншоты/реальные данные не публиковались.
 
-## Следующие поставки
+## Дальнейшая приёмка
 
-A: merge общего SHA, сохранить рубрику/flags/N/A и prompt cqa-eval-v2; помощь по
-реальным содержательным ошибкам после smoke. Расширение ансамблей не приоритет.
-
-B: merge общего SHA; реализовать docs/FLAG_FILTER_CONTRACT.md в apps/api. Заменить
-guard и тесты 501 на U01–U04. До COUNT/LIMIT выбрать current revision и newest job
-exact version. Проверить pending/failed поверх старого true, новую revision,
-arbitrary flag, scope после appeal, пустой результат и total.
-
-C: merge общего SHA; версия/флаговый criterion/scope/status в Диалогах, серверный total
-и объяснение через existing evaluation card. Не фильтровать загруженную страницу.
-U01–U04 проводить после реализации B через настоящий backend. Добавить U06 definition
-edit → fresh run, сохранив C4 regression tests.
-
-Shared DTO самостоятельно не менять. Публиковать свою ветку и передавать SHA;
-интегратор повторяет совместную приёмку. main обновляется после приёмки, не сейчас.
+Поставки A/B/C для этого расширения приняты, новых заданий на реализацию фильтра нет.
+Для дальнейшей работы сначала merge `integration-flags-v1` в свою продолжающуюся
+ветку; чужие ветки не переписывать. Shared DTO самостоятельно не менять.
+До финального release остаются U08 с независимым участником и U10 на целевой
+демонстрационной машине с подтверждением действующих квот. main не обновлялся.
 
 ## Открытые ограничения
 

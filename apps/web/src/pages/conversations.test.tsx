@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, expect, test, vi } from 'vitest';
 import checklistFixture from '../../../../fixtures/contracts/checklist-custom.json';
@@ -7,11 +7,15 @@ import detected from '../../../../fixtures/contracts/conversation-flag-detected-
 import failed from '../../../../fixtures/contracts/conversation-flag-failed.json';
 import negative from '../../../../fixtures/contracts/conversation-flag-negative.json';
 import pending from '../../../../fixtures/contracts/conversation-flag-pending.json';
-import type { ChecklistVersion, ConversationSummary } from '../api/types';
+import { api } from '../api/client';
+import type { ChecklistVersion, ConversationPage, ConversationSummary } from '../api/types';
 import { parseConversationQuery, withFilter } from '../lib/conversationQuery';
 import { ConversationsPage } from './ConversationsPage';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 // The fixture checklist has an arbitrary flag criterion titled "Synthetic synthetic-flag".
 const version = { ...(checklistFixture as ChecklistVersion) };
@@ -20,7 +24,7 @@ function json(body: unknown) {
   return { ok: true, status: 200, json: async () => body } as Response;
 }
 
-function rows(items: ConversationSummary[], total: number) {
+function rows(items: ConversationSummary[], total: number): ConversationPage {
   return { schema_version: '1.0', items, total, limit: 25, offset: 0 };
 }
 
@@ -135,5 +139,31 @@ test('server error for the flag query is shown, never replaced by a local filter
     </QueryClientProvider>,
   );
   expect((await screen.findByRole('alert')).textContent).toContain('Функция ещё не реализована на сервере');
+  expect(screen.queryByTestId('conversation-row')).toBeNull();
+});
+
+test.each(['scope', 'page'] as const)('changing %s hides previous rows and total while the new server result is pending', async (change) => {
+  let respond!: (value: ConversationPage) => void;
+  const response = new Promise<ConversationPage>((resolve) => { respond = resolve; });
+  const list = vi.spyOn(api, 'listConversations')
+    .mockResolvedValueOnce(rows([detected as ConversationSummary], 31))
+    .mockReturnValueOnce(response);
+  renderAt(`/conversations?checklist=${version.checklist_id}&checklist_version_id=${version.version_id}&flag_criterion_id=synthetic-flag`, [], 0);
+  await screen.findByTestId('conversation-row');
+  expect(screen.getByTestId('search-scope').textContent).toContain('Найдено: 31');
+
+  fireEvent.click(change === 'scope'
+    ? screen.getByRole('radio', { name: /effective/ })
+    : screen.getByRole('button', { name: 'Вперёд →' }));
+  await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+  expect(list.mock.calls[1][0]).toMatchObject(change === 'scope' ? { flag_scope: 'effective', offset: 0 } : { offset: 25 });
+  // A changed heading or page range must never label rows from the previous query.
+  expect(screen.queryByTestId('conversation-row')).toBeNull();
+  expect(screen.getByTestId('search-scope').textContent).not.toContain('Найдено:');
+  expect(screen.queryByTestId('pager-range')).toBeNull();
+  expect(screen.getByRole('status').textContent).toContain('Загрузка');
+
+  await act(async () => respond({ ...rows([], 0), offset: change === 'page' ? 25 : 0 }));
+  await waitFor(() => expect(screen.getByTestId('search-scope').textContent).toContain('Найдено: 0'));
   expect(screen.queryByTestId('conversation-row')).toBeNull();
 });

@@ -10,13 +10,21 @@ function flag(id: string, title: string, firstIsViolation: boolean) {
   return criterion(id, { response_type: 'flag', title, weight: '0', choices: firstIsViolation ? [yes, no] : [no, yes], flag_when_choice_ids: ['viol'] });
 }
 
-/** Fails loudly while the API still answers the flag query with the temporary 501 guard. */
+/** Require the real server implementation before asserting the search behaviour. */
 async function requireFlagFilter(request: APIRequestContext, base: string, versionId: string, flagId: string) {
   const res = await request.get(`${base}/api/v1/conversations?checklist_version_id=${versionId}&flag_criterion_id=${flagId}&limit=1`);
   expect(
     res.status(),
-    `Flag search is not implemented by the API (HTTP ${res.status()}). U01–U04 need Claude B's delivery of contract 1.1.0.`,
+    `Flag search must answer contract 1.1.0 (HTTP ${res.status()}).`,
   ).toBe(200);
+}
+
+async function selectScope(page: Page, scope: 'automatic' | 'effective') {
+  const radio = page.getByRole('radio', { name: new RegExp(`^${scope} —`) });
+  // URL navigation commits asynchronously; check() can assert before React's commit.
+  await radio.click();
+  await expect(radio).toBeChecked();
+  await expect(page.getByTestId('search-scope')).toContainText(`результат ${scope}`);
 }
 
 async function search(page: Page, opts: { checklistTitle: string; versionId: string; flagTitle: string; status?: string; scope?: 'automatic' | 'effective' }) {
@@ -25,7 +33,7 @@ async function search(page: Page, opts: { checklistTitle: string; versionId: str
   await page.getByLabel('Версия для поиска').selectOption(opts.versionId);
   await page.getByLabel('Флаговый критерий').selectOption({ label: opts.flagTitle });
   if (opts.status) await page.getByLabel('Состояние флага').selectOption({ label: opts.status });
-  if (opts.scope === 'effective') await page.getByRole('radio', { name: /^effective — с учётом решений/ }).check();
+  if (opts.scope === 'effective') await selectScope(page, 'effective');
   await expect(page.getByTestId('search-scope')).toContainText(`флаг «${opts.flagTitle}»`);
 }
 
@@ -48,6 +56,7 @@ test('U01+U03: the only detected record beyond the first page is found; total an
 
   // Unfiltered list: the target is not on the first page.
   await page.goto('/#/conversations');
+  await expect(page.getByTestId('conversation-row')).toHaveCount(25);
   await expect(page.getByRole('link', { name: records[0].external_id, exact: true })).toHaveCount(0);
 
   // Automatic: nothing detected (the AI said «Нет» everywhere).
@@ -56,7 +65,7 @@ test('U01+U03: the only detected record beyond the first page is found; total an
   await expect(page.getByTestId('conversation-row')).toHaveCount(0);
 
   // Effective: exactly the target, total 1.
-  await page.getByRole('radio', { name: /^effective — с учётом решений/ }).check();
+  await selectScope(page, 'effective');
   await expect(page.getByTestId('search-scope')).toContainText('Найдено: 1');
   const row = page.getByTestId('conversation-row');
   await expect(row).toHaveCount(1);
@@ -120,7 +129,7 @@ test.describe('partial scenario server', () => {
     await expect(page.getByTestId('flag-cell').filter({ hasText: 'не обнаружен' })).toHaveCount(0);
 
     // Automatic scope: the AI left the flag undetermined → the record is unknown, not detected.
-    await page.getByRole('radio', { name: /^automatic — исходный/ }).check();
+    await selectScope(page, 'automatic');
     await page.getByLabel('Состояние флага').selectOption({ label: 'обнаружен' });
     await expect(page.getByTestId('search-scope')).toContainText('Найдено: 0');
   });

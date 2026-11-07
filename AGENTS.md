@@ -2,8 +2,9 @@
 
 Read docs/specs/00_MASTER_SPEC.md and your role document before implementation.
 Read docs/specs/05_ORGANIZER_ADDENDUM.md and docs/FLAG_FILTER_CONTRACT.md for the
-current extension. The integration branch contains A/B/C deliveries; the new flag
-query remains assigned to B/C until their implementation and U01-U04 acceptance.
+current extension. The integration branch contains the A/B/C flag-search deliveries
+and joint U01-U06 automated acceptance. Read docs/handoffs/gpt-pro.md for the
+verified heads, integration fixes and remaining human/live acceptance limits.
 
 - A: packages/cqa_domain, packages/cqa_ai, fixtures/evaluation, docs/handoffs/claude-domain-ai.md.
 - B: apps/api, docs/handoffs/claude-b.md.

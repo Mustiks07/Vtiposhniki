@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useId, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
@@ -31,7 +31,7 @@ export function ConversationsPage() {
   const list = useQuery({
     queryKey: ['conversations', query],
     queryFn: ({ signal }) => api.listConversations(query, signal),
-    placeholderData: keepPreviousData,
+    // A new scope/filter/page must not display the previous query's rows or total.
   });
 
   function setFilter(key: (typeof FILTER_KEYS)[number], value: string | null, extra?: Record<string, string>) {
