@@ -18,6 +18,7 @@ from conftest import (  # noqa: E402
     import_records,
     make_settings,
 )
+from cqa_ai import PREPROCESSING_VERSION, PROMPT_VERSION  # noqa: E402
 from cqa_ai.evaluator import Evaluator  # noqa: E402
 from cqa_ai.testing import ScriptedTransport, answer_all, ok  # noqa: E402
 from cqa_ai.transport import ProviderFailure  # noqa: E402
@@ -43,7 +44,14 @@ class Scenario:
     def run(self):
         app = create_app(self.settings, evaluator=Evaluator({"test": self.transport}))
         with TestClient(app) as client:
-            add_profile(client, **self.limits)
+            add_profile(
+                client,
+                fields={
+                    "prompt_version": PROMPT_VERSION,
+                    "preprocessing_version": PREPROCESSING_VERSION,
+                },
+                **self.limits,
+            )
             imported = import_records(client, chat_record())["items"][0]
             conversation = client.get(
                 f"/api/v1/conversations/{imported['conversation_id']}"

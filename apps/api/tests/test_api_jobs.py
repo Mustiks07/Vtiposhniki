@@ -687,6 +687,15 @@ def test_duplicate_started_and_finished_are_idempotent(client):
     assert another.consumed_calls == 2
 
 
+def test_review_call_is_visible_as_an_observed_stage(client):
+    job_id, queue, claim, budget = claimed(client)
+    assert read_job(client, job_id).progress.stage == "evaluating"
+    event = call_event(budget)
+    review = event.record.model_copy(update={"purpose": "review"})
+    queue.record_call_started(claim, event.model_copy(update={"record": review}))
+    assert read_job(client, job_id).progress.stage == "reviewing"
+
+
 def test_finished_without_started_and_foreign_identity_are_refused(client):
     _, queue, claim, budget = claimed(client)
     with pytest.raises(ObserverPersistenceError):

@@ -134,11 +134,12 @@ class MutableClock:
         self.now += timedelta(seconds=seconds)
 
 
-def add_profile(client, *, version="v2", **retries):
+def add_profile(client, *, version="v2", fields=None, **retries):
     """Register a stricter synthetic profile version; it becomes the latest for the ID."""
     base = synthetic_profile()
     updated = base.model_copy(
         update={
+            **(fields or {}),
             "version": version,
             "retries": type(base.retries).model_validate(
                 {**base.retries.model_dump(), **retries}

@@ -698,6 +698,12 @@ class JobQueue:
                         "record": event.record.model_dump_json(),
                     },
                 )
+                if event.record.purpose == "review":
+                    run(
+                        conn,
+                        "UPDATE jobs SET stage = 'reviewing' WHERE id = :id",
+                        {"id": claim.job_id},
+                    )
             budget = _budget(job, call_records(conn, claim.job_id))
             assert budget is not None
             return budget
