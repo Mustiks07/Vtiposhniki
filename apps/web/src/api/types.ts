@@ -1,5 +1,5 @@
 // Aliases over the generated contract. Never redefine DTO shapes here.
-import type { components } from '../../../../contracts/typescript/api';
+import type { components, paths } from '../../../../contracts/typescript/api';
 
 type S = components['schemas'];
 
@@ -48,6 +48,12 @@ export type EvaluationPage = S['Page_EvaluationView_'];
 export type AppealPage = S['Page_Appeal_'];
 export type ProfilePage = S['Page_ProfileSummary_'];
 export type VersionList = S['VersionList'];
+
+export type ConversationFlagSummary = S['ConversationFlagSummary'];
+export type FlagStatus = ConversationFlagSummary['status'];
+export type FlagScope = ConversationFlagSummary['scope'];
+/** Query of listConversations, straight from the generated operation contract (1.1.0). */
+export type ConversationQuery = NonNullable<paths['/api/v1/conversations']['get']['parameters']['query']>;
 
 export type Language = Conversation['language'];
 export type Channel = Conversation['channel'];

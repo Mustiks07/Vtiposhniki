@@ -168,6 +168,14 @@ export function EvaluationPage() {
         {conversation.data ? `${channelLabel[conversation.data.channel]} · ${conversation.data.language} · ` : ''}
         revision разговора {ev.conversation_revision} · {serverTime(ev.created_at)}
       </p>
+      {params.get('scope') === 'automatic' || params.get('scope') === 'effective' ? (
+        <p className="notice" data-testid="opened-scope">
+          Открыто из поиска по флагу: результат <strong>{params.get('scope')}</strong>
+          {params.get('scope') === 'effective'
+            ? ' — с учётом решений проверяющего (ниже показан и исходный ответ оценщика).'
+            : ' — исходный ответ оценщика.'}
+        </p>
+      ) : null}
       {ev.artifact.evaluator_mode === 'test' ? (
         <p className="notice notice-warn" data-testid="test-banner">
           Тестовый оценщик: синтетический результат без семантической оценки. Не является AI-оценкой разговора.

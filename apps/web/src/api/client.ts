@@ -10,6 +10,7 @@ import type {
   ChecklistVersion,
   Conversation,
   ConversationPage,
+  ConversationQuery,
   CreateAppeal,
   CreateBatch,
   CreateChecklistVersion,
@@ -114,13 +115,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
 const enc = encodeURIComponent;
 
-export interface ConversationFilters {
-  limit?: number;
-  offset?: number;
-  language?: string | null;
-  channel?: string | null;
-  status?: string | null;
-}
+export type ConversationFilters = ConversationQuery;
 
 export const api = {
   health: (signal?: AbortSignal) => request<Health>('/health', { signal }),
