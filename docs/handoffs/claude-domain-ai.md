@@ -1,13 +1,30 @@
-# Claude A handoff — domain + AI (2026-11-07)
+# Claude A handoff — domain + AI (2026-11-07, updated after integrator review)
 
 - Foundation SHA: `e526aef85ad9a368b7389488514f0d53ed531ef0` (verified with `git rev-parse HEAD` before work).
 - Branch: `claude/domain-ai` (the assigned name; no remapping). Not merged into `main`.
 - Stages: A0–A5 delivered as offline-verified code. Real provider runs: **not performed**.
 - Commits: A1 `1bf14b8756d2eb7d89132ad17c6e75fa79f2a113` (first verified checkpoint for B);
-  A2/A3 `a8e506c`; A4/A5 = the commit containing this file (a commit cannot embed its
-  own SHA; the delivery report gives it, or `git log -1 -- docs/handoffs/claude-domain-ai.md`).
+  A2/A3 `a8e506c`; A4/A5 `93c7738d49856f2d478f4af652d72f4a420a58e5` (first delivery);
+  integrator fixes `0edc43e`, `2304a56`, `283758d` (below). The handoff update itself is
+  the next commit; a commit cannot embed its own SHA (`git log -1 -- docs/handoffs/claude-domain-ai.md`).
 - Changed paths: only `packages/cqa_domain/**`, `packages/cqa_ai/**`, `fixtures/evaluation/**`
   and this file. No shared contract, manifest, lockfile, CI, README or foreign handoff edited.
+
+## Integrator review of 93c7738 — fixes
+
+All three reproduced defects are fixed in separate commits on top of `93c7738`,
+each with regression tests (verified to fail on the previous code where applicable):
+
+| Defect | Fix commit | Change | Regressions |
+|---|---|---|---|
+| Decimal depended on the caller's context (`normalize()` rounded long values; rubric fractions p15→0.8, p5→0.2 at prec=1) | `0edc43e34e110f97ba830d2ce368f7f912479d8a` | `canonical_decimal` works on the digit tuple (exact, no exponent form, no context); №4/№6 fractions built exactly from raw/max; scoring quantum and pricing use private contexts | prec 1/2/3/5/28/100; 30+ digit values stay distinct; rubric, hashes and foundation vectors identical under prec=1; MASTER 85.38 under prec=1; long fraction not rounded in contributions |
+| Known conversation date missing from the evaluator request; retrieval ignored effective dates | `2304a567cbf6b6a1bd345b66c0cbc26f585c30b8` | Prompt **`cqa-eval-v2`** passes `occurred_at` as stored (null stays null, never assumed); retrieval drops source versions not in effect on a known date; offered sources carry `date_applicability` (`in_effect` / `conversation_date_unknown` / `effective_period_unknown`); limitations `sources_not_in_effect_excluded`, `source_date_applicability_unknown` | identical dialogs dated 2020 vs 2026 around a source effective from 2025-01-01 (excluded before, offered after, prompts differ); `effective_until` boundary; unknown date; undated source |
+| A call could start after the deadline when `call_started` was slow | `283758d4ecf768454835aec378c7e9b369af4024` | After the awaited `call_started`, only the deadline is re-checked (the reserved call is not counted again) and the per-call timeout is recomputed right before sending; if expired, the reserved call is finished as `timeout` with zero usage/cost (nothing sent) and `EvaluationTimeout` is raised; in review this skips the review and keeps the valid initial | slow observer past deadline (fake clock and real 1 s/2 s reproduction): no transport call, started+finished recorded, consumed_calls = 1; recomputed timeout ≈ 1 s; last reserved call not double-counted; slow reviewer start |
+
+Profiles must now use `prompt_version="cqa-eval-v2"`; `cqa-eval-v1` is rejected
+because its request no longer matches the code (no silent reuse across versions).
+Date semantics: the conversation day is `occurred_at.date()` in its own UTC offset;
+`effective_from`/`effective_until` are inclusive; `published_at` is informational only.
 
 ## A0 — foundation review findings
 
@@ -46,7 +63,8 @@ fallbacks → `status="failed"` artifact with safe `error` (retryable only for
 exhausted transient transport failures).
 
 Stable limitation codes in artifacts: `test_evaluator`, `audio_not_analyzed`,
-`knowledge_sources_empty`, `cost_unknown`, `review_unfinished`, `fallback_used`,
+`knowledge_sources_empty`, `sources_not_in_effect_excluded`,
+`source_date_applicability_unknown`, `cost_unknown`, `review_unfinished`, `fallback_used`,
 `fallback_after_<kind>`, `provider_<kind>`, `invalid_output_<diagnostic>`,
 `context_limit_exceeded`. Proposal limitations come from
 `cqa_domain.PROPOSAL_LIMITATION_CODES`; review markers from `REVIEW_REASON_CODES`.
@@ -76,14 +94,14 @@ Stable limitation codes in artifacts: `test_evaluator`, `audio_not_analyzed`,
 | Command | Result |
 |---|---|
 | `uv sync --locked --all-packages --dev` | ok |
-| `uv run pytest packages/cqa_domain` | 129 passed (at A1); current total below |
-| `uv run pytest packages/cqa_ai` | 80 passed |
-| `uv run pytest` | 279 passed, 1 foundation Starlette deprecation warning, exit 0 |
+| `uv run pytest packages/cqa_domain` | 140 passed |
+| `uv run pytest packages/cqa_ai` | 89 passed |
+| `uv run pytest` | 299 passed, 1 foundation Starlette deprecation warning, exit 0 |
 | `uv run ruff check .` | All checks passed, exit 0 |
 | `uv run mypy` | Success, 34 source files, exit 0 |
 | `uv run python scripts/generate_contracts.py --check` | no drift, exit 0 |
 | `uv run python -m cqa_domain rubric --check fixtures/evaluation/original-checklist.json` | up to date, exit 0 |
-| `uv run python scripts/check.py` (after `npm ci`, `npx playwright install chromium`) | "Foundation checks passed", exit 0 |
+| `uv run python scripts/check.py` (after `npm ci`, `npx playwright install chromium`) | "Foundation checks passed", exit 0 (rerun at `283758d`) |
 | Replay: `uv run python -m cqa_ai.experiments --dataset fixtures/evaluation --profile baseline=fixtures/evaluation/profiles/baseline.json --profile "b-light=fixtures/evaluation/profiles/b-light.json,fixtures/evaluation/corpus/manifest.json"` | exit 0; 6 synthetic cases, baseline 6 calls / B-light 8 calls (2 blind reviews: 1 agreed, 1 conflicted, initial kept), 0 changed decisions, cost null |
 
 Not run: any real Gemini/DeepSeek/OpenRouter call; real DEV evaluation; GitHub CI
@@ -99,7 +117,7 @@ Full cost of actually executed runs: none executed, so none reported.
 
 ## Dataset, labels, profile and corpus versions
 
-- Rubric `cqa-original-v1`; prompt `cqa-eval-v1`; preprocessing `identity-v1`.
+- Rubric `cqa-original-v1`; prompt `cqa-eval-v2`; preprocessing `identity-v1`.
 - `fixtures/evaluation`: 6 synthetic cases (RU/KZ/EN chat, RU call), labels
   `rule_synthetic` authored by Claude A as constructions, not expert labels; one
   deliberately undetermined label (expert ambiguity not forced). Split
@@ -116,7 +134,7 @@ Full cost of actually executed runs: none executed, so none reported.
 - Import revisions: `conversation_content_hash` (message ids `m0001…` assigned by B).
 - Corpus snapshots: build with `cqa_ai.corpus.*`; `validate_corpus` before pinning.
 - Evaluation: production `cqa_ai.evaluate`; test mode `Evaluator({"test": transport})`
-  with a `mode="test"` profile (prompt `cqa-eval-v1`). Persist `artifact` as returned;
+  with a `mode="test"` profile (prompt `cqa-eval-v2`). Persist `artifact` as returned;
   `validate_artifact` before persisting is cheap and recommended.
 - Reuse: `evaluation_reuse_key(artifact.identity)`; scoring-only changes are
   detectable via `checklist_scoring_hash` with equal `checklist_semantic_hash`.
