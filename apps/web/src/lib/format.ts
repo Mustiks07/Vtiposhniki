@@ -48,3 +48,17 @@ export function durationText(startIso: string, endIso: string | null | undefined
 export function shortId(id: string): string {
   return id.length > 14 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
 }
+
+/**
+ * Display a long server decimal (e.g. an unrounded normalized contribution 68.1818…) with two
+ * decimals and an explicit "≈". Display only: comparisons keep using the exact server string.
+ */
+export function approxRu(value: string | null | undefined): string {
+  if (value === null || value === undefined) return '—';
+  const [int, frac = ''] = value.split('.');
+  if (frac.length <= 2) return decimalRu(value);
+  const neg = int.startsWith('-');
+  const digits = BigInt(int.replace('-', '') + frac.slice(0, 2)) + (Number(frac[2]) >= 5 ? 1n : 0n);
+  const s = digits.toString().padStart(3, '0');
+  return `≈${neg ? '-' : ''}${s.slice(0, -2)},${s.slice(-2)}`;
+}
