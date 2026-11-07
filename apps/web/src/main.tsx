@@ -4,5 +4,6 @@ import { App } from './App';
 import './style.css';
 import './journal.css';
 import './product-ux.css';
+import './score-explanation.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);

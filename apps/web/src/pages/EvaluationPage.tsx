@@ -16,11 +16,13 @@ import {
 import { ExportLinks } from '../components/ExportLinks';
 import { Modal } from '../components/Modal';
 import { RunDetails } from '../components/RunDetails';
+import { ScoreExplanation } from '../components/ScoreExplanation';
 import { ScorePanel } from '../components/ScorePanel';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { Transcript, verifiedMapping } from '../components/Transcript';
 import { decimalRu, serverTime, shortId } from '../lib/format';
 import { evidenceMessageIds } from '../lib/evidence';
+import { explainScore } from '../lib/scoreExplanation';
 import {
   applicabilityLabel,
   artifactStatusLabel,
@@ -193,6 +195,19 @@ export function EvaluationPage() {
   }
   function fromMessage(cid: string) {
     selectCriterion(cid);
+  }
+  /** Reuses the `evidence=N` deep link: same criterion, scope, revision and highlighting. */
+  function showCriterionEvidence(cid: string, index: number) {
+    setShowAppealForm(false);
+    setOpenSource(null);
+    const next = new URLSearchParams(params);
+    next.set('criterion', cid);
+    next.set('evidence', String(index));
+    setParams(next);
+  }
+  function appealCriterion(cid: string) {
+    selectCriterion(cid);
+    setShowAppealForm(true);
   }
   function showEvidence(ids: string[]) {
     setHighlighted(ids);
@@ -368,6 +383,39 @@ export function EvaluationPage() {
               setParam('scope', value);
             }}
             onCriterion={selectCriterion}
+          />
+          <ScoreExplanation
+            model={
+              checklist.data
+                ? explainScore(
+                    checklist.data.criteria,
+                    scope === 'automatic' ? ev.artifact.automatic_final : ev.effective_proposals,
+                    scope === 'automatic' ? ev.automatic_score : ev.effective_score,
+                  )
+                : null
+            }
+            checklistState={checklist.isError ? 'error' : checklist.data ? 'ready' : 'loading'}
+            checklistError={checklist.error}
+            onRetryChecklist={() => checklist.refetch()}
+            sourceLabel={
+              scope === 'automatic'
+                ? 'по исходной оценке (automatic)'
+                : ev.human_decisions.length
+                  ? 'после пересмотра (effective), с решениями проверяющего'
+                  : 'после пересмотра (effective); решений нет — как automatic'
+            }
+            actions={{
+              onShowEvidence: showCriterionEvidence,
+              onOpenCriterion: selectCriterion,
+              appealState:
+                ev.artifact.status === 'failed'
+                  ? undefined
+                  : (cid) =>
+                      (appeals.data?.items ?? []).some((a) => a.criterion_id === cid && a.state === 'open')
+                        ? 'open'
+                        : 'available',
+              onAppeal: appealCriterion,
+            }}
           />
           <RunDetails evaluation={ev} />
           {checklist.isError ? <ErrorPanel error={checklist.error} onRetry={() => checklist.refetch()} /> : null}

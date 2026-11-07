@@ -1,0 +1,241 @@
+/* "Почему снижена оценка" and the onboarding example. Journal palette tokens only. */
+.why-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.why-heading h2 {
+  margin: 0;
+}
+.why-lead {
+  margin: 8px 0 10px;
+}
+.why-lead-warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.why-list,
+.why-group ul,
+.why-critical ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.why-item,
+.why-compact,
+.why-critical-item {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warn);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--panel);
+  min-width: 0;
+}
+.why-item.why-highlighted {
+  outline: 3px solid var(--evidence);
+  outline-offset: 1px;
+}
+.why-compact {
+  border-left-color: var(--control);
+  border-left-style: dashed;
+}
+.why-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.why-number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--info-bg);
+  font-size: 12px;
+  font-weight: 600;
+}
+.why-title {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.why-answer {
+  color: var(--muted);
+}
+.why-answer strong {
+  color: var(--ink);
+}
+.why-origin {
+  font-size: 12px;
+  border: 1px solid var(--evidence);
+  color: var(--evidence);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+.why-rationale {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.why-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.why-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+}
+.why-numbers dt {
+  color: var(--muted);
+}
+.why-numbers dd {
+  margin: 0;
+  font-weight: 600;
+}
+.why-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin-top: 8px;
+}
+.why-primary {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 4px 12px;
+  border-color: var(--evidence);
+  color: var(--evidence);
+  background: #f6f8fc;
+  font-weight: 600;
+}
+.why-primary small {
+  font-weight: 400;
+  font-size: 11.5px;
+}
+.why-more-evidence {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.why-more-evidence button + button {
+  margin-left: 6px;
+}
+.why-ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.why-group {
+  margin-top: 14px;
+}
+.why-group h3 {
+  margin: 0 0 2px;
+}
+.why-critical {
+  border: 1px solid #e3b4b1;
+  background: var(--bad-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0 12px;
+}
+.why-critical-lead {
+  color: var(--bad);
+  margin: 0 0 8px;
+}
+.why-critical-item {
+  border-left-color: var(--bad);
+}
+.why-flags-clear {
+  margin-top: 12px;
+}
+
+/* Onboarding example */
+.tutorial-banner {
+  border: 1px solid #ecd6a6;
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+.tutorial-steps {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.tutorial-steps button {
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+}
+.tutorial-steps button[aria-current='step'] {
+  border-color: var(--accent);
+  background: var(--ok-bg);
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+.tutorial-steps small {
+  color: var(--muted);
+}
+.tutorial-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 18px;
+  align-items: start;
+}
+.tutorial-layout > * {
+  min-width: 0;
+}
+.tutorial-step-panel {
+  border-left: 4px solid var(--accent);
+}
+.tutorial-step-panel h2 {
+  margin-top: 0;
+}
+.tutorial-step-panel ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+.tutorial-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.tutorial-score {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+}
+.tutorial-score .total {
+  font-size: 34px;
+  font-weight: 650;
+}
+@media (max-width: 900px) {
+  .tutorial-layout {
+    grid-template-columns: 1fr;
+  }
+  .tutorial-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
