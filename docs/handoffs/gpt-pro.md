@@ -7,8 +7,14 @@ Initial inspection found only those five local documents, no local Git metadata,
 and an empty public remote with no branches. Connected GitHub grants push access.
 The integrator initialized main; no prior repository work was overwritten.
 Publication identity is the foundation commit linked in the delivery report and
-the `foundation-v1` tag. Resolve the full SHA with `git rev-parse foundation-v1`.
+the `foundation-v1.1` tag. Resolve the full SHA with `git rev-parse foundation-v1.1`.
 The final SHA cannot be embedded in its own commit without changing it.
+
+Initial tag foundation-v1 retains the first published scaffold. Its GitHub Linux
+job exposed that ubuntu-latest had moved to 26.04, which has no setup-python build
+for pinned Python 3.13.5. The final foundation pins Ubuntu 24.04 and Windows 2025;
+official actions/python-versions metadata confirms 3.13.5 support. No published
+commit/tag was rewritten. Start all executor branches from the final delivery SHA.
 
 ## Delivered foundation
 
