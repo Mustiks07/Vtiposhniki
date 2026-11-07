@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cqa-submission"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = ["cqa-contracts", "cqa-domain", "cqa-api", "httpx==0.28.1"]
+
+[project.scripts]
+cqa-submit = "cqa_submission.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cqa_submission"]

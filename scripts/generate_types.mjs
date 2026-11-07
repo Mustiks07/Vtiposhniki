@@ -12,3 +12,7 @@ await writeFile(path.join(output, 'typescript/models.d.ts'), await compile(schem
   bannerComment: '/* Generated from cqa_contracts. DO NOT EDIT. */',
   unreachableDefinitions: true,
 }));
+const submission = JSON.parse(await readFile(path.join(output, 'organizer-results.schema.json'), 'utf8'));
+await writeFile(path.join(output, 'typescript/organizer-results.d.ts'), await compile(submission, 'OfficialResults', {
+  bannerComment: '/* Generated from cqa_contracts.submission. DO NOT EDIT. */',
+}));

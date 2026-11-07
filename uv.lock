@@ -8,6 +8,7 @@ members = [
     "cqa-api",
     "cqa-contracts",
     "cqa-domain",
+    "cqa-submission",
     "cqa-workspace",
 ]
 
@@ -209,6 +210,25 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "cqa-contracts", editable = "packages/cqa_contracts" }]
+
+[[package]]
+name = "cqa-submission"
+version = "0.1.0"
+source = { editable = "packages/cqa_submission" }
+dependencies = [
+    { name = "cqa-api" },
+    { name = "cqa-contracts" },
+    { name = "cqa-domain" },
+    { name = "httpx" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cqa-api", editable = "apps/api" },
+    { name = "cqa-contracts", editable = "packages/cqa_contracts" },
+    { name = "cqa-domain", editable = "packages/cqa_domain" },
+    { name = "httpx", specifier = "==0.28.1" },
+]
 
 [[package]]
 name = "cqa-workspace"

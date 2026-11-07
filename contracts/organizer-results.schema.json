@@ -1,0 +1,414 @@
+{
+  "$defs": {
+    "Consultation": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "const": "consultation",
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_turns": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Evidence Turns",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "enum": [
+                0,
+                5,
+                10,
+                15,
+                20
+              ],
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "rationale",
+        "evidence_turns",
+        "criterion_id",
+        "value"
+      ],
+      "title": "Consultation",
+      "type": "object"
+    },
+    "Dialogue": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "const": "dialogue",
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_turns": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Evidence Turns",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "value": {
+          "enum": [
+            0,
+            4,
+            7,
+            10
+          ],
+          "title": "Value",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "rationale",
+        "evidence_turns",
+        "criterion_id",
+        "value"
+      ],
+      "title": "Dialogue",
+      "type": "object"
+    },
+    "OfficialError": {
+      "additionalProperties": false,
+      "properties": {
+        "conversation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "criteria": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "closure": "#/$defs/OptionalBinary",
+                "consultation": "#/$defs/Consultation",
+                "contact": "#/$defs/RequiredBinary",
+                "critical": "#/$defs/RequiredBinary",
+                "dialogue": "#/$defs/Dialogue",
+                "discovery": "#/$defs/OptionalBinary",
+                "empathy": "#/$defs/RequiredBinary",
+                "identification": "#/$defs/OptionalBinary"
+              },
+              "propertyName": "criterion_id"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RequiredBinary"
+              },
+              {
+                "$ref": "#/$defs/OptionalBinary"
+              },
+              {
+                "$ref": "#/$defs/Consultation"
+              },
+              {
+                "$ref": "#/$defs/Dialogue"
+              }
+            ]
+          },
+          "maxItems": 0,
+          "title": "Criteria",
+          "type": "array"
+        },
+        "error": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Error",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "null"
+        },
+        "status": {
+          "const": "error",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "status",
+        "criteria",
+        "score",
+        "error"
+      ],
+      "title": "OfficialError",
+      "type": "object"
+    },
+    "OfficialModel": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "local",
+            "external_api",
+            "hybrid"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "name"
+      ],
+      "title": "OfficialModel",
+      "type": "object"
+    },
+    "OfficialScore": {
+      "additionalProperties": false,
+      "properties": {
+        "critical_flag": {
+          "title": "Critical Flag",
+          "type": "boolean"
+        },
+        "final_score": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Final Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "final_score",
+        "critical_flag"
+      ],
+      "title": "OfficialScore",
+      "type": "object"
+    },
+    "OfficialSuccess": {
+      "additionalProperties": false,
+      "properties": {
+        "conversation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "criteria": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "closure": "#/$defs/OptionalBinary",
+                "consultation": "#/$defs/Consultation",
+                "contact": "#/$defs/RequiredBinary",
+                "critical": "#/$defs/RequiredBinary",
+                "dialogue": "#/$defs/Dialogue",
+                "discovery": "#/$defs/OptionalBinary",
+                "empathy": "#/$defs/RequiredBinary",
+                "identification": "#/$defs/OptionalBinary"
+              },
+              "propertyName": "criterion_id"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RequiredBinary"
+              },
+              {
+                "$ref": "#/$defs/OptionalBinary"
+              },
+              {
+                "$ref": "#/$defs/Consultation"
+              },
+              {
+                "$ref": "#/$defs/Dialogue"
+              }
+            ]
+          },
+          "maxItems": 8,
+          "minItems": 8,
+          "title": "Criteria",
+          "type": "array"
+        },
+        "score": {
+          "$ref": "#/$defs/OfficialScore"
+        },
+        "status": {
+          "const": "ok",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "status",
+        "criteria",
+        "score"
+      ],
+      "title": "OfficialSuccess",
+      "type": "object"
+    },
+    "OptionalBinary": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "enum": [
+            "discovery",
+            "identification",
+            "closure"
+          ],
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_turns": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Evidence Turns",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "rationale",
+        "evidence_turns",
+        "criterion_id",
+        "value"
+      ],
+      "title": "OptionalBinary",
+      "type": "object"
+    },
+    "RequiredBinary": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "enum": [
+            "contact",
+            "empathy",
+            "critical"
+          ],
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_turns": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Evidence Turns",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rationale",
+        "evidence_turns",
+        "criterion_id",
+        "value"
+      ],
+      "title": "RequiredBinary",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "model": {
+      "$ref": "#/$defs/OfficialModel"
+    },
+    "results": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "error": "#/$defs/OfficialError",
+            "ok": "#/$defs/OfficialSuccess"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/OfficialSuccess"
+          },
+          {
+            "$ref": "#/$defs/OfficialError"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Results",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "team_name": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Team Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "team_name",
+    "model",
+    "results"
+  ],
+  "title": "OfficialResults",
+  "type": "object"
+}

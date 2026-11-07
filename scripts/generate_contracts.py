@@ -10,6 +10,7 @@ from pathlib import Path
 
 from cqa_contracts import hash_inputs, http_models, models
 from cqa_contracts.operations import create_contract_app
+from cqa_contracts.submission import SUBMISSION_MODELS, OfficialResults
 from pydantic.json_schema import models_json_schema
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +22,7 @@ def model_registry():
         for value in vars(module).values():
             if isinstance(value, type) and issubclass(value, models.DTO):
                 registry[value.__name__] = value
+    registry.update({model.__name__: model for model in SUBMISSION_MODELS})
     return dict(sorted(registry.items()))
 
 
@@ -41,6 +43,10 @@ def generate(output: Path) -> None:
     for name, value in {
         "json-schema.json": schema,
         "openapi.json": create_contract_app().openapi(),
+        "organizer-results.schema.json": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            **OfficialResults.model_json_schema(),
+        },
     }.items():
         (output / name).write_text(
             json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n",

@@ -20,13 +20,14 @@ required-version = "==0.13.7"
 package = false
 
 [tool.uv.workspace]
-members = ["packages/cqa_contracts", "packages/cqa_domain", "packages/cqa_ai", "apps/api"]
+members = ["packages/cqa_contracts", "packages/cqa_domain", "packages/cqa_ai", "packages/cqa_submission", "apps/api"]
 
 [tool.uv.sources]
 cqa-contracts = { workspace = true }
 cqa-domain = { workspace = true }
 cqa-ai = { workspace = true }
 cqa-api = { workspace = true }
+cqa-submission = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["packages", "apps/api/tests"]
@@ -45,4 +46,4 @@ select = ["E4", "E7", "E9", "F", "I", "UP"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["packages/cqa_contracts/src", "packages/cqa_domain/src", "packages/cqa_ai/src", "apps/api/src"]
+files = ["packages/cqa_contracts/src", "packages/cqa_domain/src", "packages/cqa_ai/src", "packages/cqa_submission/src", "apps/api/src"]

@@ -172,3 +172,34 @@ Gemini 2.5 Flash-Lite 404 (дважды, второй запрос с безоп
 - Независимой оценки на размеченном GT нет; replay A не объявляется human accuracy.
 
 Ключи, runtime-БД, live-входы/ответы и профили остаются в игнорируемых .env/data/private.
+
+## Официальная сдача JSON 1.0 — 7 ноября 2026
+
+Следующее дополнение пользователя реализовано отдельным `cqa_submission`:
+единственные DTO в cqa_contracts, генерируемые JSON Schema/TypeScript, CLI
+init/import/evaluate/export/validate, read-only SQLite snapshot, проверка pinned
+рубрик/версий/исходных turns, automatic score и фактической модели. SafeExport
+не менялся. Команда Vtiposhniki, согласованная ветка сдачи main.
+
+R-EXPORT-01–08: 43 целевых теста прошли, включая настоящий API/SQLite на
+синтетических данных. Пройден общий check до последних двух узких regression
+тестов: 598 Python tests, 32 web unit tests, 34 Chromium E2E; затем все 43
+целевых теста, Ruff и mypy (62 файла) прошли повторно. CI проверяет точный
+публикуемый commit на Ubuntu и Windows; локальная проверка не заменяет её.
+
+R-EXPORT-09: настоящий production DEV завершён. 65/65 полных оценок, исходные
+60 чатов + 5 звонков и 1268 turns сохранены. Модель gemini-3.5-flash-lite,
+без test fallback. Первоначальные 8 failed и 1 partial не перезаписаны;
+повторные fresh jobs созданы только для проблемных записей. Всего 75 jobs /
+80 calls, включая repair (71 succeeded, 9 failed); цена unknown.
+Все 520 коротких обоснований просмотрены перед публикацией, имена удалены.
+Экспорт совпадает с сохранёнными automatic оценками, пересчёт и evidence bounds
+проверены. [Файл и его hash](../../results/README.md).
+
+R-EXPORT-10 остаётся частичным: DEV подготовлен для main, PROD не получен и
+`results/prod/results.json` не выдумывается. Дедлайн неизвестен. Фактический
+remote SHA и результат CI проверяются после push. Инструкции подготовки
+следующего набора: [SUBMISSION.md](../SUBMISSION.md).
+
+U08 (независимый пользователь), U10 (целевой demo-ноутбук/квота), acoustic
+analysis и измеренная GT accuracy по-прежнему не заявляются выполненными.

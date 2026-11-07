@@ -757,6 +757,57 @@
       "title": "Choice",
       "type": "object"
     },
+    "Consultation": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "const": "consultation",
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_turns": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Evidence Turns",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "enum": [
+                0,
+                5,
+                10,
+                15,
+                20
+              ],
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "rationale",
+        "evidence_turns",
+        "criterion_id",
+        "value"
+      ],
+      "title": "Consultation",
+      "type": "object"
+    },
     "ContentMessage": {
       "additionalProperties": false,
       "properties": {
@@ -1710,6 +1761,49 @@
         "reason"
       ],
       "title": "DecisionRequest",
+      "type": "object"
+    },
+    "Dialogue": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "const": "dialogue",
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_turns": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Evidence Turns",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "value": {
+          "enum": [
+            0,
+            4,
+            7,
+            10
+          ],
+          "title": "Value",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "rationale",
+        "evidence_turns",
+        "criterion_id",
+        "value"
+      ],
+      "title": "Dialogue",
       "type": "object"
     },
     "ErrorCode": {
@@ -3184,6 +3278,282 @@
       "title": "Message",
       "type": "object"
     },
+    "OfficialError": {
+      "additionalProperties": false,
+      "properties": {
+        "conversation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "criteria": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "closure": "#/$defs/OptionalBinary",
+                "consultation": "#/$defs/Consultation",
+                "contact": "#/$defs/RequiredBinary",
+                "critical": "#/$defs/RequiredBinary",
+                "dialogue": "#/$defs/Dialogue",
+                "discovery": "#/$defs/OptionalBinary",
+                "empathy": "#/$defs/RequiredBinary",
+                "identification": "#/$defs/OptionalBinary"
+              },
+              "propertyName": "criterion_id"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RequiredBinary"
+              },
+              {
+                "$ref": "#/$defs/OptionalBinary"
+              },
+              {
+                "$ref": "#/$defs/Consultation"
+              },
+              {
+                "$ref": "#/$defs/Dialogue"
+              }
+            ]
+          },
+          "maxItems": 0,
+          "title": "Criteria",
+          "type": "array"
+        },
+        "error": {
+          "maxLength": 300,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Error",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "null"
+        },
+        "status": {
+          "const": "error",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "status",
+        "criteria",
+        "score",
+        "error"
+      ],
+      "title": "OfficialError",
+      "type": "object"
+    },
+    "OfficialModel": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "local",
+            "external_api",
+            "hybrid"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "name"
+      ],
+      "title": "OfficialModel",
+      "type": "object"
+    },
+    "OfficialResults": {
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "$ref": "#/$defs/OfficialModel"
+        },
+        "results": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "error": "#/$defs/OfficialError",
+                "ok": "#/$defs/OfficialSuccess"
+              },
+              "propertyName": "status"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/OfficialSuccess"
+              },
+              {
+                "$ref": "#/$defs/OfficialError"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Results",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "team_name": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Team Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "team_name",
+        "model",
+        "results"
+      ],
+      "title": "OfficialResults",
+      "type": "object"
+    },
+    "OfficialScore": {
+      "additionalProperties": false,
+      "properties": {
+        "critical_flag": {
+          "title": "Critical Flag",
+          "type": "boolean"
+        },
+        "final_score": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Final Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "final_score",
+        "critical_flag"
+      ],
+      "title": "OfficialScore",
+      "type": "object"
+    },
+    "OfficialSuccess": {
+      "additionalProperties": false,
+      "properties": {
+        "conversation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "criteria": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "closure": "#/$defs/OptionalBinary",
+                "consultation": "#/$defs/Consultation",
+                "contact": "#/$defs/RequiredBinary",
+                "critical": "#/$defs/RequiredBinary",
+                "dialogue": "#/$defs/Dialogue",
+                "discovery": "#/$defs/OptionalBinary",
+                "empathy": "#/$defs/RequiredBinary",
+                "identification": "#/$defs/OptionalBinary"
+              },
+              "propertyName": "criterion_id"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RequiredBinary"
+              },
+              {
+                "$ref": "#/$defs/OptionalBinary"
+              },
+              {
+                "$ref": "#/$defs/Consultation"
+              },
+              {
+                "$ref": "#/$defs/Dialogue"
+              }
+            ]
+          },
+          "maxItems": 8,
+          "minItems": 8,
+          "title": "Criteria",
+          "type": "array"
+        },
+        "score": {
+          "$ref": "#/$defs/OfficialScore"
+        },
+        "status": {
+          "const": "ok",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "status",
+        "criteria",
+        "score"
+      ],
+      "title": "OfficialSuccess",
+      "type": "object"
+    },
+    "OptionalBinary": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "enum": [
+            "discovery",
+            "identification",
+            "closure"
+          ],
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_turns": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Evidence Turns",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "rationale",
+        "evidence_turns",
+        "criterion_id",
+        "value"
+      ],
+      "title": "OptionalBinary",
+      "type": "object"
+    },
     "OrganizerImport": {
       "additionalProperties": false,
       "properties": {
@@ -3429,6 +3799,47 @@
       ],
       "title": "ReasonCode",
       "type": "string"
+    },
+    "RequiredBinary": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "enum": [
+            "contact",
+            "empathy",
+            "critical"
+          ],
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "evidence_turns": {
+          "items": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Evidence Turns",
+          "type": "array"
+        },
+        "rationale": {
+          "maxLength": 600,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Rationale",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rationale",
+        "evidence_turns",
+        "criterion_id",
+        "value"
+      ],
+      "title": "RequiredBinary",
+      "type": "object"
     },
     "RetryPolicy": {
       "additionalProperties": false,
@@ -4997,6 +5408,245 @@
       "title": "SourceVersion",
       "type": "object"
     },
+    "SubmissionAttempt": {
+      "additionalProperties": false,
+      "properties": {
+        "batch_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Batch Id"
+        },
+        "external_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "External Id",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "external_id",
+        "idempotency_key"
+      ],
+      "title": "SubmissionAttempt",
+      "type": "object"
+    },
+    "SubmissionConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "checklist_version_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Checklist Version Id",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "redactions": {
+          "items": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "title": "Redactions",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "submission_branch": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Submission Branch",
+          "type": "string"
+        },
+        "team_name": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Team Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "team_name",
+        "submission_branch",
+        "checklist_version_id",
+        "profile_id",
+        "profile_version"
+      ],
+      "title": "SubmissionConfig",
+      "type": "object"
+    },
+    "SubmissionEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "channel": {
+          "enum": [
+            "agent_chat",
+            "voice_call"
+          ],
+          "title": "Channel",
+          "type": "string"
+        },
+        "conversation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "external_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "External Id",
+          "type": "string"
+        },
+        "language": {
+          "enum": [
+            "RU",
+            "KZ",
+            "EN"
+          ],
+          "title": "Language",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "turn_hashes": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Turn Hashes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "external_id",
+        "channel",
+        "language",
+        "turn_hashes",
+        "conversation_id",
+        "revision"
+      ],
+      "title": "SubmissionEntry",
+      "type": "object"
+    },
+    "SubmissionManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset": {
+          "enum": [
+            "dev",
+            "prod"
+          ],
+          "title": "Dataset",
+          "type": "string"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/SubmissionEntry"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dataset",
+        "source_sha256",
+        "entries"
+      ],
+      "title": "SubmissionManifest",
+      "type": "object"
+    },
+    "SubmissionRun": {
+      "additionalProperties": false,
+      "properties": {
+        "attempts": {
+          "items": {
+            "$ref": "#/$defs/SubmissionAttempt"
+          },
+          "title": "Attempts",
+          "type": "array"
+        },
+        "config_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Config Sha256",
+          "type": "string"
+        },
+        "manifest_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Manifest Sha256",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "manifest_sha256",
+        "config_sha256",
+        "attempts"
+      ],
+      "title": "SubmissionRun",
+      "type": "object"
+    },
     "TokenUsage": {
       "additionalProperties": false,
       "properties": {
@@ -5258,6 +5908,9 @@
     "Message": {
       "$ref": "#/$defs/Message"
     },
+    "OfficialResults": {
+      "$ref": "#/$defs/OfficialResults"
+    },
     "OrganizerImport": {
       "$ref": "#/$defs/OrganizerImport"
     },
@@ -5345,6 +5998,15 @@
     "SourceVersion": {
       "$ref": "#/$defs/SourceVersion"
     },
+    "SubmissionConfig": {
+      "$ref": "#/$defs/SubmissionConfig"
+    },
+    "SubmissionManifest": {
+      "$ref": "#/$defs/SubmissionManifest"
+    },
+    "SubmissionRun": {
+      "$ref": "#/$defs/SubmissionRun"
+    },
     "TokenUsage": {
       "$ref": "#/$defs/TokenUsage"
     },
@@ -5403,6 +6065,7 @@
     "JobProgress",
     "KnowledgeSources",
     "Message",
+    "OfficialResults",
     "OrganizerImport",
     "Page",
     "Page[ChecklistVersion]",
@@ -5432,6 +6095,9 @@
     "SourceChunk",
     "SourceFragment",
     "SourceVersion",
+    "SubmissionConfig",
+    "SubmissionManifest",
+    "SubmissionRun",
     "TokenUsage",
     "VersionList"
   ],

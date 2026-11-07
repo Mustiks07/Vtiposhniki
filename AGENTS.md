@@ -10,7 +10,9 @@ verified heads, integration fixes and remaining human/live acceptance limits.
 - B: apps/api, docs/handoffs/claude-b.md.
 - C: apps/web, docs/handoffs/claude-web-e2e.md.
 - Integrator: contracts, packages/cqa_contracts, fixtures/contracts, fixtures/hashing,
-  scripts, all manifests/lockfiles, CI, root configuration and shared docs.
+  packages/cqa_submission, fixtures/submission, scripts, all manifests/lockfiles,
+  CI, root configuration and shared docs. Official submission has separate DTOs;
+  read docs/SUBMISSION.md and docs/specs/06_OFFICIAL_SUBMISSION_ADDENDUM.md.
 
 No independent copies of public DTOs, scoring or canonical hashing. Generated
 artifacts are not edited manually. Request shared changes through your handoff.
@@ -20,3 +22,5 @@ Run the documented checks for your changes; the aggregate check is
 `uv run python scripts/check.py`. Record actual acceptance coverage; automated
 synthetic checks do not prove live-provider readiness or AI accuracy.
 Real transcripts, audio, keys, signed URLs and runtime databases stay out of Git.
+The explicitly authorized organizer results are a separate public export: only
+reviewed short rationales and required external IDs, never full source transcripts.

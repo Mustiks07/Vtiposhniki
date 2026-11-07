@@ -13,7 +13,7 @@ def main() -> None:
     if npm is None:
         raise SystemExit("npm is not installed")
     commands = [
-        [sys.executable, "-c", "import cqa_contracts, cqa_domain, cqa_ai, cqa_api"],
+        [sys.executable, "-c", "import cqa_contracts, cqa_domain, cqa_ai, cqa_api, cqa_submission"],
         [sys.executable, "scripts/generate_contracts.py", "--check"],
         [sys.executable, "-m", "ruff", "check", "."],
         [sys.executable, "-m", "mypy"],

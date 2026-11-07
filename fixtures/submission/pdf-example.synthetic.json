@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "team_name": "Название команды",
+  "model": {
+    "mode": "local",
+    "name": "Название модели"
+  },
+  "results": [
+    {
+      "conversation_id": "demo-001",
+      "status": "ok",
+      "criteria": [
+        {
+          "rationale": "Оператор поздоровался и представился.",
+          "evidence_turns": [
+            4
+          ],
+          "criterion_id": "contact",
+          "value": true
+        },
+        {
+          "rationale": "Клиент сразу ясно изложил вопрос.",
+          "evidence_turns": [
+            1
+          ],
+          "criterion_id": "discovery",
+          "value": null
+        },
+        {
+          "rationale": "Общий вопрос не требует идентификации.",
+          "evidence_turns": [
+            1
+          ],
+          "criterion_id": "identification",
+          "value": null
+        },
+        {
+          "rationale": "Основной вопрос решён, упущена деталь.",
+          "evidence_turns": [
+            5,
+            6
+          ],
+          "criterion_id": "consultation",
+          "value": 15
+        },
+        {
+          "rationale": "Вежливо признал неудобство клиента.",
+          "evidence_turns": [
+            4,
+            5
+          ],
+          "criterion_id": "empathy",
+          "value": true
+        },
+        {
+          "rationale": "Есть повтор, но ход диалога понятен.",
+          "evidence_turns": [
+            5,
+            6
+          ],
+          "criterion_id": "dialogue",
+          "value": 7
+        },
+        {
+          "rationale": "Предложил дальнейшую помощь и попрощался.",
+          "evidence_turns": [
+            8
+          ],
+          "criterion_id": "closure",
+          "value": true
+        },
+        {
+          "rationale": "Грубых нарушений в репликах нет.",
+          "evidence_turns": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "criterion_id": "critical",
+          "value": false
+        }
+      ],
+      "score": {
+        "final_score": 85.38,
+        "critical_flag": false
+      }
+    }
+  ]
+}

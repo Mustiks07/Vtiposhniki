@@ -20,6 +20,8 @@ production или измеренной точности AI. Результаты
 [интеграция](docs/specs/04_GPT_PRO_INTEGRATION.md),
 [дополнение организаторов](docs/specs/05_ORGANIZER_ADDENDUM.md).
 Состояние поставки и ограничения: [handoff интегратора](docs/handoffs/gpt-pro.md).
+Официальная сдача JSON 1.0: [команды импорта, оценки, экспорта и удалённой проверки](docs/SUBMISSION.md).
+Это отдельный адаптер: обычный SafeExport не переименовывается в results.json.
 Подробности модулей: [API и настройки](apps/api/README.md),
 [домен](packages/cqa_domain/README.md), [AI](packages/cqa_ai/README.md).
 
