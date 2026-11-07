@@ -58,10 +58,13 @@ valid initial is raised; after it, only the review is skipped.
 | gemini | `POST {base}/models/{model}:generateContent`, `x-goog-api-key` | JSON mime type, seed, usage incl. thoughts; SAFETY/RECITATION → refusal |
 | deepseek | `POST https://api.deepseek.com/chat/completions`, Bearer | `json_object` (may return blank content: treated as invalid output), cache-hit usage |
 | openrouter | `POST https://openrouter.ai/api/v1/chat/completions`, Bearer | `json_object` depends on routed endpoint; floating `openrouter/free`/`auto` rejected; routed model recorded |
+| xerosharc | `POST {XEROSHARC_BASE_URL}/chat/completions`, Bearer | Separate gateway identity; `json_object`, no seed; reported model and usage preserved |
 
 Usage normalization: `input_tokens` includes cached, `output_tokens` includes
 reasoning. Tariffs are never built in: `PriceTable()` is empty → `cost=null`.
-All adapter behaviour is covered only with `httpx.MockTransport`; no live call was made.
+Offline adapter tests use `httpx.MockTransport`. Separate production smoke runs
+are documented in [live-config](../../examples/live-config/README.md) and
+[xerosharc-config](../../examples/xerosharc-config/README.md); they do not measure accuracy.
 
 ## Offline commands
 

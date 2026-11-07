@@ -8,6 +8,7 @@ from cqa_ai.providers import (
     DeepSeekTransport,
     GeminiTransport,
     OpenRouterTransport,
+    XerosharcTransport,
     transports_from_environment,
 )
 from cqa_ai.transport import ChatMessage, ProviderFailure, ProviderRequest
@@ -261,3 +262,67 @@ async def test_transports_from_environment_builds_only_used_providers() -> None:
             prof, {"DEEPSEEK_API_KEY": "x", "GEMINI_API_KEY": "y"}, c
         )
     assert sorted(built) == ["deepseek", "gemini"]
+
+
+async def test_xerosharc_routes_credential_and_preserves_reported_model() -> None:
+    from _cqa_ai_helpers import profile
+    from cqa_contracts.interfaces import ConfigurationError
+    from cqa_contracts.runtime import require_production_configuration
+
+    prof = profile().model_copy(
+        update={
+            "mode": "production",
+            "primary": profile().primary.model_copy(
+                update={
+                    "provider": "xerosharc",
+                    "model": "requested-model",
+                    "configuration_ref": "XEROSHARC_API_KEY",
+                }
+            ),
+            "reviewer": None,
+            "fallbacks": [],
+        }
+    )
+    with pytest.raises(ConfigurationError):
+        require_production_configuration(prof, {"OPENROUTER_API_KEY": KEY})
+    environment = {"XEROSHARC_API_KEY": KEY, "XEROSHARC_BASE_URL": "https://proxy.example/v1"}
+    require_production_configuration(prof, environment)
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=openai_body(model="gateway-reported-model"))
+
+    async with client(handler) as c:
+        built = transports_from_environment(prof, environment, c)
+        assert list(built) == ["xerosharc"]
+        assert isinstance(built["xerosharc"], XerosharcTransport)
+        response = await built["xerosharc"].complete(REQUEST)
+    assert str(seen[0].url) == "https://proxy.example/v1/chat/completions"
+    assert seen[0].headers["Authorization"] == f"Bearer {KEY}"
+    assert "X-Title" not in seen[0].headers
+    assert response.actual_model == "gateway-reported-model"
+    assert response.usage and response.usage.input_tokens == 100
+    body = json.loads(seen[0].content)
+    assert body["response_format"] == {"type": "json_object"}
+    assert "seed" not in body
+
+
+@pytest.mark.parametrize(
+    "base",
+    [
+        "http://proxy.example/v1",
+        "https://key@proxy.example/v1",
+        "https://proxy.example/v1?key=secret",
+        "",
+        "https://[broken",
+        "https://proxy.example:invalid/v1",
+    ],
+)
+def test_xerosharc_rejects_unsafe_endpoint_without_echoing_it(base) -> None:
+    from cqa_contracts.interfaces import ConfigurationError
+    from cqa_contracts.runtime import xerosharc_base_url
+
+    with pytest.raises(ConfigurationError) as error:
+        xerosharc_base_url({"XEROSHARC_BASE_URL": base})
+    assert "secret" not in str(error.value)

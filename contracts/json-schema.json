@@ -3761,6 +3761,7 @@
             "gemini",
             "deepseek",
             "openrouter",
+            "xerosharc",
             "test"
           ],
           "title": "Provider",

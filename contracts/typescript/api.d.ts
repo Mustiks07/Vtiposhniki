@@ -1573,7 +1573,7 @@ export interface components {
              * Provider
              * @enum {string}
              */
-            provider: "gemini" | "deepseek" | "openrouter" | "test";
+            provider: "gemini" | "deepseek" | "openrouter" | "xerosharc" | "test";
             /**
              * Schema Version
              * @default 1.0

@@ -359,7 +359,8 @@ def test_effective_overrides_never_change_submission():
     assert convert(replace(item, evaluation=edited), CONFIG) == convert(item, CONFIG)
 
 
-def test_actual_models_include_reviewer_and_fallback_not_unused_configuration():
+@pytest.mark.parametrize("provider", ["gemini", "xerosharc"])
+def test_actual_models_include_reviewer_and_fallback_not_unused_configuration(provider):
     items, manifest = dataset()
     call = items[0].calls[0]
     extra = [
@@ -367,7 +368,7 @@ def test_actual_models_include_reviewer_and_fallback_not_unused_configuration():
             update={
                 "call_id": name,
                 "purpose": purpose,
-                "actual": call.actual.model_copy(update={"model": name}),
+                "actual": call.actual.model_copy(update={"provider": provider, "model": name}),
             }
         )
         for name, purpose in [("actual-reviewer", "review"), ("actual-fallback", "fallback")]

@@ -16,6 +16,7 @@ from urllib.parse import quote
 
 import httpx
 from cqa_contracts.models import EvaluatorProfile, TokenUsage
+from cqa_contracts.runtime import PROVIDER_ENV_KEYS, XEROSHARC_BASE_URL, xerosharc_base_url
 
 from .transport import (
     Capabilities,
@@ -29,11 +30,6 @@ from .transport import (
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-ENV_KEYS = {
-    "gemini": "GEMINI_API_KEY",
-    "deepseek": "DEEPSEEK_API_KEY",
-    "openrouter": "OPENROUTER_API_KEY",
-}
 FinishReason = Literal["stop", "length", "refusal", "error", "unknown"]
 
 
@@ -204,7 +200,7 @@ class GeminiTransport:
 
 
 class OpenAICompatibleTransport:
-    """Chat-completions dialect shared by DeepSeek and OpenRouter."""
+    """Chat-completions dialect; response model identity is never inferred."""
 
     provider = "openai-compatible"
     capabilities = Capabilities(
@@ -367,6 +363,23 @@ class OpenRouterTransport(OpenAICompatibleTransport):
         return super()._body(request)
 
 
+class XerosharcTransport(OpenAICompatibleTransport):
+    provider = "xerosharc"
+    capabilities = Capabilities(
+        json_object=True,
+        json_schema_strict=False,
+        seed=False,
+        reports_usage=True,
+        reports_reasoning_tokens=True,
+        notes=("third-party gateway; reported model may differ from requested model",),
+    )
+
+    def __init__(
+        self, api_key: str, client: httpx.AsyncClient, base_url: str = XEROSHARC_BASE_URL
+    ) -> None:
+        super().__init__(api_key, client, base_url)
+
+
 def transports_from_environment(
     profile: EvaluatorProfile, environment: Mapping[str, str], client: httpx.AsyncClient
 ) -> dict[str, ProviderTransport]:
@@ -375,6 +388,9 @@ def transports_from_environment(
         "gemini": GeminiTransport,
         "deepseek": DeepSeekTransport,
         "openrouter": OpenRouterTransport,
+        "xerosharc": lambda key, client: XerosharcTransport(
+            key, client, xerosharc_base_url(environment)
+        ),
     }
     used = {
         s.provider
@@ -389,6 +405,6 @@ def transports_from_environment(
         builder = builders.get(provider)
         if builder is None:
             continue
-        key = environment.get(ENV_KEYS[provider], "").strip()
+        key = environment.get(PROVIDER_ENV_KEYS[provider], "").strip()
         transports[provider] = builder(key, client)
     return transports

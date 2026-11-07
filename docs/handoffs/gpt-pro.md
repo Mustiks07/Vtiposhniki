@@ -196,10 +196,37 @@ R-EXPORT-09: настоящий production DEV завершён. 65/65 полн�
 Экспорт совпадает с сохранёнными automatic оценками, пересчёт и evidence bounds
 проверены. [Файл и его hash](../../results/README.md).
 
-R-EXPORT-10 остаётся частичным: DEV подготовлен для main, PROD не получен и
+DEV опубликован в `main`, commit
+[`b5d39653644e234712a42d56ddb90d80d2bf388e`](https://github.com/Mustiks07/Vtiposhniki/commit/b5d39653644e234712a42d56ddb90d80d2bf388e).
+[CI этого SHA](https://github.com/Mustiks07/Vtiposhniki/actions/runs/42382887961)
+прошёл на Ubuntu/Windows: 600 Python, 32 web unit и 34 browser tests.
+Remote файл прочитан после push: 65/65 ok, team/model/hash совпали.
+
+R-EXPORT-10 остаётся частичным: PROD не получен и
 `results/prod/results.json` не выдумывается. Дедлайн неизвестен. Фактический
-remote SHA и результат CI проверяются после push. Инструкции подготовки
+remote DEV SHA и результат CI указаны выше. Инструкции подготовки
 следующего набора: [SUBMISSION.md](../SUBMISSION.md).
 
 U08 (независимый пользователь), U10 (целевой demo-ноутбук/квота), acoustic
 analysis и измеренная GT accuracy по-прежнему не заявляются выполненными.
+
+## Новый провайдер и граница текущей работы
+
+Пользователь предоставил новый ключ Xerosharc. Подключение выполнялось отдельно
+в `integration/xerosharc`; API 1.2.0 добавляет идентификатор провайдера и
+перегенерированные типы. Используется существующий Chat Completions transport,
+общие ограничения budget/callbacks и fail-closed проверка конфигурации.
+Секрет остался только в ignored .env. [Профиль и фактический smoke](../../examples/xerosharc-config/README.md).
+
+Запрос gpt-6.1-sol дал reported model xeros_core. Обе идентичности сохраняются;
+экспорт не приписывает шлюзу неподтверждённую модель. Production smoke на новом
+выдуманном разговоре прошёл: 8/8 criteria/evidence, domain/profile/score checks,
+persist/restart. DEV в main не переоценивался: его actual model остаётся Gemini.
+
+Общий локальный check прошёл (606 Python, 32 web unit, 34 E2E), после двух
+дополнительных regression cases прошли 73 затронутых теста и повторный Ruff/mypy.
+CI опубликованного commit проверяет окончательный набор заново.
+
+Последнее указание пользователя: **к редизайну пока не переходить**. Архив изучен
+как референс; apps/web не изменялся. После завершения публикации и проверки
+подключения работа останавливается до отдельного указания.

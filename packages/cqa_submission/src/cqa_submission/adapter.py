@@ -295,7 +295,7 @@ def build_results(
         for call in item.calls:
             if call.actual is None:
                 continue  # A configured/requested model is not proof of an actual model.
-            if call.actual.provider not in {"gemini", "deepseek", "openrouter"}:
+            if call.actual.provider not in {"gemini", "deepseek", "openrouter", "xerosharc"}:
                 raise PreparationError("unsupported_actual_provider")
             if SENSITIVE.search(call.actual.model):
                 raise PreparationError("unsafe_actual_model_name")

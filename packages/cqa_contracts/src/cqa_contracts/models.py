@@ -297,7 +297,7 @@ class CriterionProposal(DTO):
 
 
 class ProviderSelection(DTO):
-    provider: Literal["gemini", "deepseek", "openrouter", "test"]
+    provider: Literal["gemini", "deepseek", "openrouter", "xerosharc", "test"]
     model: ID
     configuration_ref: ID  # name only; never a credential or endpoint URL
 
