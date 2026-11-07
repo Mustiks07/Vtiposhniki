@@ -26,7 +26,13 @@ async function noPageOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 }
 
-async function newVersion(request: Parameters<typeof createChecklist>[0], origin: string, checklistId: string, latest: string, body: unknown) {
+async function newVersion(
+  request: Parameters<typeof createChecklist>[0],
+  origin: string,
+  checklistId: string,
+  latest: string,
+  body: unknown,
+) {
   const res = await request.post(`${origin}/api/v1/checklists/${checklistId}/versions`, {
     data: { expected_latest_version_id: latest, config: body },
   });
@@ -34,9 +40,16 @@ async function newVersion(request: Parameters<typeof createChecklist>[0], origin
   return (await res.json()) as { version_id: string };
 }
 
-test('paste dialog: explained errors, live preview, import through the real API, then launch', async ({ page, request }) => {
+test('paste dialog: explained errors, live preview, import through the real API, then launch', async ({
+  page,
+  request,
+}) => {
   const title = uid('Учебный чек-лист вставки');
-  await createChecklist(request, servers.complete, draft(title, [criterion('paste-greet', { title: 'Приветствие', weight: '100' })]));
+  await createChecklist(
+    request,
+    servers.complete,
+    draft(title, [criterion('paste-greet', { title: 'Приветствие', weight: '100' })]),
+  );
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto('/#/conversations');
   await page.getByRole('button', { name: 'Вставить диалог' }).click();
@@ -86,12 +99,20 @@ test('paste dialog: explained errors, live preview, import through the real API,
   await expect(dialog.getByRole('button', { name: 'Диалог импортирован' })).toBeDisabled();
 
   // The server stored exactly what the preview showed: order, roles, times, text.
-  const list = await (await request.get(`${servers.complete}/api/v1/conversations?q=${encodeURIComponent(externalId)}`)).json();
+  const list = await (
+    await request.get(`${servers.complete}/api/v1/conversations?q=${encodeURIComponent(externalId)}`)
+  ).json();
   expect(list.total).toBe(1);
   const stored = list.items[0].conversation;
   expect(stored.language).toBe('KZ');
   expect(stored.channel).toBe('voice_call');
-  expect(stored.messages.map((m: { speaker: string; timestamp_original: string; text: string }) => [m.speaker, m.timestamp_original, m.text])).toEqual([
+  expect(
+    stored.messages.map((m: { speaker: string; timestamp_original: string; text: string }) => [
+      m.speaker,
+      m.timestamp_original,
+      m.text,
+    ]),
+  ).toEqual([
     ['client', '00:02', 'Сәлеметсіз бе! Ақшаны қалай шығарамын?'],
     ['operator', '00:05', 'Добрый день! Меня зовут Анна.\nУточните: какой способ вывода вы выбрали?'],
     ['system', '', 'Оператор подключился.'],
@@ -103,7 +124,9 @@ test('paste dialog: explained errors, live preview, import through the real API,
   await page.screenshot({ path: path.join(shots, 'paste-imported-1366.png') });
   await result.getByRole('button', { name: 'Запустить пакет' }).click();
   await expect(page).toHaveURL(/#\/batches\//);
-  await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии', { timeout: 30_000 });
+  await expect(page.getByTestId('batch-progress')).toContainText('Все задания в финальном состоянии', {
+    timeout: 30_000,
+  });
   const evals = await (await request.get(`${servers.complete}/api/v1/evaluations?conversation_id=${stored.id}`)).json();
   expect(evals.total).toBe(1);
   await page.goto(`/#/evaluations/${evals.items[0].id}`);
@@ -111,10 +134,15 @@ test('paste dialog: explained errors, live preview, import through the real API,
   await expect(page.getByTestId('run-origin')).toContainText('Новый вызов оценщика');
 });
 
-test('paste dialog: an existing ID follows the standard revision rules and the narrow layout fits', async ({ page, request }) => {
+test('paste dialog: an existing ID follows the standard revision rules and the narrow layout fits', async ({
+  page,
+  request,
+}) => {
   const externalId = uid('ПОВТОР');
   await importViaApi(request, servers.complete, [
-    record(externalId, { messages: [{ speaker: 'client', text: 'Вопрос.', timestamp_original: '00:01' }] }),
+    record(externalId, {
+      messages: [{ speaker: 'client', text: 'Вопрос.', timestamp_original: '00:01' }],
+    }),
   ]);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/#/conversations');
@@ -124,7 +152,10 @@ test('paste dialog: an existing ID follows the standard revision rules and the n
   await dialog.getByLabel('Внешний ID разговора').fill(externalId);
   await dialog.getByLabel('Текст диалога').fill('[00:01] client: Вопрос.');
   await noPageOverflow(page);
-  await page.screenshot({ path: path.join(shots, 'paste-preview-390.png'), fullPage: true });
+  await page.screenshot({
+    path: path.join(shots, 'paste-preview-390.png'),
+    fullPage: true,
+  });
   await dialog.getByRole('button', { name: 'Импортировать диалог (1)' }).click();
   await expect(dialog.getByTestId('paste-result')).toContainText('новый не создан');
 
@@ -133,7 +164,9 @@ test('paste dialog: an existing ID follows the standard revision rules and the n
   await dialog.getByRole('button', { name: 'Импортировать диалог (1)' }).click();
   await expect(dialog.getByTestId('paste-result')).toContainText('сохранена новая версия');
   await expect(dialog.getByTestId('paste-result')).toContainText('Версия текста 2');
-  const list = await (await request.get(`${servers.complete}/api/v1/conversations?q=${encodeURIComponent(externalId)}`)).json();
+  const list = await (
+    await request.get(`${servers.complete}/api/v1/conversations?q=${encodeURIComponent(externalId)}`)
+  ).json();
   expect(list.total).toBe(1);
   expect(list.items[0].conversation.revision).toBe(2);
 
@@ -145,14 +178,29 @@ test('paste dialog: an existing ID follows the standard revision rules and the n
   await noPageOverflow(page);
 });
 
-test('comparison: weight-only reuse, rule/scale/added/removed changes, swap, "only changes" and evidence', async ({ page, request }) => {
+test('comparison: weight-only reuse, rule/scale/added/removed changes, swap, "only changes" and evidence', async ({
+  page,
+  request,
+}) => {
   const flag = criterion('cmp-risk', {
     title: 'Раскрытие данных',
     response_type: 'flag',
     weight: '0',
     choices: [
-      { id: 'no', label: 'Нет', raw_value: false, anchor: 'Нет нарушения', score_fraction: null },
-      { id: 'yes', label: 'Да', raw_value: true, anchor: 'Нарушение', score_fraction: null },
+      {
+        id: 'no',
+        label: 'Нет',
+        raw_value: false,
+        anchor: 'Нет нарушения',
+        score_fraction: null,
+      },
+      {
+        id: 'yes',
+        label: 'Да',
+        raw_value: true,
+        anchor: 'Нарушение',
+        score_fraction: null,
+      },
     ],
     flag_when_choice_ids: ['yes'],
   });
@@ -165,9 +213,15 @@ test('comparison: weight-only reuse, rule/scale/added/removed changes, swap, "on
   const first = (await runBatchApi(request, servers.complete, [cid], v1.version_id)).jobs[0].evaluation_id!;
 
   // v2: only weights change → reuse of the same raw answers, recalculated by the server.
-  const v2 = await newVersion(request, servers.complete, v1.checklist_id, v1.version_id,
-    draft('Сравнение v2', [{ ...greet, weight: '75' }, { ...close, weight: '25' }, old, flag]));
-  const reused = (await runBatchApi(request, servers.complete, [cid], v2.version_id, 'reuse_if_compatible')).jobs[0].evaluation_id!;
+  const v2 = await newVersion(
+    request,
+    servers.complete,
+    v1.checklist_id,
+    v1.version_id,
+    draft('Сравнение v2', [{ ...greet, weight: '75' }, { ...close, weight: '25' }, old, flag]),
+  );
+  const reused = (await runBatchApi(request, servers.complete, [cid], v2.version_id, 'reuse_if_compatible')).jobs[0]
+    .evaluation_id!;
   const reusedView = await (await request.get(`${servers.complete}/api/v1/evaluations/${reused}`)).json();
   expect(reusedView.reuse.reused_from_evaluation_id).toBe(first);
 
@@ -188,13 +242,35 @@ test('comparison: weight-only reuse, rule/scale/added/removed changes, swap, "on
   await expect(page.getByTestId('total-delta')).toContainText('±0,00');
 
   // v3: same IDs with a new definition and a re-meant first choice; one removed, one added.
-  const v3 = await newVersion(request, servers.complete, v1.checklist_id, v2.version_id,
+  const v3 = await newVersion(
+    request,
+    servers.complete,
+    v1.checklist_id,
+    v2.version_id,
     draft('Сравнение v3', [
-      { ...greet, weight: '75', definition: 'Новое определение: приветствие и имя оператора.' },
-      { ...close, weight: '25', choices: close.choices.map((c) => (c.id === 'yes' ? { ...c, label: 'Частично', anchor: 'Только прощание', score_fraction: '0.5' } : c)) },
+      {
+        ...greet,
+        weight: '75',
+        definition: 'Новое определение: приветствие и имя оператора.',
+      },
+      {
+        ...close,
+        weight: '25',
+        choices: close.choices.map((c) =>
+          c.id === 'yes'
+            ? {
+                ...c,
+                label: 'Частично',
+                anchor: 'Только прощание',
+                score_fraction: '0.5',
+              }
+            : c,
+        ),
+      },
       criterion('cmp-new', { title: 'Новое правило', weight: '10' }),
       flag,
-    ]));
+    ]),
+  );
   const third = (await runBatchApi(request, servers.complete, [cid], v3.version_id)).jobs[0].evaluation_id!;
   await page.goto(`/#/conversations/${cid}/compare?left=${reused}&right=${third}`);
   const kinds = async (id: string) =>
@@ -205,9 +281,14 @@ test('comparison: weight-only reuse, rule/scale/added/removed changes, swap, "on
   expect(await kinds('cmp-old')).toContain('removed');
   expect(await kinds('cmp-new')).toContain('added');
   expect(await kinds('cmp-risk')).toBe('');
-  await expect(page.getByTestId('rule-change').first()).toContainText('Новое определение: приветствие и имя оператора.');
+  await expect(page.getByTestId('rule-change').first()).toContainText(
+    'Новое определение: приветствие и имя оператора.',
+  );
   await expect(page.getByTestId('total-delta')).toContainText('−');
-  await page.screenshot({ path: path.join(shots, 'comparison-1366.png'), fullPage: true });
+  await page.screenshot({
+    path: path.join(shots, 'comparison-1366.png'),
+    fullPage: true,
+  });
 
   // "Only changes" hides the unchanged flag row only; state survives refresh.
   // The checkbox state lives in the URL: click, then wait for the navigation to apply it.
@@ -227,7 +308,10 @@ test('comparison: weight-only reuse, rule/scale/added/removed changes, swap, "on
   // Evidence opens the right evaluation, criterion and highlighted message range.
   await page.setViewportSize({ width: 390, height: 844 });
   await noPageOverflow(page);
-  await page.screenshot({ path: path.join(shots, 'comparison-390.png'), fullPage: true });
+  await page.screenshot({
+    path: path.join(shots, 'comparison-390.png'),
+    fullPage: true,
+  });
   await page.setViewportSize({ width: 1366, height: 768 });
   const greetLeft = page.locator('[data-testid="comparison-row"][data-criterion-id="cmp-greet"] td').nth(0);
   await greetLeft.getByTestId('cmp-evidence-link').first().click();
@@ -237,11 +321,18 @@ test('comparison: weight-only reuse, rule/scale/added/removed changes, swap, "on
   await expect(page.locator('.msg-highlight')).toHaveCount(3);
 });
 
-test('comparison: automatic vs effective after an appeal, and N/A → undetermined as a status change', async ({ page, request }) => {
-  const v = await createChecklist(request, servers.complete, draft(uid('Апелляция'), [
-    criterion('ap-greet', { title: 'Приветствие', weight: '50' }),
-    criterion('ap-close', { title: 'Завершение', weight: '50' }),
-  ]));
+test('comparison: automatic vs effective after an appeal, and N/A → undetermined as a status change', async ({
+  page,
+  request,
+}) => {
+  const v = await createChecklist(
+    request,
+    servers.complete,
+    draft(uid('Апелляция'), [
+      criterion('ap-greet', { title: 'Приветствие', weight: '50' }),
+      criterion('ap-close', { title: 'Завершение', weight: '50' }),
+    ]),
+  );
   const cid = (await importViaApi(request, servers.complete, [record(uid('АПЕЛЛЯЦИЯ'))])).items[0].conversation_id;
   const a = (await runBatchApi(request, servers.complete, [cid], v.version_id)).jobs[0].evaluation_id!;
   const b = (await runBatchApi(request, servers.complete, [cid], v.version_id)).jobs[0].evaluation_id!;
@@ -261,9 +352,18 @@ test('comparison: automatic vs effective after an appeal, and N/A → undetermin
   await expect(page.getByTestId('criterion-detail')).toContainText('Действующий ответ (решение проверяющего)');
 
   // Partial server: both automatic results are undetermined; a human N/A on the left.
-  const pv = await createChecklist(request, servers.partial, draft(uid('Неполная'), [
-    criterion('na-greet', { title: 'Приветствие', allow_na: true, na_condition: 'Клиент не писал', weight: '100' }),
-  ]));
+  const pv = await createChecklist(
+    request,
+    servers.partial,
+    draft(uid('Неполная'), [
+      criterion('na-greet', {
+        title: 'Приветствие',
+        allow_na: true,
+        na_condition: 'Клиент не писал',
+        weight: '100',
+      }),
+    ]),
+  );
   const pcid = (await importViaApi(request, servers.partial, [record(uid('НЕПОЛНАЯ'))])).items[0].conversation_id;
   const pa = (await runBatchApi(request, servers.partial, [pcid], pv.version_id)).jobs[0].evaluation_id!;
   const pb = (await runBatchApi(request, servers.partial, [pcid], pv.version_id)).jobs[0].evaluation_id!;
@@ -275,7 +375,10 @@ test('comparison: automatic vs effective after an appeal, and N/A → undetermin
   await expect(naRow.locator('td').nth(1).getByTestId('cmp-answer')).toHaveText('не определено');
   await expect(page.getByTestId('total-delta')).toContainText('Числовая разница не показывается');
   await expect(page.getByTestId('cmp-side-right')).toContainText('нет итога');
-  await page.screenshot({ path: path.join(shots, 'comparison-na-undetermined-1366.png'), fullPage: true });
+  await page.screenshot({
+    path: path.join(shots, 'comparison-na-undetermined-1366.png'),
+    fullPage: true,
+  });
 });
 
 test('run summary: new call vs reuse, known cost, tokens and the separate source run', async ({ page, request }) => {
@@ -298,14 +401,17 @@ test('run summary: new call vs reuse, known cost, tokens and the separate source
   });
   expect(order).toBe(true);
   await summary.scrollIntoViewIfNeeded();
-  await page.screenshot({ path: path.join(shots, 'run-summary-fresh-1366.png') });
+  await page.screenshot({
+    path: path.join(shots, 'run-summary-fresh-1366.png'),
+  });
   // All technical details are still there.
   await page.getByText('Детали запуска: версии, модели, стоимость').click();
   await expect(page.getByTestId('total-cost')).toContainText('0,75 USD');
   await expect(page.getByTestId('current-run').locator('tbody tr')).toHaveCount(2);
   await expect(page.getByTestId('run-details')).toContainText('Ключ переиспользования');
 
-  const reused = (await runBatchApi(request, audit, [cid], version.version_id, 'reuse_if_compatible')).jobs[0].evaluation_id!;
+  const reused = (await runBatchApi(request, audit, [cid], version.version_id, 'reuse_if_compatible')).jobs[0]
+    .evaluation_id!;
   await page.goto(`${audit}/#/evaluations/${reused}`);
   await expect(summary.getByTestId('run-origin')).toContainText('Переиспользован сохранённый результат');
   await expect(summary.getByTestId('run-calls')).toContainText('0 ·');
@@ -313,13 +419,21 @@ test('run summary: new call vs reuse, known cost, tokens and the separate source
   await expect(summary.getByTestId('run-source')).toContainText('0,75 USD');
   await expect(summary.getByTestId('run-source')).toContainText('не прибавляются');
   await summary.scrollIntoViewIfNeeded();
-  await page.screenshot({ path: path.join(shots, 'run-summary-reuse-1366.png') });
+  await page.screenshot({
+    path: path.join(shots, 'run-summary-reuse-1366.png'),
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await noPageOverflow(page);
-  await page.screenshot({ path: path.join(shots, 'run-summary-390.png'), fullPage: true });
+  await page.screenshot({
+    path: path.join(shots, 'run-summary-390.png'),
+    fullPage: true,
+  });
 });
 
-test('run summary: synthetic test call without reported usage or price stays unknown, not zero', async ({ page, request }) => {
+test('run summary: synthetic test call without reported usage or price stays unknown, not zero', async ({
+  page,
+  request,
+}) => {
   const version = await createChecklist(request, servers.complete, draft(uid('Без цены'), [criterion('nocost')]));
   const cid = (await importViaApi(request, servers.complete, [record(uid('БЕЗ-ЦЕНЫ'))])).items[0].conversation_id;
   const id = (await runBatchApi(request, servers.complete, [cid], version.version_id)).jobs[0].evaluation_id!;

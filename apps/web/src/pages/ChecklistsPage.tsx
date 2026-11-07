@@ -145,7 +145,10 @@ function ChecklistCard({ checklist, index }: { checklist: ChecklistSummary; inde
 
 export function ChecklistsPage() {
   const [importOpen, setImportOpen] = useState(false);
-  const list = useQuery({ queryKey: ['checklists'], queryFn: ({ signal }) => api.listChecklists(signal) });
+  const list = useQuery({
+    queryKey: ['checklists'],
+    queryFn: ({ signal }) => api.listChecklists(signal),
+  });
   return (
     <div className="page checklists-page checklist-design">
       <header className="page-heading">

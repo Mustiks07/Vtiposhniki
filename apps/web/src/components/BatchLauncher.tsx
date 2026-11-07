@@ -24,12 +24,7 @@ export function BatchLauncher(props: LaunchProps) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button
-        type="button"
-        className="primary"
-        disabled={!props.conversationIds.length}
-        onClick={() => setOpen(true)}
-      >
+      <button type="button" className="primary" disabled={!props.conversationIds.length} onClick={() => setOpen(true)}>
         <Icon name="play" />
         Оценить выбранные
         {props.conversationIds.length ? ` (${props.conversationIds.length})` : ''}
@@ -104,8 +99,7 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
   const keyRef = useRef<{ payload: string; key: string } | null>(null);
   function keyFor(body: CreateBatch): string {
     const serialized = JSON.stringify(body);
-    if (keyRef.current?.payload !== serialized)
-      keyRef.current = { payload: serialized, key: newIdempotencyKey() };
+    if (keyRef.current?.payload !== serialized) keyRef.current = { payload: serialized, key: newIdempotencyKey() };
     return keyRef.current.key;
   }
 
@@ -135,9 +129,7 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
         Выбрано разговоров: <strong data-testid="selected-count">{conversationIds.length}</strong>
       </p>
       {checklists.isPending || profiles.isPending ? <Loading /> : null}
-      {checklists.isError ? (
-        <ErrorPanel error={checklists.error} onRetry={() => checklists.refetch()} />
-      ) : null}
+      {checklists.isError ? <ErrorPanel error={checklists.error} onRetry={() => checklists.refetch()} /> : null}
       {profiles.isError ? <ErrorPanel error={profiles.error} onRetry={() => profiles.refetch()} /> : null}
       {checklists.data && checklists.data.items.length === 0 ? (
         <p className="notice">Нет чек-листов. Создайте чек-лист в разделе «Чек-листы».</p>
@@ -162,18 +154,15 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
         <select id={ids.version} value={versionId} onChange={(e) => setVersionId(e.target.value)}>
           {versions.data?.items.map((v, index) => (
             <option key={v.version_id} value={v.version_id}>
-              Версия {versions.data!.total - versions.data!.offset - index} · {serverTime(v.created_at)} · {v.criteria.length} критериев
+              Версия {versions.data!.total - versions.data!.offset - index} · {serverTime(v.created_at)} ·{' '}
+              {v.criteria.length} критериев
             </option>
           ))}
         </select>
         <label htmlFor={ids.profile}>Профиль оценщика</label>
         <select id={ids.profile} value={profileId} onChange={(e) => setProfileId(e.target.value)}>
           {profiles.data?.items.map((p) => (
-            <option
-              key={`${p.profile.id}-${p.profile.version}`}
-              value={p.profile.id}
-              disabled={!p.configured}
-            >
+            <option key={`${p.profile.id}-${p.profile.version}`} value={p.profile.id} disabled={!p.configured}>
               {profileLabel(p.profile)}
               {p.configured ? '' : ' · не настроен'}
               {p.preferred ? ' · по умолчанию' : ''}
@@ -186,13 +175,8 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
         <fieldset className="segmented">
           <legend>Режим</legend>
           <label>
-            <input
-              type="radio"
-              name="batch-mode"
-              checked={mode === 'fresh'}
-              onChange={() => setMode('fresh')}
-            />{' '}
-            Новый анализ
+            <input type="radio" name="batch-mode" checked={mode === 'fresh'} onChange={() => setMode('fresh')} /> Новый
+            анализ
             <small className="hint">Модель заново оценит разговор. Будет создан отдельный запуск.</small>
           </label>
           <label>
@@ -203,9 +187,7 @@ function LaunchForm({ conversationIds, initialChecklistId, initialVersionId }: L
               onChange={() => setMode('reuse_if_compatible')}
             />{' '}
             Использовать совместимую оценку
-            <small className="hint">
-              Сервер проверит версии и переиспользует результат, если он совместим.
-            </small>
+            <small className="hint">Сервер проверит версии и переиспользует результат, если он совместим.</small>
           </label>
         </fieldset>
         <div className="row">

@@ -1,7 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type FormEvent } from 'react';
 import { ApiError, api } from '../api/client';
-import type { Appeal, Criterion, CriterionProposal, Decision, DecisionRequest, EvaluationView, Message } from '../api/types';
+import type {
+  Appeal,
+  Criterion,
+  CriterionProposal,
+  Decision,
+  DecisionRequest,
+  EvaluationView,
+  Message,
+} from '../api/types';
 import { approxRu, decimalRu, serverTime, totalRu } from '../lib/format';
 import { reasonCodeLabel } from '../lib/labels';
 import { answerText } from './CriterionDetail';
@@ -14,7 +22,15 @@ function invalidateEvaluation(queryClient: ReturnType<typeof useQueryClient>, ev
   ]);
 }
 
-export function AppealForm({ evaluation, criterionId, onDone }: { evaluation: EvaluationView; criterionId: string; onDone?: () => void }) {
+export function AppealForm({
+  evaluation,
+  criterionId,
+  onDone,
+}: {
+  evaluation: EvaluationView;
+  criterionId: string;
+  onDone?: () => void;
+}) {
   const queryClient = useQueryClient();
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +84,9 @@ export function AppealForm({ evaluation, criterionId, onDone }: { evaluation: Ev
       </div>
       {mutation.isError ? (
         <ErrorPanel error={mutation.error} retryLabel="Отправить ещё раз" onRetry={() => mutation.mutate()}>
-          <p className="hint">Комментарий сохранён в форме. Если запрос мог дойти до сервера, проверьте очередь апелляций.</p>
+          <p className="hint">
+            Комментарий сохранён в форме. Если запрос мог дойти до сервера, проверьте очередь апелляций.
+          </p>
         </ErrorPanel>
       ) : null}
     </form>
@@ -126,7 +144,13 @@ export function DecisionForm({
   onDecided?: (decision: Decision) => void;
 }) {
   const queryClient = useQueryClient();
-  const ids = { reason: useId(), choice: useId(), rationale: useId(), start: useId(), end: useId() };
+  const ids = {
+    reason: useId(),
+    choice: useId(),
+    rationale: useId(),
+    start: useId(),
+    end: useId(),
+  };
   const [decision, setDecision] = useState<'confirmed' | 'changed'>('confirmed');
   const [reason, setReason] = useState('');
   const [choice, setChoice] = useState('');
@@ -154,7 +178,8 @@ export function DecisionForm({
       if (!choice) next.choice = 'Выберите новый ответ.';
       if (choice === '__na__' && !rationale.trim()) next.rationale = 'Для N/A укажите причину неприменимости.';
       if (choice && choice !== '__na__' && !rationale.trim()) next.rationale = 'Добавьте обоснование нового ответа.';
-      if ((start || end || evidenceRequired) && !(start && end)) next.range = 'Выберите первую и последнюю реплику основания.';
+      if ((start || end || evidenceRequired) && !(start && end))
+        next.range = 'Выберите первую и последнюю реплику основания.';
       if (start && end && messages.findIndex((m) => m.id === start) > messages.findIndex((m) => m.id === end))
         next.range = 'Начало диапазона должно быть не позже конца.';
     }
@@ -165,7 +190,9 @@ export function DecisionForm({
       expected_revision: expectedRevision,
       decision,
       replacement:
-        decision === 'changed' ? buildReplacement(criterion, choice, rationale, start && end ? { start, end } : null) : null,
+        decision === 'changed'
+          ? buildReplacement(criterion, choice, rationale, start && end ? { start, end } : null)
+          : null,
       reason,
     };
   }
@@ -186,9 +213,7 @@ export function DecisionForm({
   }
 
   if (mutation.isSuccess) {
-    return (
-      <p className="notice notice-ok">Решение сохранено (версия {mutation.data.revision}).</p>
-    );
+    return <p className="notice notice-ok">Решение сохранено (версия {mutation.data.revision}).</p>;
   }
 
   return (
@@ -196,11 +221,21 @@ export function DecisionForm({
       <fieldset className="segmented">
         <legend>Решение</legend>
         <label>
-          <input type="radio" name={`${appeal.id}-d`} checked={decision === 'confirmed'} onChange={() => setDecision('confirmed')} />{' '}
+          <input
+            type="radio"
+            name={`${appeal.id}-d`}
+            checked={decision === 'confirmed'}
+            onChange={() => setDecision('confirmed')}
+          />{' '}
           Подтвердить текущий ответ
         </label>
         <label>
-          <input type="radio" name={`${appeal.id}-d`} checked={decision === 'changed'} onChange={() => setDecision('changed')} />{' '}
+          <input
+            type="radio"
+            name={`${appeal.id}-d`}
+            checked={decision === 'changed'}
+            onChange={() => setDecision('changed')}
+          />{' '}
           Изменить ответ
         </label>
       </fieldset>
@@ -228,7 +263,9 @@ export function DecisionForm({
               {errors.choice}
             </p>
           ) : null}
-          <label htmlFor={ids.rationale}>{choice === '__na__' ? 'Причина неприменимости' : 'Обоснование нового ответа'}</label>
+          <label htmlFor={ids.rationale}>
+            {choice === '__na__' ? 'Причина неприменимости' : 'Обоснование нового ответа'}
+          </label>
           <textarea
             id={ids.rationale}
             rows={2}
@@ -243,29 +280,44 @@ export function DecisionForm({
             </p>
           ) : null}
           <fieldset aria-describedby={`${ids.start}-h ${errors.range ? `${ids.start}-e` : ''}`}>
-            <legend>Основание в разговоре{evidenceRequired ? ' (обязательно для этого критерия)' : ''}</legend>
+            <legend>
+              Основание в разговоре
+              {evidenceRequired ? ' (обязательно для этого критерия)' : ''}
+            </legend>
             <small id={`${ids.start}-h`} className="hint">
               Диапазон целых реплик, границы включительно.
             </small>
             <div className="grid-2">
               <div>
                 <label htmlFor={ids.start}>Первая реплика</label>
-                <select id={ids.start} value={start} onChange={(e) => setStart(e.target.value)} aria-invalid={errors.range ? true : undefined}>
+                <select
+                  id={ids.start}
+                  value={start}
+                  onChange={(e) => setStart(e.target.value)}
+                  aria-invalid={errors.range ? true : undefined}
+                >
                   <option value="">— выберите —</option>
                   {messages.map((m) => (
                     <option key={m.id} value={m.id}>
-                      №{m.source_index + 1}{m.timestamp_original ? ` · ${m.timestamp_original}` : ''} · {m.text.slice(0, 60)}
+                      №{m.source_index + 1}
+                      {m.timestamp_original ? ` · ${m.timestamp_original}` : ''} · {m.text.slice(0, 60)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label htmlFor={ids.end}>Последняя реплика</label>
-                <select id={ids.end} value={end} onChange={(e) => setEnd(e.target.value)} aria-invalid={errors.range ? true : undefined}>
+                <select
+                  id={ids.end}
+                  value={end}
+                  onChange={(e) => setEnd(e.target.value)}
+                  aria-invalid={errors.range ? true : undefined}
+                >
                   <option value="">— выберите —</option>
                   {messages.map((m) => (
                     <option key={m.id} value={m.id}>
-                      №{m.source_index + 1}{m.timestamp_original ? ` · ${m.timestamp_original}` : ''} · {m.text.slice(0, 60)}
+                      №{m.source_index + 1}
+                      {m.timestamp_original ? ` · ${m.timestamp_original}` : ''} · {m.text.slice(0, 60)}
                     </option>
                   ))}
                 </select>
@@ -295,8 +347,8 @@ export function DecisionForm({
       ) : null}
       {reloaded ? (
         <p className="notice" role="status">
-          Данные обновлены (версия {expectedRevision}). Проверьте актуальное состояние и отправьте решение повторно, если оно
-          всё ещё нужно.
+          Данные обновлены (версия {expectedRevision}). Проверьте актуальное состояние и отправьте решение повторно,
+          если оно всё ещё нужно.
         </p>
       ) : null}
       <div className="row">
@@ -308,19 +360,28 @@ export function DecisionForm({
         <div className="state state-error" role="alert" data-testid="decision-conflict">
           <p className="state-title">⚠ Решение не сохранено: данные изменились в другом окне</p>
           <p>
-            Другое решение уже принято или карточка обновилась. Ваш ввод сохранён. Обновите данные и решите, нужно ли повторное
-            действие.
+            Другое решение уже принято или карточка обновилась. Ваш ввод сохранён. Обновите данные и решите, нужно ли
+            повторное действие.
           </p>
           <button type="button" onClick={reload}>
             Обновить данные
           </button>
           {mutation.error instanceof ApiError && mutation.error.correlationId ? (
-            <details className="technical-details"><summary>Код для поддержки</summary><code>{mutation.error.correlationId}</code></details>
+            <details className="technical-details">
+              <summary>Код для поддержки</summary>
+              <code>{mutation.error.correlationId}</code>
+            </details>
           ) : null}
         </div>
       ) : mutation.isError ? (
-        <ErrorPanel error={mutation.error} retryLabel="Отправить ещё раз" onRetry={() => submit({ preventDefault() {} } as FormEvent)}>
-          <p className="hint">Ввод сохранён. При сетевой ошибке решение могло быть записано — обновите карточку перед повтором.</p>
+        <ErrorPanel
+          error={mutation.error}
+          retryLabel="Отправить ещё раз"
+          onRetry={() => submit({ preventDefault() {} } as FormEvent)}
+        >
+          <p className="hint">
+            Ввод сохранён. При сетевой ошибке решение могло быть записано — обновите карточку перед повтором.
+          </p>
         </ErrorPanel>
       ) : null}
     </form>
@@ -333,10 +394,13 @@ export function DecisionSavedNotice({ decision, onClose }: { decision: Decision 
   return (
     <div className="notice notice-ok" role="status" data-testid="decision-saved">
       <p>
-        Решение «{decision.decision === 'confirmed' ? 'подтвердить' : 'изменить'}» сохранено. Версия оценки {decision.revision}; итог обновлён с учётом решения.
+        Решение «{decision.decision === 'confirmed' ? 'подтвердить' : 'изменить'}» сохранено. Версия оценки{' '}
+        {decision.revision}; итог обновлён с учётом решения.
       </p>
       <div className="row">
-        <a href={`#/evaluations/${encodeURIComponent(decision.evaluation_id)}?criterion=${encodeURIComponent(decision.criterion_id)}`}>
+        <a
+          href={`#/evaluations/${encodeURIComponent(decision.evaluation_id)}?criterion=${encodeURIComponent(decision.criterion_id)}`}
+        >
           Открыть карточку
         </a>
         <button type="button" onClick={onClose}>
@@ -372,7 +436,10 @@ export function DecisionComparison({
         <li>
           <strong>Ответ оценщика:</strong> {answerText(criterion, automatic)}
           {autoC && criterion.response_type !== 'flag' ? (
-            <span className="muted" title={autoC.normalized_contribution ?? undefined}> · вклад {approxRu(autoC.normalized_contribution)}</span>
+            <span className="muted" title={autoC.normalized_contribution ?? undefined}>
+              {' '}
+              · вклад {approxRu(autoC.normalized_contribution)}
+            </span>
           ) : null}
         </li>
         {decisions.map((d) => (
@@ -396,11 +463,20 @@ export function DecisionComparison({
         <li>
           <strong>Действующий ответ:</strong> {answerText(criterion, effective)}
           {effC && criterion.response_type !== 'flag' ? (
-            <span className="muted" title={effC.normalized_contribution ?? undefined}> · вклад {approxRu(effC.normalized_contribution)}</span>
+            <span className="muted" title={effC.normalized_contribution ?? undefined}>
+              {' '}
+              · вклад {approxRu(effC.normalized_contribution)}
+            </span>
           ) : null}
           <div>
-            Итог AI: {evaluation.automatic_score.total_score === null ? 'нет итога' : totalRu(evaluation.automatic_score.total_score)} →
-            после пересмотра: {evaluation.effective_score.total_score === null ? 'нет итога' : totalRu(evaluation.effective_score.total_score)}
+            Итог AI:{' '}
+            {evaluation.automatic_score.total_score === null
+              ? 'нет итога'
+              : totalRu(evaluation.automatic_score.total_score)}{' '}
+            → после пересмотра:{' '}
+            {evaluation.effective_score.total_score === null
+              ? 'нет итога'
+              : totalRu(evaluation.effective_score.total_score)}
           </div>
         </li>
       </ol>

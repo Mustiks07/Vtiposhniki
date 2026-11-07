@@ -1,5 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Channel, ImportRecord, ImportResult, JSONImport, Language } from '../api/types';
@@ -34,24 +44,36 @@ export function parseImportJson(text: string): { ok: true; body: JSONImport } | 
     return { ok: false, error: 'Файл не является корректным JSON.' };
   }
   if (Array.isArray(value)) {
-    return { ok: true, body: { schema_version: '1.0', source: 'json', records: value as JSONImport['records'] } };
+    return {
+      ok: true,
+      body: {
+        schema_version: '1.0',
+        source: 'json',
+        records: value as JSONImport['records'],
+      },
+    };
   }
   if (typeof value === 'object' && value !== null && Array.isArray((value as { records?: unknown }).records)) {
     const obj = value as Partial<JSONImport>;
     if (obj.source !== undefined && obj.source !== 'json') {
       return { ok: false, error: 'Поле source должно быть "json".' };
     }
-    return { ok: true, body: { ...(obj as JSONImport), schema_version: '1.0', source: 'json' } };
+    return {
+      ok: true,
+      body: { ...(obj as JSONImport), schema_version: '1.0', source: 'json' },
+    };
   }
-  return { ok: false, error: 'Ожидается объект с массивом records (формат JSONImport v1) или массив записей.' };
+  return {
+    ok: false,
+    error: 'Ожидается объект с массивом records (формат JSONImport v1) или массив записей.',
+  };
 }
 
 function ImportResultView({ result }: { result: ImportResult }) {
   return (
     <div className="notice notice-ok" role="status">
       <p>
-        Импорт завершён: получено записей — {result.received_count}, объединено повторов —{' '}
-        {result.deduplicated_count}.
+        Импорт завершён: получено записей — {result.received_count}, объединено повторов — {result.deduplicated_count}.
       </p>
       <ul>
         {result.items.map((item) => (
@@ -168,7 +190,11 @@ function ImportForm({ mode }: { mode: 'json' | 'organizer' }) {
         setLocalError('Укажите номер группы организаторов.');
         return;
       }
-      mutation.mutate({ schema_version: '1.0', source: 'organizer_api', group_id: groupId.trim() });
+      mutation.mutate({
+        schema_version: '1.0',
+        source: 'organizer_api',
+        group_id: groupId.trim(),
+      });
       return;
     }
     const parsed = parseImportJson(jsonText);
@@ -266,7 +292,18 @@ function usePasteDraftState() {
   const [channel, setChannel] = useState<Channel>('agent_chat');
   const [externalId, setExternalId] = useState(() => newPastedExternalId());
   const [imported, setImported] = useState<Imported | null>(null);
-  return { text, setText, language, setLanguage, channel, setChannel, externalId, setExternalId, imported, setImported };
+  return {
+    text,
+    setText,
+    language,
+    setLanguage,
+    channel,
+    setChannel,
+    externalId,
+    setExternalId,
+    imported,
+    setImported,
+  };
 }
 
 const PasteDraftContext = createContext<ReturnType<typeof usePasteDraftState> | null>(null);
@@ -295,7 +332,18 @@ function PasteDialogForm({ seed = null }: { seed?: string | null }) {
   };
   const draft = useContext(PasteDraftContext);
   if (!draft) throw new Error('PasteDraftProvider is required');
-  const { text, setText, language, setLanguage, channel, setChannel, externalId, setExternalId, imported, setImported } = draft;
+  const {
+    text,
+    setText,
+    language,
+    setLanguage,
+    channel,
+    setChannel,
+    externalId,
+    setExternalId,
+    imported,
+    setImported,
+  } = draft;
   const [seedNote, setSeedNote] = useState<string | null>(null);
   const appliedSeed = useRef<string | null>(null);
   // A seed never overwrites a draft the user already typed.
@@ -306,7 +354,9 @@ function PasteDialogForm({ seed = null }: { seed?: string | null }) {
       setSeedNote('В поле уже есть ваш текст — пример не перенесён.');
       return;
     }
-    setSeedNote('Текст учебного примера перенесён для редактирования. Импорт и оценка выполняются только по вашей команде.');
+    setSeedNote(
+      'Текст учебного примера перенесён для редактирования. Импорт и оценка выполняются только по вашей команде.',
+    );
     setText(seed);
   }, [seed, text, setText]);
   const [touched, setTouched] = useState(false);
@@ -322,7 +372,11 @@ function PasteDialogForm({ seed = null }: { seed?: string | null }) {
   const record: ImportRecord | null =
     parsed.errors.length || idProblem
       ? null
-      : toImportRecord(parsed.messages, { externalId: externalId.trim(), language, channel });
+      : toImportRecord(parsed.messages, {
+          externalId: externalId.trim(),
+          language,
+          channel,
+        });
   const serialized = record ? JSON.stringify(record) : null;
   const sameAsImported = imported !== null && serialized === imported.sent;
   const editedAfterImport =
@@ -332,12 +386,23 @@ function PasteDialogForm({ seed = null }: { seed?: string | null }) {
   const resultRef = useRef<HTMLElement>(null);
   const mutation = useMutation({
     mutationFn: (body: { record: ImportRecord; sent: string }) =>
-      api.importConversations({ schema_version: '1.0', source: 'json', records: [body.record] }),
+      api.importConversations({
+        schema_version: '1.0',
+        source: 'json',
+        records: [body.record],
+      }),
     onSuccess: (result, body) => {
-      setImported({ sent: body.sent, externalId: body.record.external_id, result });
+      setImported({
+        sent: body.sent,
+        externalId: body.record.external_id,
+        result,
+      });
       // Bring the outcome and the next step (launch) into view; focus for screen readers.
       requestAnimationFrame(() => {
-        resultRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        resultRef.current?.scrollIntoView({
+          block: 'start',
+          behavior: 'smooth',
+        });
         resultRef.current?.focus({ preventScroll: true });
       });
       void queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -436,8 +501,8 @@ function PasteDialogForm({ seed = null }: { seed?: string | null }) {
             {SUPPORTED_ROLES_TEXT}.
           </p>
           <p>
-            Строка с отступом (пробел или Tab) продолжает предыдущую реплику с переводом строки. Двоеточия внутри
-            текста сохраняются. Без времени реплика сохраняется без метки, а не как 00:00.
+            Строка с отступом (пробел или Tab) продолжает предыдущую реплику с переводом строки. Двоеточия внутри текста
+            сохраняются. Без времени реплика сохраняется без метки, а не как 00:00.
           </p>
           <details>
             <summary>Пример</summary>
@@ -466,8 +531,8 @@ function PasteDialogForm({ seed = null }: { seed?: string | null }) {
 
         {editedAfterImport ? (
           <p className="notice notice-warn" data-testid="paste-edited">
-            Текст изменён после импорта. Повтор сохранит новую версию разговора. Чтобы
-            создать отдельный разговор, откройте «Номер источника» и нажмите «Новый ID».
+            Текст изменён после импорта. Повтор сохранит новую версию разговора. Чтобы создать отдельный разговор,
+            откройте «Номер источника» и нажмите «Новый ID».
           </p>
         ) : null}
 
@@ -491,14 +556,10 @@ function PasteDialogForm({ seed = null }: { seed?: string | null }) {
           ) : null}
         </div>
         {mutation.isError ? (
-          <ErrorPanel
-            error={mutation.error}
-            onRetry={record ? send : undefined}
-            retryLabel="Повторить с тем же ID"
-          >
+          <ErrorPanel error={mutation.error} onRetry={record ? send : undefined} retryLabel="Повторить с тем же ID">
             <p className="hint">
-              Текст сохранён в поле. Повтор отправит ту же запись с тем же ID: если сервер уже сохранил её,
-              второй разговор не появится.
+              Текст сохранён в поле. Повтор отправит ту же запись с тем же ID: если сервер уже сохранил её, второй
+              разговор не появится.
             </p>
           </ErrorPanel>
         ) : null}
@@ -546,8 +607,8 @@ function PasteDialogForm({ seed = null }: { seed?: string | null }) {
         >
           <div className="notice notice-ok" role="status">
             <p id={`${ids.text}-done`}>
-              <strong>Готово.</strong> {pasteDisposition[item.disposition] ?? item.disposition} Версия текста {item.revision}, сообщений:{' '}
-              {JSON.parse(imported.sent).messages.length}.
+              <strong>Готово.</strong> {pasteDisposition[item.disposition] ?? item.disposition} Версия текста{' '}
+              {item.revision}, сообщений: {JSON.parse(imported.sent).messages.length}.
             </p>
             <p>
               <Link to={`/conversations/${encodeURIComponent(item.conversation_id)}?revision=${item.revision}`}>

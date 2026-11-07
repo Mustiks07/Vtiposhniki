@@ -41,7 +41,13 @@ export function rawStepText(criterion: Criterion, choiceId: string | null): stri
   return rawValueText(chosen.raw_value);
 }
 
-export function ContributionLine({ criterion, contribution }: { criterion: Criterion; contribution: ScoreContribution | undefined }) {
+export function ContributionLine({
+  criterion,
+  contribution,
+}: {
+  criterion: Criterion;
+  contribution: ScoreContribution | undefined;
+}) {
   if (criterion.response_type === 'flag') {
     return <p className="hint">Флаг: вес 0, в итог не входит.</p>;
   }
@@ -65,7 +71,9 @@ export function ContributionLine({ criterion, contribution }: { criterion: Crite
       </dd>
       <dt>Нормализованный вклад в общий итог</dt>
       <dd data-testid="normalized" title={contribution.normalized_contribution ?? undefined}>
-        {contribution.normalized_contribution === null ? '—' : `${approxRu(contribution.normalized_contribution)} п. из 100`}
+        {contribution.normalized_contribution === null
+          ? '—'
+          : `${approxRu(contribution.normalized_contribution)} п. из 100`}
       </dd>
     </dl>
   );
@@ -77,7 +85,10 @@ function SourceView({ chunkId, fragments }: { chunkId: string; fragments: Source
     return (
       <div className="notice" data-testid="source-missing">
         Фрагмент источника не найден среди сохранённых в карточке. Текст не подставляется.
-        <details><summary>Номер фрагмента</summary><code>{chunkId}</code></details>
+        <details>
+          <summary>Номер фрагмента</summary>
+          <code>{chunkId}</code>
+        </details>
       </div>
     );
   }
@@ -131,7 +142,12 @@ export function EvidenceList({
           const chunk = ev.source_chunk_id;
           return (
             <li key={i} data-testid="evidence" data-kind="source">
-              <button type="button" className="link" aria-expanded={openSource === chunk} onClick={() => onToggleSource(chunk)}>
+              <button
+                type="button"
+                className="link"
+                aria-expanded={openSource === chunk}
+                onClick={() => onToggleSource(chunk)}
+              >
                 {fragments.find((f) => f.chunk.chunk_id === chunk)?.source.title ?? 'Открыть источник'}
               </button>{' '}
               <span className="muted">({relationLabel[ev.relation]})</span> — {ev.explanation}
@@ -140,7 +156,10 @@ export function EvidenceList({
           );
         }
         const ids = evidenceMessageIds(ev, messages);
-        const label = ev.kind === 'range' ? `Реплики ${evidenceRefText(ev, messages)} (включительно)` : `Реплика ${evidenceRefText(ev, messages)}`;
+        const label =
+          ev.kind === 'range'
+            ? `Реплики ${evidenceRefText(ev, messages)} (включительно)`
+            : `Реплика ${evidenceRefText(ev, messages)}`;
         return (
           <li key={i} data-testid="evidence" data-kind={ev.kind}>
             {ids.length ? (
@@ -155,7 +174,10 @@ export function EvidenceList({
               <blockquote className="quote">
                 {ids.map((id) => (
                   <span key={id} className="quote-line">
-                    <span className="msg-id" title={id}>№{byId.get(id)!.source_index + 1}</span> {byId.get(id)?.text}
+                    <span className="msg-id" title={id}>
+                      №{byId.get(id)!.source_index + 1}
+                    </span>{' '}
+                    {byId.get(id)?.text}
                   </span>
                 ))}
               </blockquote>
@@ -195,11 +217,15 @@ export function ProposalView({
       {proposal.applicability === 'not_applicable' ? (
         <p className="notice">
           <strong>Причина N/A:</strong> {proposal.rationale}
-          {criterion.na_condition ? <span className="muted"> (условие чек-листа: {criterion.na_condition})</span> : null}
+          {criterion.na_condition ? (
+            <span className="muted"> (условие чек-листа: {criterion.na_condition})</span>
+          ) : null}
         </p>
       ) : null}
       {proposal.applicability === 'undetermined' ? (
-        <p className="notice notice-warn">Ответ не определён: данных недостаточно для вывода. Это не N/A и не 0 баллов.</p>
+        <p className="notice notice-warn">
+          Ответ не определён: данных недостаточно для вывода. Это не N/A и не 0 баллов.
+        </p>
       ) : null}
       <h4>Обоснование</h4>
       <p className="rationale">{proposal.rationale}</p>
@@ -261,7 +287,11 @@ export function ScaleTable({ criterion, selected }: { criterion: Criterion; sele
         </thead>
         <tbody>
           {criterion.choices.map((c) => (
-            <tr key={c.id} className={c.id === selected ? 'row-selected' : undefined} aria-current={c.id === selected ? 'true' : undefined}>
+            <tr
+              key={c.id}
+              className={c.id === selected ? 'row-selected' : undefined}
+              aria-current={c.id === selected ? 'true' : undefined}
+            >
               <td>
                 {c.id === selected ? <span aria-hidden="true">▸ </span> : null}
                 {c.label}
@@ -282,7 +312,8 @@ export function ReviewNote({ review }: { review: ReviewRecordT | undefined }) {
   if (!review) return null;
   const text: Record<string, string> = {
     agreed: 'Независимый reviewer согласился с оценкой.',
-    conflicted: 'Независимый reviewer пришёл к другому выводу. По политике v1 сохранён исходный ответ; конфликт требует внимания проверяющего.',
+    conflicted:
+      'Независимый reviewer пришёл к другому выводу. По политике v1 сохранён исходный ответ; конфликт требует внимания проверяющего.',
     skipped: 'Перепроверка пропущена.',
     failed: 'Перепроверка не завершилась; сохранён исходный допустимый ответ.',
   };

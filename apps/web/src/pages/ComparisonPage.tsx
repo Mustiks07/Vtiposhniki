@@ -81,7 +81,15 @@ function SideResult({
         <strong data-testid="cmp-answer">{answerText(c, p)}</strong>
         {step ? <span className="muted"> · ступень {step}</span> : null}
         {p ? (
-          <Badge status={p.applicability === 'undetermined' ? 'undetermined' : p.applicability === 'applicable' ? 'complete' : 'unevaluated'}>
+          <Badge
+            status={
+              p.applicability === 'undetermined'
+                ? 'undetermined'
+                : p.applicability === 'applicable'
+                  ? 'complete'
+                  : 'unevaluated'
+            }
+          >
             {applicabilityLabel[p.applicability]}
           </Badge>
         ) : null}
@@ -160,11 +168,15 @@ function RuleChange({ row }: { row: ComparisonRow }) {
   const changedChoices = choiceIds.filter((id) => {
     const x = a.choices.find((c) => c.id === id);
     const y = b.choices.find((c) => c.id === id);
-    return JSON.stringify([x?.label, x?.raw_value, x?.anchor, x?.score_fraction]) !==
-      JSON.stringify([y?.label, y?.raw_value, y?.anchor, y?.score_fraction]);
+    return (
+      JSON.stringify([x?.label, x?.raw_value, x?.anchor, x?.score_fraction]) !==
+      JSON.stringify([y?.label, y?.raw_value, y?.anchor, y?.score_fraction])
+    );
   });
   const choiceText = (c: Criterion['choices'][number] | undefined) =>
-    c ? `${c.label} · значение ${String(c.raw_value)} · доля ${c.score_fraction ?? '—'}${c.anchor ? ` · ${c.anchor}` : ''}` : 'нет';
+    c
+      ? `${c.label} · значение ${String(c.raw_value)} · доля ${c.score_fraction ?? '—'}${c.anchor ? ` · ${c.anchor}` : ''}`
+      : 'нет';
   return (
     <div className="rule-changes" data-testid="rule-change">
       <p className="muted">Изменено в правиле: {row.fields.map(fieldLabel).join(', ')}.</p>
@@ -181,7 +193,8 @@ function RuleChange({ row }: { row: ComparisonRow }) {
       {changedChoices.map((id) => (
         <div className="rule-change" key={id}>
           <span className="rule-change-label">
-            Вариант «{b.choices.find((c) => c.id === id)?.label ?? a.choices.find((c) => c.id === id)?.label ?? 'Без названия'}»
+            Вариант «
+            {b.choices.find((c) => c.id === id)?.label ?? a.choices.find((c) => c.id === id)?.label ?? 'Без названия'}»
           </span>
           <del>{choiceText(a.choices.find((c) => c.id === id))}</del>
           <ins>{choiceText(b.choices.find((c) => c.id === id))}</ins>
@@ -215,7 +228,11 @@ function TotalDelta({ left, right }: { left: ScoreSummary; right: ScoreSummary }
 
 export function ComparisonPage() {
   const { id = '' } = useParams();
-  const profiles = useQuery({ queryKey: ['profiles'], queryFn: ({ signal }) => api.listProfiles(signal), staleTime: 60_000 });
+  const profiles = useQuery({
+    queryKey: ['profiles'],
+    queryFn: ({ signal }) => api.listProfiles(signal),
+    staleTime: 60_000,
+  });
   const [params, setParams] = useSearchParams();
   const scope: Scope = params.get('scope') === 'effective' ? 'effective' : 'automatic';
   const onlyChanges = params.get('changes') === '1';
@@ -272,9 +289,7 @@ export function ComparisonPage() {
   if (missing.length)
     return (
       <Empty title="Выбранная оценка не найдена у этого разговора">
-        <p>
-          Одна из выбранных оценок недоступна. Выберите сохранённые оценки из истории разговора.
-        </p>
+        <p>Одна из выбранных оценок недоступна. Выберите сохранённые оценки из истории разговора.</p>
         <Link to={`/conversations/${encodeURIComponent(id)}/compare`}>Открыть сравнение без выбора</Link>
       </Empty>
     );
@@ -322,7 +337,14 @@ export function ComparisonPage() {
             <select value={(side === 'left' ? left : right).id} onChange={(e) => update({ [side]: e.target.value })}>
               {items.map((e, index) => (
                 <option key={e.id} value={e.id}>
-                  Запуск {items.length - index} · {serverTime(e.created_at)} · {(() => { const p = profiles.data?.items.find((p) => p.profile.id === e.profile_id && p.profile.version === e.profile_version); return p ? profileLabel(p.profile) : 'Сохранённая оценка'; })()} · текст v{e.conversation_revision}
+                  Запуск {items.length - index} · {serverTime(e.created_at)} ·{' '}
+                  {(() => {
+                    const p = profiles.data?.items.find(
+                      (p) => p.profile.id === e.profile_id && p.profile.version === e.profile_version,
+                    );
+                    return p ? profileLabel(p.profile) : 'Сохранённая оценка';
+                  })()}{' '}
+                  · текст v{e.conversation_revision}
                 </option>
               ))}
             </select>
@@ -356,8 +378,8 @@ export function ComparisonPage() {
       ) : null}
       {!compatible ? (
         <p className="notice notice-warn">
-          Выберите разные оценки одного и того же текста. Изменённый разговор нельзя сравнивать как изменение
-          оценки прежнего текста.
+          Выберите разные оценки одного и того же текста. Изменённый разговор нельзя сравнивать как изменение оценки
+          прежнего текста.
         </p>
       ) : (
         <>
@@ -379,10 +401,24 @@ export function ComparisonPage() {
                 <div className="comparison-score">
                   <TotalValue score={score} />
                 </div>
-                {score.flags.length ? <Badge status={score.flags.some((f) => f.detected) ? 'failed' : score.flags.some((f) => f.detected === null) ? 'partial' : 'complete'}>{score.flags.some((f) => f.detected) ? 'Обнаружено нарушение' : score.flags.some((f) => f.detected === null) ? 'Нарушения: не определено' : 'Нарушений не обнаружено'}</Badge> : null}
-                {score.status !== 'complete' ? (
-                  <p className="hint">{scoreStatusExplanation[score.status]}</p>
+                {score.flags.length ? (
+                  <Badge
+                    status={
+                      score.flags.some((f) => f.detected)
+                        ? 'failed'
+                        : score.flags.some((f) => f.detected === null)
+                          ? 'partial'
+                          : 'complete'
+                    }
+                  >
+                    {score.flags.some((f) => f.detected)
+                      ? 'Обнаружено нарушение'
+                      : score.flags.some((f) => f.detected === null)
+                        ? 'Нарушения: не определено'
+                        : 'Нарушений не обнаружено'}
+                  </Badge>
                 ) : null}
+                {score.status !== 'complete' ? <p className="hint">{scoreStatusExplanation[score.status]}</p> : null}
                 <dl className="cmp-side-meta">
                   <dt>Чек-лист</dt>
                   <dd>
@@ -450,10 +486,10 @@ export function ComparisonPage() {
                   </li>
                 </ul>
                 <p className="hint">
-                  Группы пересекаются: один критерий может одновременно получить новый вес и новый вклад. Вклад
-                  меняется и тогда, когда изменились другие критерии — у итога общий знаменатель. Все баллы и вклады
-                  рассчитаны сервером для закреплённой версии каждой стороны; одинаковый ID варианта при изменённой
-                  шкале не считается тем же ответом.
+                  Группы пересекаются: один критерий может одновременно получить новый вес и новый вклад. Вклад меняется
+                  и тогда, когда изменились другие критерии — у итога общий знаменатель. Все баллы и вклады рассчитаны
+                  сервером для закреплённой версии каждой стороны; одинаковый ID варианта при изменённой шкале не
+                  считается тем же ответом.
                 </p>
               </section>
               {shown.length === 0 ? (
@@ -521,4 +557,3 @@ export function ComparisonPage() {
     </div>
   );
 }
-

@@ -1,5 +1,7 @@
 /* Explanation and tutorial use the shared Graphite / Platinum / Cobalt system. */
-.why { padding: 24px; }
+.why {
+  padding: 24px;
+}
 .why-heading {
   display: flex;
   flex-wrap: wrap;
@@ -127,8 +129,14 @@
   background: var(--panel);
   font-weight: 600;
 }
-.why .why-primary:hover { border-color: var(--accent); background: var(--info-bg); }
-.why-actions > .link, .why-actions > a { font-size: 12px; }
+.why .why-primary:hover {
+  border-color: var(--accent);
+  background: var(--info-bg);
+}
+.why-actions > .link,
+.why-actions > a {
+  font-size: 12px;
+}
 .why-primary small {
   font-weight: 400;
   font-size: 11.5px;
@@ -243,11 +251,15 @@
 .tutorial-score .total {
   font-size: 48px;
   font-weight: 710;
-  letter-spacing: -.05em;
+  letter-spacing: -0.05em;
   color: var(--ok);
 }
-.tutorial-score .total-unit { font-size: 16px; }
-.tutorial-score .hint { flex-basis: 100%; }
+.tutorial-score .total-unit {
+  font-size: 16px;
+}
+.tutorial-score .hint {
+  flex-basis: 100%;
+}
 @media (max-width: 900px) {
   .tutorial-layout {
     grid-template-columns: 1fr;
@@ -257,11 +269,28 @@
   }
 }
 @media (max-width: 700px) {
-  .why { padding: 18px; }
-  .why-item, .why-compact, .why-critical-item { padding: 14px; }
-  .why-critical { padding: 12px; }
-  .tutorial-steps { gap: 8px; }
-  .tutorial-steps button { padding: 12px; font-size: 12px; }
-  .tutorial-banner { padding: 14px; }
-  .tutorial-nav > * { flex: 1 1 140px; }
+  .why {
+    padding: 18px;
+  }
+  .why-item,
+  .why-compact,
+  .why-critical-item {
+    padding: 14px;
+  }
+  .why-critical {
+    padding: 12px;
+  }
+  .tutorial-steps {
+    gap: 8px;
+  }
+  .tutorial-steps button {
+    padding: 12px;
+    font-size: 12px;
+  }
+  .tutorial-banner {
+    padding: 14px;
+  }
+  .tutorial-nav > * {
+    flex: 1 1 140px;
+  }
 }

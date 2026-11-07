@@ -15,15 +15,27 @@ import { EvaluationPage } from './pages/EvaluationPage';
 import { NotFound } from './pages/NotFound';
 
 const ComparisonPage = lazy(() =>
-  import('./pages/ComparisonPage').then((module) => ({ default: module.ComparisonPage })),
+  import('./pages/ComparisonPage').then((module) => ({
+    default: module.ComparisonPage,
+  })),
 );
-const TutorialPage = lazy(() => import('./pages/TutorialPage').then((module) => ({ default: module.TutorialPage })));
+const TutorialPage = lazy(() =>
+  import('./pages/TutorialPage').then((module) => ({
+    default: module.TutorialPage,
+  })),
+);
 const ChecklistEditorPage = lazy(() =>
-  import('./pages/ChecklistEditorPage').then((module) => ({ default: module.ChecklistEditorPage })),
+  import('./pages/ChecklistEditorPage').then((module) => ({
+    default: module.ChecklistEditorPage,
+  })),
 );
 
 function HealthLine() {
-  const health = useQuery({ queryKey: ['health'], queryFn: ({ signal }) => api.health(signal), retry: 0 });
+  const health = useQuery({
+    queryKey: ['health'],
+    queryFn: ({ signal }) => api.health(signal),
+    retry: 0,
+  });
   if (health.isError) {
     return (
       <span className="health health-bad" role="status">
@@ -74,7 +86,12 @@ function Shell() {
           </div>
         </div>
         <nav aria-label="Основные разделы">
-          <NavLink to="/conversations" className={({ isActive }) => isActive || /^\/(evaluations|batches)\//.test(location.pathname) ? 'active' : undefined}>
+          <NavLink
+            to="/conversations"
+            className={({ isActive }) =>
+              isActive || /^\/(evaluations|batches|example)\//.test(location.pathname) ? 'active' : undefined
+            }
+          >
             <Icon name="chat" />
             Диалоги
           </NavLink>
@@ -93,7 +110,9 @@ function Shell() {
       </aside>
       <div className="workspace">
         <main id="main" ref={mainRef} tabIndex={-1}>
-          <PasteDraftProvider><Outlet /></PasteDraftProvider>
+          <PasteDraftProvider>
+            <Outlet />
+          </PasteDraftProvider>
         </main>
       </div>
     </div>
@@ -145,7 +164,10 @@ export const routes = [
           </Suspense>
         ),
       },
-      { path: 'checklists/version/:versionId', element: <ChecklistVersionRedirect /> },
+      {
+        path: 'checklists/version/:versionId',
+        element: <ChecklistVersionRedirect />,
+      },
       { path: 'checklists/:id', element: <ChecklistPage /> },
       { path: 'appeals', element: <AppealsPage /> },
       { path: '*', element: <NotFound /> },

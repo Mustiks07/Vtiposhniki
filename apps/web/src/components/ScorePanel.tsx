@@ -43,30 +43,34 @@ function ScoreBlock({
   );
 }
 
-function FlagList({ flags, criterionTitle, scope }: {
-  flags: ScoreSummary["flags"];
+function FlagList({
+  flags,
+  criterionTitle,
+  scope,
+}: {
+  flags: ScoreSummary['flags'];
   criterionTitle: Map<string, string>;
-  scope: "automatic" | "effective";
+  scope: 'automatic' | 'effective';
 }) {
   return flags.length ? (
-        <ul className="flags" aria-label="Флаги грубых нарушений">
-          {flags.map((f) => (
-            <li key={f.criterion_id} data-testid="flag" data-detected={String(f.detected)}>
-              <span className={`flag-icon ${f.detected ? 'flag-on' : ''}`} aria-hidden="true">
-                {f.detected ? '⚑' : '⚐'}
-              </span>{' '}
-              {criterionTitle.get(f.criterion_id) ?? 'Нарушение'}:{' '}
-              <strong>
-                {f.detected === true
-                  ? 'нарушение обнаружено'
-                  : f.detected === false
-                    ? 'нарушение не обнаружено'
-                    : 'не определено'}
-              </strong>
-              <span className="visually-hidden"> · {scope === 'automatic' ? 'оценка AI' : 'после пересмотра'}</span>
-            </li>
-          ))}
-        </ul>
+    <ul className="flags" aria-label="Флаги грубых нарушений">
+      {flags.map((f) => (
+        <li key={f.criterion_id} data-testid="flag" data-detected={String(f.detected)}>
+          <span className={`flag-icon ${f.detected ? 'flag-on' : ''}`} aria-hidden="true">
+            {f.detected ? '⚑' : '⚐'}
+          </span>{' '}
+          {criterionTitle.get(f.criterion_id) ?? 'Нарушение'}:{' '}
+          <strong>
+            {f.detected === true
+              ? 'нарушение обнаружено'
+              : f.detected === false
+                ? 'нарушение не обнаружено'
+                : 'не определено'}
+          </strong>
+          <span className="visually-hidden"> · {scope === 'automatic' ? 'оценка AI' : 'после пересмотра'}</span>
+        </li>
+      ))}
+    </ul>
   ) : null;
 }
 
@@ -136,63 +140,76 @@ export function ScorePanel({
         />
       </div>
       <FlagList flags={displayed.flags} criterionTitle={criterionTitle} scope={scope} />
-      <details className="score-breakdown"><summary>Разделы чек-листа и состав итога</summary>
-      {displayed.contributions.length ? (
-        <div className="composition" aria-label="Состав итога: вес и набранная доля каждого критерия">
-          {displayed.contributions
-            .filter((c) => Number(c.original_weight) > 0)
-            .map((c) => (
-              <button
-                type="button"
-                key={c.criterion_id}
-                className={`composition-part composition-${c.applicability}`}
-                style={{ flexGrow: Number(c.original_weight) }}
-                onClick={() => onCriterion?.(c.criterion_id)}
-                title={`${criterionTitle.get(c.criterion_id) ?? c.criterion_id}: ${c.applicability === 'applicable' ? `${decimalRu(c.earned_weight)} / ${decimalRu(c.original_weight)}` : c.applicability === 'not_applicable' ? 'N/A · исключён из итога' : 'Не определено'}`}
-                aria-label={`Состав итога: ${criterionTitle.get(c.criterion_id) ?? c.criterion_id}`}
-              >
-                <span style={{ width: `${Number(c.score_fraction ?? 0) * 100}%` }} />
-              </button>
-            ))}
-        </div>
-      ) : null}
-      <p className="composition-legend">
-        <span>Вес критерия / набранная доля</span>
-        <span className="hatch-key">N/A — исключён из итога</span>
-      </p>
-
-      {displayed.section_results.length ? (
-        <div className="table-wrap" tabIndex={0} aria-label="Результаты секций">
-          <table className="table compact section-table">
-            <caption>Разделы чек-листа. Проценты секций не складываются в общий итог.</caption>
-            <thead>
-              <tr>
-                <th scope="col">Секция</th>
-                <th scope="col">Получено веса / применимый вес</th>
-                <th scope="col">Процент секции</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayed.section_results.map((s) => (
-                <tr key={s.section_id} data-testid="section-row">
-                  <th scope="row">{sectionTitle.get(s.section_id) ?? s.section_id}</th>
-                  {flagSections.has(s.section_id) ? (
-                    <td colSpan={2}>
-                      {(flagSections.get(s.section_id) ?? []).map((f) => <p key={f.criterion_id}>{criterionTitle.get(f.criterion_id) ?? 'Нарушение'}: {f.detected === true ? 'обнаружено' : f.detected === false ? 'не обнаружено' : 'не определено'}</p>)}
-                    </td>
-                  ) : (
-                    <>
-                      <td>{decimalRu(s.section_earned_weight)} / {decimalRu(s.section_applicable_weight)}</td>
-                      <td>{s.section_percent === null ? 'нет применимого веса' : `${totalRu(s.section_percent)} %`}</td>
-                    </>
-                  )}
-                </tr>
+      <details className="score-breakdown">
+        <summary>Разделы чек-листа и состав итога</summary>
+        {displayed.contributions.length ? (
+          <div className="composition" aria-label="Состав итога: вес и набранная доля каждого критерия">
+            {displayed.contributions
+              .filter((c) => Number(c.original_weight) > 0)
+              .map((c) => (
+                <button
+                  type="button"
+                  key={c.criterion_id}
+                  className={`composition-part composition-${c.applicability}`}
+                  style={{ flexGrow: Number(c.original_weight) }}
+                  onClick={() => onCriterion?.(c.criterion_id)}
+                  title={`${criterionTitle.get(c.criterion_id) ?? c.criterion_id}: ${c.applicability === 'applicable' ? `${decimalRu(c.earned_weight)} / ${decimalRu(c.original_weight)}` : c.applicability === 'not_applicable' ? 'N/A · исключён из итога' : 'Не определено'}`}
+                  aria-label={`Состав итога: ${criterionTitle.get(c.criterion_id) ?? c.criterion_id}`}
+                >
+                  <span style={{ width: `${Number(c.score_fraction ?? 0) * 100}%` }} />
+                </button>
               ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+        <p className="composition-legend">
+          <span>Вес критерия / набранная доля</span>
+          <span className="hatch-key">N/A — исключён из итога</span>
+        </p>
 
+        {displayed.section_results.length ? (
+          <div className="table-wrap" tabIndex={0} aria-label="Результаты секций">
+            <table className="table compact section-table">
+              <caption>Разделы чек-листа. Проценты секций не складываются в общий итог.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Секция</th>
+                  <th scope="col">Получено веса / применимый вес</th>
+                  <th scope="col">Процент секции</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayed.section_results.map((s) => (
+                  <tr key={s.section_id} data-testid="section-row">
+                    <th scope="row">{sectionTitle.get(s.section_id) ?? s.section_id}</th>
+                    {flagSections.has(s.section_id) ? (
+                      <td colSpan={2}>
+                        {(flagSections.get(s.section_id) ?? []).map((f) => (
+                          <p key={f.criterion_id}>
+                            {criterionTitle.get(f.criterion_id) ?? 'Нарушение'}:{' '}
+                            {f.detected === true
+                              ? 'обнаружено'
+                              : f.detected === false
+                                ? 'не обнаружено'
+                                : 'не определено'}
+                          </p>
+                        ))}
+                      </td>
+                    ) : (
+                      <>
+                        <td>
+                          {decimalRu(s.section_earned_weight)} / {decimalRu(s.section_applicable_weight)}
+                        </td>
+                        <td>
+                          {s.section_percent === null ? 'нет применимого веса' : `${totalRu(s.section_percent)} %`}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </details>
     </section>
   );

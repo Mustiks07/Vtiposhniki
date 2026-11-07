@@ -23,7 +23,9 @@ export function ConversationsPage() {
   const [params, setParams] = useSearchParams();
   // `?paste=open[&example=<id>]` (from the tutorial) opens the plain-text import once; the
   // dialog text itself never travels through the URL. The parameters are then removed.
-  const [pasteRequest, setPasteRequest] = useState<{ exampleId: string | null } | null>(null);
+  const [pasteRequest, setPasteRequest] = useState<{
+    exampleId: string | null;
+  } | null>(null);
   useEffect(() => {
     if (params.get('paste') !== 'open') return;
     setPasteRequest({ exampleId: params.get('example') });
@@ -53,8 +55,7 @@ export function ConversationsPage() {
     let next = withFilter(params, key, value);
     if (key === 'flag_scope') next = withFilter(next, 'result_scope', value);
     if (key === 'result_scope' && parsed.flagCriterionId) next = withFilter(next, 'flag_scope', value);
-    if (key === 'flag_criterion_id' && value)
-      next = withFilter(next, 'flag_scope', query.result_scope ?? 'automatic');
+    if (key === 'flag_criterion_id' && value) next = withFilter(next, 'flag_scope', query.result_scope ?? 'automatic');
     for (const [k, v] of Object.entries(extra ?? {}))
       next = new URLSearchParams(withFilter(next, k as (typeof FILTER_KEYS)[number], v));
     setParams(next);
@@ -311,7 +312,13 @@ export function ConversationsPage() {
                           />
                         </td>
                         <td className="cell-main">
-                          <Link className="conversation-title" title={conversationTitle(c)} to={`/conversations/${encodeURIComponent(c.id)}`}>{conversationTitle(c)}</Link>
+                          <Link
+                            className="conversation-title"
+                            title={conversationTitle(c)}
+                            to={`/conversations/${encodeURIComponent(c.id)}`}
+                          >
+                            {conversationTitle(c)}
+                          </Link>
                           <div
                             className="muted clamp"
                             lang={c.language.toLowerCase() === 'kz' ? 'kk' : c.language.toLowerCase()}
@@ -326,7 +333,11 @@ export function ConversationsPage() {
                         <td className="score-cell">
                           <strong data-testid="row-score">{totalRu(summary.total_score)}</strong>
                           <small className="muted">
-                            {summary.checklist_version_id ? (query.result_scope === 'effective' ? 'После пересмотра' : 'Оценка AI') : 'Нет запуска'}
+                            {summary.checklist_version_id
+                              ? query.result_scope === 'effective'
+                                ? 'После пересмотра'
+                                : 'Оценка AI'
+                              : 'Нет запуска'}
                           </small>
                         </td>
                         <td>
@@ -334,10 +345,7 @@ export function ConversationsPage() {
                             <FlagCell
                               summary={summary.flag_summary}
                               evaluationId={summary.latest_evaluation_id}
-                              title={
-                                flagTitle.get(summary.flag_summary.result.criterion_id) ??
-                                'Нарушение'
-                              }
+                              title={flagTitle.get(summary.flag_summary.result.criterion_id) ?? 'Нарушение'}
                             />
                           ) : (
                             <Badge

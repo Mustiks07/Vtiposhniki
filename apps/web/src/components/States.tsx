@@ -22,10 +22,16 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 export function describeError(error: unknown): { title: string; hint: string } {
   if (error instanceof ApiError) {
     if (error.network) {
-      return { title: 'Сервер недоступен', hint: 'Проверьте подключение и повторите попытку.' };
+      return {
+        title: 'Сервер недоступен',
+        hint: 'Проверьте подключение и повторите попытку.',
+      };
     }
     if (error.status === 404) {
-      return { title: 'Не удалось найти запись', hint: 'Возможно, ссылка устарела. Вернитесь к списку и выберите запись снова.' };
+      return {
+        title: 'Не удалось найти запись',
+        hint: 'Возможно, ссылка устарела. Вернитесь к списку и выберите запись снова.',
+      };
     }
     const label = error.code ? errorCodeLabel[error.code] : undefined;
     return {
@@ -75,7 +81,10 @@ export function ErrorPanel({
           </button>
         ) : null}
         {api?.correlationId ? (
-          <details className="technical-details"><summary>Код для поддержки</summary><code>{api.correlationId}</code></details>
+          <details className="technical-details">
+            <summary>Код для поддержки</summary>
+            <code>{api.correlationId}</code>
+          </details>
         ) : null}
       </div>
     </div>
@@ -100,7 +109,13 @@ const tone: Record<string, string> = {
   unevaluated: 'muted',
 };
 
-const icon: Record<string, string> = { ok: '✓', warn: '◐', info: '…', bad: '✕', muted: '○' };
+const icon: Record<string, string> = {
+  ok: '✓',
+  warn: '◐',
+  info: '…',
+  bad: '✕',
+  muted: '○',
+};
 
 /** Status chip: text + glyph, so colour is never the only signal. */
 export function Badge({ status, children }: { status: string; children: ReactNode }) {

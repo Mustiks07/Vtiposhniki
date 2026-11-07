@@ -12,12 +12,12 @@ export function ExportLinks({ kind, id }: { kind: 'batch' | 'evaluation'; id: st
       <fieldset className="segmented">
         <legend>Вид результата</legend>
         <label>
-          <input type="radio" name={name} checked={scope === 'automatic'} onChange={() => setScope('automatic')} /> Оценка AI
-          — исходный результат оценщика
+          <input type="radio" name={name} checked={scope === 'automatic'} onChange={() => setScope('automatic')} />{' '}
+          Оценка AI — исходный результат оценщика
         </label>
         <label>
-          <input type="radio" name={name} checked={scope === 'effective'} onChange={() => setScope('effective')} /> После пересмотра
-          — с учётом решений проверяющего
+          <input type="radio" name={name} checked={scope === 'effective'} onChange={() => setScope('effective')} />{' '}
+          После пересмотра — с учётом решений проверяющего
         </label>
       </fieldset>
       <div className="row">

@@ -54,7 +54,10 @@ function ChoicesEditor({
       (key) => key.startsWith(`criterion.${index}.choice.`) && (key.endsWith('.raw') || key.endsWith('.fraction')),
     );
   function setChoice(j: number, patch: Partial<Choice>) {
-    onChange({ ...criterion, choices: criterion.choices.map((x, k) => (k === j ? { ...x, ...patch } : x)) });
+    onChange({
+      ...criterion,
+      choices: criterion.choices.map((x, k) => (k === j ? { ...x, ...patch } : x)),
+    });
   }
   function move(j: number, dir: -1 | 1) {
     const next = [...criterion.choices];
@@ -109,7 +112,11 @@ function ChoicesEditor({
                       readOnly={!showAdvanced}
                       title={showAdvanced ? undefined : 'Для изменения шкалы откройте «Настроить значения и доли»'}
                       value={rawValueText(x.raw_value === '' ? null : x.raw_value).replace('—', '')}
-                      onChange={(e) => setChoice(j, { raw_value: parseRaw(criterion.response_type, e.target.value) })}
+                      onChange={(e) =>
+                        setChoice(j, {
+                          raw_value: parseRaw(criterion.response_type, e.target.value),
+                        })
+                      }
                       aria-invalid={errors[`${q}.raw`] ? true : undefined}
                       aria-describedby={`${base}-ch${j}-err`}
                     />
@@ -143,7 +150,11 @@ function ChoicesEditor({
                         aria-label={`Доля варианта ${n}`}
                         inputMode="decimal"
                         value={x.score_fraction ?? ''}
-                        onChange={(e) => setChoice(j, { score_fraction: e.target.value.replace(',', '.') })}
+                        onChange={(e) =>
+                          setChoice(j, {
+                            score_fraction: e.target.value.replace(',', '.'),
+                          })
+                        }
                         aria-invalid={errors[`${q}.fraction`] ? true : undefined}
                         aria-describedby={`${base}-ch${j}-err`}
                       />
@@ -352,7 +363,12 @@ function CriterionEditor({
             inputMode="decimal"
             value={criterion.weight}
             disabled={isFlag}
-            onChange={(e) => onChange({ ...criterion, weight: e.target.value.replace(',', '.') })}
+            onChange={(e) =>
+              onChange({
+                ...criterion,
+                weight: e.target.value.replace(',', '.'),
+              })
+            }
             aria-invalid={errors[`${p}.weight`] ? true : undefined}
             aria-describedby={`${uid}-weight-h ${uid}-weight-e`}
           />
@@ -464,7 +480,10 @@ function CriterionEditor({
               onChange={(e) =>
                 onChange({
                   ...criterion,
-                  channel_instructions: { ...criterion.channel_instructions, agent_chat: e.target.value },
+                  channel_instructions: {
+                    ...criterion.channel_instructions,
+                    agent_chat: e.target.value,
+                  },
                 })
               }
             />
@@ -478,7 +497,10 @@ function CriterionEditor({
               onChange={(e) =>
                 onChange({
                   ...criterion,
-                  channel_instructions: { ...criterion.channel_instructions, voice_call: e.target.value },
+                  channel_instructions: {
+                    ...criterion.channel_instructions,
+                    voice_call: e.target.value,
+                  },
                 })
               }
             />
@@ -491,7 +513,10 @@ function CriterionEditor({
             onChange={(e) =>
               onChange({
                 ...criterion,
-                evidence_policy: { ...criterion.evidence_policy, require_evidence: e.target.checked },
+                evidence_policy: {
+                  ...criterion.evidence_policy,
+                  require_evidence: e.target.checked,
+                },
               })
             }
           />{' '}
@@ -504,7 +529,10 @@ function CriterionEditor({
             onChange={(e) =>
               onChange({
                 ...criterion,
-                evidence_policy: { ...criterion.evidence_policy, missing_action_requires_range: e.target.checked },
+                evidence_policy: {
+                  ...criterion.evidence_policy,
+                  missing_action_requires_range: e.target.checked,
+                },
               })
             }
           />{' '}
@@ -517,7 +545,10 @@ function CriterionEditor({
             onChange={(e) =>
               onChange({
                 ...criterion,
-                evidence_policy: { ...criterion.evidence_policy, allow_source: e.target.checked },
+                evidence_policy: {
+                  ...criterion.evidence_policy,
+                  allow_source: e.target.checked,
+                },
               })
             }
           />{' '}
@@ -550,7 +581,15 @@ function ConflictResolution({
   onRebase: (latestVersionId: string) => void;
 }) {
   const [state, setState] = useState<
-    { from: ChecklistVersion; to: ChecklistVersion; fromLabel: string; toLabel: string } | 'loading' | 'error' | null
+    | {
+        from: ChecklistVersion;
+        to: ChecklistVersion;
+        fromLabel: string;
+        toLabel: string;
+      }
+    | 'loading'
+    | 'error'
+    | null
   >(null);
   async function load() {
     setState('loading');
@@ -649,13 +688,18 @@ export function ChecklistEditor({
         : api.createChecklist(body),
     onSuccess: async (v) => {
       await queryClient.invalidateQueries({ queryKey: ['checklists'] });
-      await queryClient.invalidateQueries({ queryKey: ['checklist-versions', v.checklist_id] });
+      await queryClient.invalidateQueries({
+        queryKey: ['checklist-versions', v.checklist_id],
+      });
       onSaved(v);
     },
   });
 
   function setCriterion(i: number, c: Criterion) {
-    setDraft((d) => ({ ...d, criteria: d.criteria.map((x, k) => (k === i ? c : x)) }));
+    setDraft((d) => ({
+      ...d,
+      criteria: d.criteria.map((x, k) => (k === i ? c : x)),
+    }));
   }
   function move(i: number, dir: -1 | 1) {
     setDraft((d) => {
@@ -796,7 +840,10 @@ export function ChecklistEditor({
           <button
             type="button"
             onClick={() =>
-              setDraft({ ...draft, sections: [...sections, { schema_version: '1.0', id: newSectionId(), title: '' }] })
+              setDraft({
+                ...draft,
+                sections: [...sections, { schema_version: '1.0', id: newSectionId(), title: '' }],
+              })
             }
           >
             + Секция
@@ -855,7 +902,12 @@ export function ChecklistEditor({
                 onConfirm={(v) => confirm(c, v)}
                 onChange={(next) => setCriterion(i, next)}
                 onMove={(dir) => move(i, dir)}
-                onRemove={() => setDraft((d) => ({ ...d, criteria: d.criteria.filter((_, k) => k !== i) }))}
+                onRemove={() =>
+                  setDraft((d) => ({
+                    ...d,
+                    criteria: d.criteria.filter((_, k) => k !== i),
+                  }))
+                }
                 onReplace={() => {
                   const id = newCriterionId();
                   setCriterion(i, { ...c, id });

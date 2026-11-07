@@ -53,7 +53,10 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
         {job.error ? (
           <span>
             {errorCodeLabel[job.error.code] ?? job.error.code}
-            <details className="technical-details"><summary>Код для поддержки</summary><code>{job.error.correlation_id}</code></details>
+            <details className="technical-details">
+              <summary>Код для поддержки</summary>
+              <code>{job.error.correlation_id}</code>
+            </details>
           </span>
         ) : (
           '—'
@@ -62,7 +65,8 @@ function JobRow({ job, evaluation }: { job: Job; evaluation: EvaluationView | un
       <td>
         {job.evaluation_id ? (
           <Link to={`/evaluations/${encodeURIComponent(job.evaluation_id)}`}>
-            Открыть оценку{evaluation ? ` · ${artifactStatusLabel[evaluation.artifact.status]}` : ''}
+            Открыть оценку
+            {evaluation ? ` · ${artifactStatusLabel[evaluation.artifact.status]}` : ''}
           </Link>
         ) : null}
         {job.state === 'failed' ? (
@@ -104,11 +108,54 @@ export function BatchPage() {
       <p className="crumbs">
         <Link to="/conversations">Диалоги</Link> / Пакет
       </p>
-      <header className="page-heading"><div><h1>Запуск оценки</h1><p className="page-intro">{serverTime(b.created_at)} · {p.total} диалогов</p></div></header>
+      <header className="page-heading">
+        <div>
+          <h1>Запуск оценки</h1>
+          <p className="page-intro">
+            {serverTime(b.created_at)} · Диалогов: {p.total}
+          </p>
+        </div>
+      </header>
       <section className="panel batch-overview">
-        <div><h2>{finished} из {p.total} обработаны</h2><progress value={finished} max={Math.max(p.total, 1)} aria-label="Обработано диалогов" /><p className="hint">{active ? 'Результаты появляются по мере обработки.' : 'Обработка завершена. Ошибки и неполные оценки доступны ниже.'}</p></div>
-        <div className="batch-counts"><Badge status="succeeded">{p.succeeded} с результатом</Badge><Badge status="running">{p.running} выполняется</Badge><Badge status="failed">{p.failed} с ошибкой</Badge>{p.queued ? <Badge status="queued">{p.queued} в очереди</Badge> : null}{p.retry_wait ? <Badge status="retry_wait">{p.retry_wait} ожидает повтора</Badge> : null}{p.cancelled ? <Badge status="cancelled">{p.cancelled} отменено</Badge> : null}</div>
-        <dl className="batch-settings"><div><dt>Чек-лист</dt><dd><Link to={`/checklists/version/${encodeURIComponent(b.checklist_version_id)}`}><ChecklistName id={b.checklist_version_id} /></Link></dd></div><div><dt>Профиль</dt><dd><ProfileName id={b.profile_id} version={b.profile_version} /></dd></div><div><dt>Режим</dt><dd>{b.mode === 'fresh' ? 'Новый анализ' : 'Переиспользование при совместимости'}</dd></div></dl>
+        <div>
+          <h2>
+            Обработано {finished} из {p.total}
+          </h2>
+          <progress value={finished} max={Math.max(p.total, 1)} aria-label="Обработано диалогов" />
+          <p className="hint">
+            {active
+              ? 'Результаты появляются по мере обработки.'
+              : 'Обработка завершена. Ошибки и неполные оценки доступны ниже.'}
+          </p>
+        </div>
+        <div className="batch-counts">
+          <Badge status="succeeded">{p.succeeded} с результатом</Badge>
+          <Badge status="running">{p.running} выполняется</Badge>
+          <Badge status="failed">{p.failed} с ошибкой</Badge>
+          {p.queued ? <Badge status="queued">{p.queued} в очереди</Badge> : null}
+          {p.retry_wait ? <Badge status="retry_wait">{p.retry_wait} ожидает повтора</Badge> : null}
+          {p.cancelled ? <Badge status="cancelled">{p.cancelled} отменено</Badge> : null}
+        </div>
+        <dl className="batch-settings">
+          <div>
+            <dt>Чек-лист</dt>
+            <dd>
+              <Link to={`/checklists/version/${encodeURIComponent(b.checklist_version_id)}`}>
+                <ChecklistName id={b.checklist_version_id} />
+              </Link>
+            </dd>
+          </div>
+          <div>
+            <dt>Профиль</dt>
+            <dd>
+              <ProfileName id={b.profile_id} version={b.profile_version} />
+            </dd>
+          </div>
+          <div>
+            <dt>Режим</dt>
+            <dd>{b.mode === 'fresh' ? 'Новый анализ' : 'Переиспользование при совместимости'}</dd>
+          </div>
+        </dl>
       </section>
       {batch.isError ? (
         <ErrorPanel error={batch.error} onRetry={() => batch.refetch()}>
@@ -118,7 +165,8 @@ export function BatchPage() {
       <p role="status" aria-live="polite" className="visually-hidden" data-testid="batch-progress">
         Всего {p.total}: в очереди {p.queued}, выполняется {p.running}, ожидает повтора {p.retry_wait}, завершено{' '}
         {p.succeeded}, с ошибкой {p.failed}
-        {p.cancelled ? `, отменено ${p.cancelled}` : ''}.{active ? ' Обновляется…' : ' Все задания в финальном состоянии.'}
+        {p.cancelled ? `, отменено ${p.cancelled}` : ''}.
+        {active ? ' Обновляется…' : ' Все задания в финальном состоянии.'}
       </p>
       <div className="table-wrap" tabIndex={0} aria-label="Задания пакета">
         <table className="table">
@@ -139,7 +187,23 @@ export function BatchPage() {
         </table>
       </div>
       <ExportLinks kind="batch" id={b.id} />
-      <details className="technical-details"><summary>Технические сведения о запуске</summary><dl className="meta"><dt>ID запуска</dt><dd><code>{b.id}</code></dd><dt>Версия правил</dt><dd><code>{b.checklist_version_id}</code></dd><dt>Профиль</dt><dd><code>{b.profile_id}</code> · {b.profile_version}</dd></dl></details>
+      <details className="technical-details">
+        <summary>Технические сведения о запуске</summary>
+        <dl className="meta">
+          <dt>ID запуска</dt>
+          <dd>
+            <code>{b.id}</code>
+          </dd>
+          <dt>Версия правил</dt>
+          <dd>
+            <code>{b.checklist_version_id}</code>
+          </dd>
+          <dt>Профиль</dt>
+          <dd>
+            <code>{b.profile_id}</code> · {b.profile_version}
+          </dd>
+        </dl>
+      </details>
     </div>
   );
 }

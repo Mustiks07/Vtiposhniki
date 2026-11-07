@@ -32,7 +32,10 @@ export function FlagFilters({
   ) => void;
 }) {
   const ids = { cl: useId(), ver: useId(), crit: useId(), status: useId() };
-  const checklists = useQuery({ queryKey: ['checklists'], queryFn: ({ signal }) => api.listChecklists(signal) });
+  const checklists = useQuery({
+    queryKey: ['checklists'],
+    queryFn: ({ signal }) => api.listChecklists(signal),
+  });
   const versions = useQuery({
     queryKey: ['checklist-versions', parsed.checklistId],
     queryFn: ({ signal }) => api.listChecklistVersions(parsed.checklistId!, signal),
@@ -49,7 +52,8 @@ export function FlagFilters({
       <fieldset className="flag-filters" aria-describedby={`${ids.cl}-hint`}>
         <legend>Поиск по результату оценки</legend>
         <small id={`${ids.cl}-hint`} className="hint">
-          Поиск по последней оценке текущего текста. Выберите чек-лист и его версию, чтобы сравнивать разговоры по одним правилам.
+          Поиск по последней оценке текущего текста. Выберите чек-лист и его версию, чтобы сравнивать разговоры по одним
+          правилам.
         </small>
         <div className="filters">
           <div>
@@ -181,7 +185,11 @@ export function SearchScope({ parsed, total }: { parsed: ParsedQuery; total: num
   );
 }
 
-const flagTone: Record<string, string> = { detected: 'failed', not_detected: 'complete', unknown: 'unevaluated' };
+const flagTone: Record<string, string> = {
+  detected: 'failed',
+  not_detected: 'complete',
+  unknown: 'unevaluated',
+};
 
 export function FlagCell({
   summary,

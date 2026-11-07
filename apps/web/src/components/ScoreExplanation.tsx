@@ -29,7 +29,13 @@ function Rationale({ text }: { text: string }) {
         {text}
       </p>
       {long ? (
-        <button type="button" className="link" aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}>
+        <button
+          type="button"
+          className="link"
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={() => setOpen((v) => !v)}
+        >
           {open ? 'Свернуть обоснование' : 'Показать обоснование полностью'}
         </button>
       ) : null}
@@ -38,7 +44,11 @@ function Rationale({ text }: { text: string }) {
 }
 
 function evidenceLabel(e: Evidence, messages?: Message[]): string {
-  return e.kind === 'source' ? 'сохранённый источник' : messages ? `реплики ${evidenceRefText(e, messages)}` : 'реплики диалога';
+  return e.kind === 'source'
+    ? 'сохранённый источник'
+    : messages
+      ? `реплики ${evidenceRefText(e, messages)}`
+      : 'реплики диалога';
 }
 
 function ItemActions({ item, actions }: { item: ExplainedItem; actions: ExplanationActions }) {
@@ -64,7 +74,12 @@ function ItemActions({ item, actions }: { item: ExplainedItem; actions: Explanat
         <span className="why-more-evidence" role="group" aria-label={`Другие доказательства: ${item.criterion.title}`}>
           ещё:{' '}
           {evidence.slice(1).map((e, i) => (
-            <button key={i} type="button" className="link" onClick={() => actions.onShowEvidence(item.criterion.id, i + 1)}>
+            <button
+              key={i}
+              type="button"
+              className="link"
+              onClick={() => actions.onShowEvidence(item.criterion.id, i + 1)}
+            >
               {evidenceLabel(e, actions.messages)}
             </button>
           ))}
@@ -89,8 +104,12 @@ function ItemActions({ item, actions }: { item: ExplainedItem; actions: Explanat
         </button>
       ) : appeal === 'open' ? (
         actions.appealHref?.(item.criterion.id) ? (
-          <a href={actions.appealHref(item.criterion.id)} data-testid="why-open-appeal">Открыть апелляцию</a>
-        ) : <span className="muted">Апелляция уже открыта</span>
+          <a href={actions.appealHref(item.criterion.id)} data-testid="why-open-appeal">
+            Открыть апелляцию
+          </a>
+        ) : (
+          <span className="muted">Апелляция уже открыта</span>
+        )
       ) : null}
     </div>
   );
@@ -98,7 +117,8 @@ function ItemActions({ item, actions }: { item: ExplainedItem; actions: Explanat
 
 function answerOf(item: ExplainedItem): string {
   const p = item.proposal;
-  if (p?.applicability === 'applicable') return rawStepText(item.criterion, p.answer_choice_id) ?? answerText(item.criterion, p);
+  if (p?.applicability === 'applicable')
+    return rawStepText(item.criterion, p.answer_choice_id) ?? answerText(item.criterion, p);
   return answerText(item.criterion, p);
 }
 
@@ -110,10 +130,22 @@ function Origin({ item }: { item: ExplainedItem }) {
   ) : null;
 }
 
-function ReductionItem({ item, actions, highlighted }: { item: ExplainedItem; actions: ExplanationActions; highlighted: boolean }) {
+function ReductionItem({
+  item,
+  actions,
+  highlighted,
+}: {
+  item: ExplainedItem;
+  actions: ExplanationActions;
+  highlighted: boolean;
+}) {
   const c = item.contribution;
   return (
-    <li className={`why-item${highlighted ? ' why-highlighted' : ''}`} data-testid="why-reduction" data-criterion-id={item.criterion.id}>
+    <li
+      className={`why-item${highlighted ? ' why-highlighted' : ''}`}
+      data-testid="why-reduction"
+      data-criterion-id={item.criterion.id}
+    >
       <div className="why-head">
         <span className="why-number" aria-hidden="true">
           {item.number}
@@ -135,7 +167,9 @@ function ReductionItem({ item, actions, highlighted }: { item: ExplainedItem; ac
         <div>
           <dt>Вклад в итог</dt>
           <dd title={c?.normalized_contribution ?? undefined}>
-            {c?.normalized_contribution != null ? `${approxRu(c.normalized_contribution)} п. из 100` : 'не рассчитан: общего итога нет'}
+            {c?.normalized_contribution != null
+              ? `${approxRu(c.normalized_contribution)} п. из 100`
+              : 'не рассчитан: общего итога нет'}
           </dd>
         </div>
       </dl>
@@ -198,7 +232,9 @@ export function ScoreExplanation({
         <h2 id={titleId}>Почему такая оценка</h2>
         {checklistState === 'error' ? (
           <ErrorPanel error={checklistError} onRetry={onRetryChecklist}>
-            <p>Не удалось загрузить версию чек-листа этой оценки. Без неё названия и правила критериев не показываются.</p>
+            <p>
+              Не удалось загрузить версию чек-листа этой оценки. Без неё названия и правила критериев не показываются.
+            </p>
           </ErrorPanel>
         ) : (
           <Loading label="Загрузка правил чек-листа…" />
@@ -228,9 +264,7 @@ export function ScoreExplanation({
       {status === 'complete' && model.total !== null ? (
         <p className="why-lead">
           Итог {totalRu(model.total)} из 100.{' '}
-          {reductions.length
-            ? `Полный балл не получили критерии: ${reductions.length}.`
-            : null}
+          {reductions.length ? `Полный балл не получили критерии: ${reductions.length}.` : null}
         </p>
       ) : status === 'incomplete_evaluation' ? (
         <p className="why-lead why-lead-warn" data-testid="why-incomplete">

@@ -50,7 +50,17 @@ export function ConversationPage() {
       <p className="card-meta">
         {channelLabel[latest.data.channel]} · {languageLabel[latest.data.language]}
       </p>
-      <details className="technical-details"><summary>Сведения об источнике</summary><dl className="meta"><dt>Номер в источнике</dt><dd>{latest.data.external_id}</dd><dt>Технический ID</dt><dd><code>{id}</code></dd></dl></details>
+      <details className="technical-details">
+        <summary>Сведения об источнике</summary>
+        <dl className="meta">
+          <dt>Номер в источнике</dt>
+          <dd>{latest.data.external_id}</dd>
+          <dt>Технический ID</dt>
+          <dd>
+            <code>{id}</code>
+          </dd>
+        </dl>
+      </details>
       <div className="row">
         <label htmlFor={revId}>Версия текста</label>
         <select
@@ -113,7 +123,14 @@ export function ConversationPage() {
             <ul className="eval-list">
               {evaluations.data?.items.map((e, index) => (
                 <li key={e.id} data-testid="evaluation-item" data-revision={e.conversation_revision}>
-                  <Link to={`/evaluations/${encodeURIComponent(e.id)}`}>Оценка от {serverTime(e.created_at)}{evaluations.data.items.some((other, n) => n !== index && serverTime(other.created_at) === serverTime(e.created_at)) ? ` · запуск ${evaluations.data.items.length - index}` : ''}</Link>
+                  <Link to={`/evaluations/${encodeURIComponent(e.id)}`}>
+                    Оценка от {serverTime(e.created_at)}
+                    {evaluations.data.items.some(
+                      (other, n) => n !== index && serverTime(other.created_at) === serverTime(e.created_at),
+                    )
+                      ? ` · запуск ${evaluations.data.items.length - index}`
+                      : ''}
+                  </Link>
                   <div>
                     <Badge status={e.artifact.status}>{artifactStatusLabel[e.artifact.status]}</Badge>{' '}
                     <TotalValue score={e.effective_score} />

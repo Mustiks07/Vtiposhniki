@@ -117,16 +117,24 @@ export function TutorialPage() {
 
       <div className="tutorial-layout">
         <div>
-          <section className="panel tutorial-step-panel" aria-live="polite" data-testid="tutorial-step" data-step={step}>
+          <section
+            className="panel tutorial-step-panel"
+            aria-live="polite"
+            data-testid="tutorial-step"
+            data-step={step}
+          >
             {step === 1 ? (
               <>
                 <h2>Почему не 100?</h2>
                 <p>
                   Итог считает сервер по правилам чек-листа. Применимый вес — {example.applicable_weight}, получено —{' '}
-                  {example.earned_weight}. Не хватает одного критерия: <strong>{closing?.criterion.title}</strong>, ответ
-                  «{closing ? answerText(closing.criterion, closing.proposal) : ''}».
+                  {example.earned_weight}. Не хватает одного критерия: <strong>{closing?.criterion.title}</strong>,
+                  ответ «{closing ? answerText(closing.criterion, closing.proposal) : ''}
+                  ».
                 </p>
-                <p className="hint">Блок «Почему снижена оценка» справа — тот же, что в настоящей карточке результата.</p>
+                <p className="hint">
+                  Блок «Почему снижена оценка» справа — тот же, что в настоящей карточке результата.
+                </p>
               </>
             ) : step === 2 ? (
               <>
@@ -152,12 +160,12 @@ export function TutorialPage() {
                     <strong>Выявление потребности:</strong> запрос был понятен сразу — уточнять было нечего.
                   </li>
                   <li>
-                    <strong>Идентификация:</strong> общий вопрос о настройке не раскрывает данных и не требует
-                    действий со счётом.
+                    <strong>Идентификация:</strong> общий вопрос о настройке не раскрывает данных и не требует действий
+                    со счётом.
                   </li>
                   <li>
-                    N/A — <strong>не штраф</strong>: критерий исключается из применимого веса. Поэтому итог считается
-                    от {example.applicable_weight}, а не от всех весов чек-листа.
+                    N/A — <strong>не штраф</strong>: критерий исключается из применимого веса. Поэтому итог считается от{' '}
+                    {example.applicable_weight}, а не от всех весов чек-листа.
                   </li>
                 </ul>
                 <button type="button" onClick={() => showEvidence('c2_needs', 0)}>
@@ -206,7 +214,12 @@ export function TutorialPage() {
               )}
             </div>
           </section>
-          <Transcript conversation={example.conversation} highlighted={highlighted} focusToken={focusToken} canSeek={false} />
+          <Transcript
+            conversation={example.conversation}
+            highlighted={highlighted}
+            focusToken={focusToken}
+            canSeek={false}
+          />
         </div>
 
         <div>
@@ -221,7 +234,11 @@ export function TutorialPage() {
             checklistState="ready"
             sourceLabel="учебная разметка, не AI"
             highlightCriterion={step <= 2 ? closing?.criterion.id : null}
-            actions={{ messages, onShowEvidence: showEvidence, onOpenCriterion: setOpenCriterion }}
+            actions={{
+              messages,
+              onShowEvidence: showEvidence,
+              onOpenCriterion: setOpenCriterion,
+            }}
           />
           {criterion && openProposal ? (
             <section className="panel" aria-labelledby={`${ids.steps}-crit`} data-testid="tutorial-criterion">

@@ -140,7 +140,10 @@ export function EvaluationPage() {
     }
   }, [criterionToFocus, view, selectedParam]);
 
-  const evaluation = useQuery({ queryKey: ['evaluation', id], queryFn: ({ signal }) => api.getEvaluation(id, signal) });
+  const evaluation = useQuery({
+    queryKey: ['evaluation', id],
+    queryFn: ({ signal }) => api.getEvaluation(id, signal),
+  });
   const e = evaluation.data;
   const conversation = useQuery({
     queryKey: ['conversation', e?.conversation_id, e?.conversation_revision],
@@ -291,9 +294,7 @@ export function EvaluationPage() {
         <div className="state state-error" role="alert">
           <p className="state-title">Оценка не получена</p>
           {ev.artifact.error ? (
-            <p>
-              {errorCodeLabel[ev.artifact.error.code] ?? 'Не удалось получить ответ оценщика'}
-            </p>
+            <p>{errorCodeLabel[ev.artifact.error.code] ?? 'Не удалось получить ответ оценщика'}</p>
           ) : null}
         </div>
       ) : null}
@@ -339,14 +340,23 @@ export function EvaluationPage() {
           aria-selected={view === 'transcript'}
           onClick={() => setParam('view', 'transcript')}
         >
-          Разговор{highlighted.length ? ` · выделено ${highlighted.length}` : ''}
+          Разговор
+          {highlighted.length ? ` · выделено ${highlighted.length}` : ''}
         </button>
       </div>
 
       <div className={`card-layout view-${view}`}>
         <div className="card-transcript" id="transcript-pane">
-          {conversation.data ? <AudioPanel key={`${conversation.data.id}:${conversation.data.revision}`}
-            ref={audioRef} conversation={conversation.data} onAvailable={() => { void conversation.refetch(); }} /> : null}
+          {conversation.data ? (
+            <AudioPanel
+              key={`${conversation.data.id}:${conversation.data.revision}`}
+              ref={audioRef}
+              conversation={conversation.data}
+              onAvailable={() => {
+                void conversation.refetch();
+              }}
+            />
+          ) : null}
           {conversation.isPending ? <Loading label="Загрузка разговора…" /> : null}
           {conversation.isError ? (
             <ErrorPanel error={conversation.error} onRetry={() => conversation.refetch()} />
@@ -417,7 +427,9 @@ export function EvaluationPage() {
               onAppeal: appealCriterion,
               appealHref: (cid) => {
                 const existing = appeals.data?.items.find((a) => a.criterion_id === cid && a.state === 'open');
-                return existing ? `#/appeals?evaluation_id=${encodeURIComponent(ev.id)}&appeal=${encodeURIComponent(existing.id)}` : undefined;
+                return existing
+                  ? `#/appeals?evaluation_id=${encodeURIComponent(ev.id)}&appeal=${encodeURIComponent(existing.id)}`
+                  : undefined;
               },
             }}
           />
@@ -441,17 +453,30 @@ export function EvaluationPage() {
               aria-labelledby="crit-title"
               data-testid="criterion-detail"
             >
-              <div className="criterion-detail-heading"><h2 id="crit-title"><span className="muted">{String(criteria.indexOf(criterion) + 1).padStart(2, '0')}</span> {criterion.title}</h2><Badge status={(scope === 'automatic' ? autoP : effP)?.applicability === 'undetermined' ? 'partial' : 'unevaluated'}>{answerText(criterion, scope === 'automatic' ? autoP : effP)}</Badge></div>
+              <div className="criterion-detail-heading">
+                <h2 id="crit-title">
+                  <span className="muted">{String(criteria.indexOf(criterion) + 1).padStart(2, '0')}</span>{' '}
+                  {criterion.title}
+                </h2>
+                <Badge
+                  status={
+                    (scope === 'automatic' ? autoP : effP)?.applicability === 'undetermined' ? 'partial' : 'unevaluated'
+                  }
+                >
+                  {answerText(criterion, scope === 'automatic' ? autoP : effP)}
+                </Badge>
+              </div>
               <details className="criterion-rule">
                 <summary>Правило и шкала закреплённой версии</summary>
                 <p className="definition">{criterion.definition}</p>
                 <ScaleTable criterion={criterion} selected={(scope === 'automatic' ? autoP : effP)?.answer_choice_id} />
               </details>
-              <details className="criterion-calculation"><summary>Расчёт балла · {scopeLabel(scope)}</summary>
-              <ContributionLine criterion={criterion} contribution={scope === 'automatic' ? autoC : effC} />
-              {effC && autoC && effC.applicability !== autoC.applicability ? (
-                <p className="hint">Исходная оценка: {applicabilityLabel[autoC.applicability]}.</p>
-              ) : null}
+              <details className="criterion-calculation">
+                <summary>Расчёт балла · {scopeLabel(scope)}</summary>
+                <ContributionLine criterion={criterion} contribution={scope === 'automatic' ? autoC : effC} />
+                {effC && autoC && effC.applicability !== autoC.applicability ? (
+                  <p className="hint">Исходная оценка: {applicabilityLabel[autoC.applicability]}.</p>
+                ) : null}
               </details>
               <ReviewNote review={review} />
               {effP && effP.origin === 'human' ? (

@@ -27,6 +27,9 @@ export function tutorialExample(id: string | null | undefined): TutorialExample 
 /** The example dialog in the plain-text import format, for the user to edit and import. */
 export function exampleAsPlainText(example: TutorialExample): string {
   return example.conversation.messages
-    .map((m) => `${m.timestamp_original ? `[${m.timestamp_original}] ` : ''}${m.speaker}: ${m.text.replace(/\n/g, '\n  ')}`)
+    .map(
+      (m) =>
+        `${m.timestamp_original ? `[${m.timestamp_original}] ` : ''}${m.speaker}: ${m.text.replace(/\n/g, '\n  ')}`,
+    )
     .join('\n');
 }
