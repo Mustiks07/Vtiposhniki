@@ -20,7 +20,6 @@ import { ScoreExplanation } from '../components/ScoreExplanation';
 import { ScorePanel } from '../components/ScorePanel';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { Transcript, verifiedMapping } from '../components/Transcript';
-import { useAudioNavigation } from '../lib/audioNavigation';
 import { decimalRu, serverTime } from '../lib/format';
 import { conversationTitle, scopeLabel } from '../lib/presentation';
 import { evidenceMessageIds } from '../lib/evidence';
@@ -157,7 +156,6 @@ export function EvaluationPage() {
     enabled: Boolean(e),
     staleTime: Infinity, // versions are immutable
   });
-  const audioNavigation = useAudioNavigation(conversation.data, audioRef);
   const appeals = useQuery({
     queryKey: ['appeals', { evaluation_id: id }],
     queryFn: ({ signal }) => api.listAppeals({ evaluation_id: id, limit: 200 }, signal),
@@ -222,7 +220,10 @@ export function EvaluationPage() {
     if (view !== 'transcript') setParam('view', 'transcript');
   }
   function seek(messageId: string) {
-    audioNavigation.seek(messageId);
+    const start = conversation.data && verifiedMapping(conversation.data.audio)?.get(messageId);
+    if (start === undefined || !audioRef.current) return;
+    audioRef.current.currentTime = Number(start);
+    void audioRef.current.play().catch(() => undefined);
   }
 
   if (evaluation.isPending) return <Loading label="Загрузка карточки…" />;
@@ -351,9 +352,6 @@ export function EvaluationPage() {
               key={`${conversation.data.id}:${conversation.data.revision}`}
               ref={audioRef}
               conversation={conversation.data}
-              timing={audioNavigation.timing}
-              onTiming={audioNavigation.setTiming}
-              timingError={audioNavigation.error}
               onAvailable={() => {
                 void conversation.refetch();
               }}
@@ -378,7 +376,6 @@ export function EvaluationPage() {
               focusReady={view === 'transcript'}
               canSeek={canSeek}
               onSeek={seek}
-              approximatePositions={audioNavigation.positions}
               citations={citations}
               onCriterion={fromMessage}
             />

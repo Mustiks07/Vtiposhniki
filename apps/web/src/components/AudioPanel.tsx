@@ -1,17 +1,13 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { audioUrl } from '../api/client';
 import type { Conversation } from '../api/types';
-import type { AudioTiming } from '../lib/audioNavigation';
 
 /**
  * Real player over the server's audio route for the pinned revision. No fake waveform or
  * separate speaker tracks. Exact seeking is offered only with a verified mapping.
  */
-export const AudioPanel = forwardRef<HTMLAudioElement, {
-  conversation: Conversation; onAvailable?: () => void;
-  timing?: AudioTiming; onTiming?: (timing: AudioTiming) => void; timingError?: string | null;
-}>(
-  function AudioPanel({ conversation, onAvailable, timing, onTiming, timingError }, ref) {
+export const AudioPanel = forwardRef<HTMLAudioElement, { conversation: Conversation; onAvailable?: () => void }>(
+  function AudioPanel({ conversation, onAvailable }, ref) {
     const audio = conversation.audio;
     const player = useRef<HTMLAudioElement>(null);
     useImperativeHandle(ref, () => player.current!, [audio.access_path]);
@@ -21,7 +17,7 @@ export const AudioPanel = forwardRef<HTMLAudioElement, {
     const alignment =
       audio.alignment_status === 'verified' && audio.mapping
         ? 'Привязка реплик к записи подтверждена сервером: можно перейти к началу реплики.'
-        : 'Привязка реплик к времени записи не подтверждена. Переход по меткам — приблизительно, не сверено со звуком.';
+        : 'Привязка реплик к времени записи не подтверждена: переход возможен только к реплике в тексте, позиция в записи неизвестна.';
 
     return (
       <section className="panel audio" aria-labelledby="audio-title">
@@ -91,20 +87,6 @@ export const AudioPanel = forwardRef<HTMLAudioElement, {
         <p className="hint" data-testid="audio-alignment">
           {alignment}
         </p>
-        {audio.access_path && audio.alignment_status !== 'verified' && timing && onTiming ? (
-          <details className="technical-details">
-            <summary>Уточнить начало и паузы записи</summary>
-            <p className="hint">По умолчанию первая реплика считается началом файла. Это допущение. Паузы записи не определяются по молчанию: укажите только известные остановки записи.</p>
-            <label>Первая реплика: секунд от начала файла
-              <input type="number" min="0" step="any" value={timing.firstOffset} onChange={(e) => onTiming({ ...timing, firstOffset: e.target.value })} />
-            </label>
-            <label>Паузы записи: секунды от первой метки транскрипта
-              <input value={timing.pauses} placeholder="30–45; 80–90" onChange={(e) => onTiming({ ...timing, pauses: e.target.value })} />
-            </label>
-            <p className="hint">Начало–конец каждой паузы; интервалы вычитаются из смещения. Реплика внутри паузы не имеет перехода. Настройка действует только в этой открытой карточке.</p>
-            {timingError ? <p role="status" className="notice notice-warn">{timingError}</p> : null}
-          </details>
-        ) : null}
       </section>
     );
   },
