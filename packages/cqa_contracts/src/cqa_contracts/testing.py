@@ -4,6 +4,7 @@ The caller must opt into test mode AND pass a test profile. Arbitrary inputs get
 obviously synthetic answers; no network or domain arithmetic is performed.
 """
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Literal
 from uuid import uuid4
@@ -33,6 +34,7 @@ class SyntheticEvaluator:
         *,
         app_mode: Literal["test", "production"],
         scenario: Literal["complete", "partial", "failed"] = "complete",
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         if app_mode != "test":
             raise ConfigurationError(
@@ -44,6 +46,7 @@ class SyntheticEvaluator:
                 )
             )
         self.scenario = scenario
+        self._clock = clock if clock is not None else lambda: datetime.now(UTC)
 
     async def __call__(
         self,
@@ -63,7 +66,7 @@ class SyntheticEvaluator:
                     correlation_id="test-mode",
                 )
             )
-        now = datetime.now(UTC)
+        now = self._clock()
         if budget.consumed_calls >= budget.max_provider_calls or now >= budget.deadline_at:
             raise BudgetExceeded(
                 APIError(
@@ -121,7 +124,7 @@ class SyntheticEvaluator:
         record = record.model_copy(
             update={
                 "outcome": "failed" if self.scenario == "failed" else "succeeded",
-                "finished_at": datetime.now(UTC),
+                "finished_at": self._clock(),
                 "finish_reason": "stop",
             }
         )

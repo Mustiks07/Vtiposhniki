@@ -500,7 +500,7 @@ def _artifact_for(client, claim, queue):
         return queue.record_call_finished(claim, event)
 
     return asyncio.run(
-        SyntheticEvaluator(app_mode="test")(
+        SyntheticEvaluator(app_mode="test", clock=client.app.state.services.clock)(
             inputs.conversation,
             inputs.checklist,
             inputs.profile,

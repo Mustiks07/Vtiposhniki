@@ -22,8 +22,10 @@ C дополнительно проверены на старом e67d4b1 (па�
 
 [Дополнение пользователя](../specs/05_ORGANIZER_ADDENDUM.md) опубликовано дословно.
 Точный [HTTP-контракт фильтра](../FLAG_FILTER_CONTRACT.md) зафиксирован интегратором.
-Тег `contracts-v1.1.0` указывает общий SHA: `git rev-parse contracts-v1.1.0`.
-Это маркер контракта, не релиз готовой функции.
+Тег `contracts-v1.1.0` сохраняет исходный контрактный SHA
+`48f806fedb739d8d437e7ec1d1879e15c52d4a8d`. Продолжать ветки от тега
+`integration-v1.1.1`: `git rev-parse integration-v1.1.1` (включает исправление часов,
+описанное ниже). Теги не переписывались; это промежуточная поставка.
 
 - HTTP 1.1.0, DTO schema_version 1.0, 23 операции; расширен listConversations.
 - checklist_version_id + один flag_criterion_id; flag_status; automatic/effective.
@@ -56,6 +58,15 @@ Windows, Python 3.13.5, uv 0.13.7, Node 26.1.0, npm 11.13.0. В новой ра�
 (успешная повторная проверка typecheck/E2E). Исходный aggregate exit1 не скрывается;
 все его этапы затем прошли, Python/unit/build не повторялись без изменений к ним.
 CI Ubuntu 24.04/Windows 2025 проверяет тот же код после публикации.
+
+Первый CI на 48f806f обнаружил календарную зависимость двух API recovery tests:
+MutableClock закреплён на 2026-11-07, а shared SyntheticEvaluator проверял deadline
+по реальному datetime.now. После истечения этой даты тестовые jobs ошибочно падали.
+Исправление: optional clock в SyntheticEvaluator, test-mode wiring передаёт те же
+часы, что использует queue; прямой helper теста тоже их передаёт. Новые regression
+cases с 2001/2099 проверяют timestamps и реальное соблюдение simulated deadline.
+Production evaluator не изменён. Исторический failed CI не выдаётся за успешный.
+После исправления локально прошли Ruff, mypy и все 62 затронутых contract/jobs tests.
 
 Автоматические E2E используют настоящий API с явным test evaluator; это не настоящий
 AI-анализ и не измерение близости к Ground Truth.

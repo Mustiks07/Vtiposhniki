@@ -13,6 +13,7 @@ Delete nothing here when A lands: the stand-ins simply stop being called.
 import hashlib
 import logging
 from collections.abc import Callable
+from datetime import datetime
 from decimal import Decimal
 
 from cqa_contracts.models import (
@@ -185,8 +186,10 @@ def build_test_domain(base: DomainPort | None = None) -> DomainPort:
     )
 
 
-def build_test_evaluator(settings: Settings) -> SyntheticEvaluator:
-    return SyntheticEvaluator(app_mode=settings.mode, scenario=settings.test_scenario)
+def build_test_evaluator(
+    settings: Settings, clock: Callable[[], datetime] | None = None
+) -> SyntheticEvaluator:
+    return SyntheticEvaluator(app_mode=settings.mode, scenario=settings.test_scenario, clock=clock)
 
 
 def synthetic_profile() -> EvaluatorProfile:

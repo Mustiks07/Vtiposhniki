@@ -57,7 +57,9 @@ def build_services(
     _require_consistent_mode(settings)
     if settings.mode == "test":
         bound_domain = build_test_domain(domain)
-        bound_evaluator = evaluator if evaluator is not None else build_test_evaluator(settings)
+        bound_evaluator = (
+            evaluator if evaluator is not None else build_test_evaluator(settings, clock=clock)
+        )
     else:
         bound_domain = domain if domain is not None else production_domain()
         bound_evaluator = evaluator if evaluator is not None else production_evaluator()

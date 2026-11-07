@@ -211,3 +211,28 @@ async def test_exhausted_budget_prevents_callbacks():
 
     with pytest.raises(BudgetExceeded):
         await SyntheticEvaluator(app_mode="test")(**inputs, call_observer=observer)
+
+
+@pytest.mark.parametrize("year", [2001, 2099])
+async def test_synthetic_deadline_and_records_use_the_injected_clock(year):
+    inputs = evaluator_inputs()
+    moment = [datetime(year, 1, 1, tzinfo=UTC)]
+    started = moment[0]
+    deadline = started + timedelta(minutes=1)
+    inputs["budget"] = inputs["budget"].model_copy(update={"deadline_at": deadline})
+    events = []
+
+    async def observer(event):
+        events.append(event)
+        if event.event == "call_started":
+            moment[0] += timedelta(seconds=2)
+        return inputs["budget"]
+
+    evaluator = SyntheticEvaluator(app_mode="test", clock=lambda: moment[0])
+    artifact = await evaluator(**inputs, call_observer=observer)
+    assert artifact.calls[0].started_at == started
+    assert artifact.calls[0].finished_at == started + timedelta(seconds=2)
+    moment[0] = deadline
+    with pytest.raises(BudgetExceeded):
+        await evaluator(**inputs, call_observer=observer)
+    assert len(events) == 2  # Expired in the simulated clock, even in the far future.
