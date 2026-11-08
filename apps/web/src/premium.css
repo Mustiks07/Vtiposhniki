@@ -1489,3 +1489,15 @@ small {
     transition: none !important;
   }
 }
+
+.ai-advice {
+  margin-block: 24px;
+  padding: 22px;
+  border: 1px solid #d8dffc;
+  border-radius: 18px;
+  background: #f5f7ff;
+}
+.ai-advice h3 { margin-top: 0; }
+.ai-advice-result { padding-block: 18px; border-top: 1px solid #d8dffc; margin-top: 18px; }
+.ai-advice-result p { overflow-wrap: anywhere; }
+@media (max-width: 640px) { .ai-advice { padding: 16px; border-radius: 14px; } }

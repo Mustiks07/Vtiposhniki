@@ -25,6 +25,8 @@ import type {
   Job,
   OrganizerImport,
   ProfilePage,
+  SecondOpinion,
+  SecondOpinionPage,
   VersionList,
 } from './types';
 
@@ -177,6 +179,11 @@ export const api = {
 
   createAppeal: (evaluationId: string, body: CreateAppeal) =>
     request<Appeal>(`/evaluations/${enc(evaluationId)}/appeals`, { method: 'POST', body }),
+
+  createSecondOpinion: (appealId: string, key: string) =>
+    request<SecondOpinion>(`/appeals/${enc(appealId)}/second-opinions`, { method: 'POST', headers: { 'Idempotency-Key': key } }),
+  listSecondOpinions: (appealId: string, signal?: AbortSignal) =>
+    request<SecondOpinionPage>(`/appeals/${enc(appealId)}/second-opinions`, { signal }),
 
   listAppeals: (
     filters: { state?: string | null; evaluation_id?: string | null; limit?: number; offset?: number },

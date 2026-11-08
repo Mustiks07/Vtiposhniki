@@ -16,6 +16,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from .assistance import recover as recover_assistance
 from .checklists import seed_original_checklist
 from .errors import install_error_handlers, make_error
 from .ports import DomainPort, production_domain
@@ -135,6 +136,7 @@ def create_app(
             host_resolver=host_resolver,
         )
         services.db.migrate()
+        recover_assistance(services)
         sync_registry(services)
         seed_original_checklist(services)
         worker = Worker(services)
@@ -142,9 +144,7 @@ def create_app(
         app.state.worker = worker
         app.state.domain_ready = _domain_ready()
         stop = asyncio.Event()
-        task = (
-            asyncio.create_task(worker.run(stop)) if services.settings.worker_enabled else None
-        )
+        task = asyncio.create_task(worker.run(stop)) if services.settings.worker_enabled else None
         try:
             yield
         finally:

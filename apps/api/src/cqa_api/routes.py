@@ -27,6 +27,7 @@ from fastapi.responses import Response
 
 from . import (
     appeals,
+    assistance,
     audio,
     checklists,
     conversations,
@@ -40,6 +41,32 @@ from . import (
 from .services import Services
 
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
+
+
+@router.post(
+    "/appeals/{id}/second-opinions",
+    operation_id="createSecondOpinion",
+    response_model=h.SecondOpinion,
+    status_code=201,
+)
+async def create_second_opinion(
+    request: Request,
+    id: str,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> h.SecondOpinion:
+    return await assistance.create(_services(request), id, idempotency_key)
+
+
+@router.get(
+    "/appeals/{id}/second-opinions",
+    operation_id="listSecondOpinions",
+    response_model=Page[h.SecondOpinion],
+)
+def list_second_opinions(
+    request: Request, id: str, limit: Limit = 50, offset: Offset = 0
+) -> Page[h.SecondOpinion]:
+    items, total = assistance.list_opinions(_services(request), id, limit, offset)
+    return Page[h.SecondOpinion](items=items, total=total, limit=limit, offset=offset)
 
 
 def _services(request: Request) -> Services:

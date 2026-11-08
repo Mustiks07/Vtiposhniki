@@ -33,6 +33,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/appeals/{id}/second-opinions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Second Opinions */
+        get: operations["listSecondOpinions"];
+        put?: never;
+        /** Create Second Opinion */
+        post: operations["createSecondOpinion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/checklist-versions/{version_id}": {
         parameters: {
             query?: never;
@@ -1597,6 +1615,23 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Page[SecondOpinion] */
+        Page_SecondOpinion_: {
+            /** Items */
+            items: components["schemas"]["SecondOpinion"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Total */
+            total: number;
+        };
         /** ProfileSummary */
         ProfileSummary: {
             configuration_error?: components["schemas"]["APIError"] | null;
@@ -2008,6 +2043,50 @@ export interface components {
             /** Total Score */
             total_score: string | null;
         };
+        /** SecondOpinion */
+        SecondOpinion: {
+            /** Appeal Id */
+            appeal_id: string;
+            /** Calls */
+            calls?: components["schemas"]["CallRecord"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Criterion Id */
+            criterion_id: string;
+            error?: components["schemas"]["APIError"] | null;
+            /** Evaluation Id */
+            evaluation_id: string;
+            /** Finished At */
+            finished_at?: string | null;
+            /** Id */
+            id: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "production" | "test";
+            /** Profile Id */
+            profile_id: string;
+            /** Profile Version */
+            profile_version: string;
+            proposal?: components["schemas"]["CriterionProposal"] | null;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Source Fragments */
+            source_fragments?: components["schemas"]["SourceFragment"][];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "running" | "succeeded" | "failed";
+        };
         /** Section */
         Section: {
             /** Id */
@@ -2291,6 +2370,235 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Decision"];
+                };
+            };
+            /** @description Invalid operation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Version/state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Payload limit exceeded */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Invalid request (no input values echoed) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Internal failure */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Foundation placeholder */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Unavailable or configuration error */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    listSecondOpinions: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_SecondOpinion_"];
+                };
+            };
+            /** @description Invalid operation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Version/state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Payload limit exceeded */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Invalid request (no input values echoed) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Internal failure */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Foundation placeholder */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Unavailable or configuration error */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    createSecondOpinion: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecondOpinion"];
                 };
             };
             /** @description Invalid operation */

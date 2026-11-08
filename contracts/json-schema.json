@@ -5092,6 +5092,137 @@
       "title": "ScoringHashInput",
       "type": "object"
     },
+    "SecondOpinion": {
+      "additionalProperties": false,
+      "properties": {
+        "appeal_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Appeal Id",
+          "type": "string"
+        },
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/CallRecord"
+          },
+          "title": "Calls",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "criterion_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/APIError"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evaluation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Evaluation Id",
+          "type": "string"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "production",
+            "test"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "proposal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CriterionProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_fragments": {
+          "items": {
+            "$ref": "#/$defs/SourceFragment"
+          },
+          "title": "Source Fragments",
+          "type": "array"
+        },
+        "state": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "appeal_id",
+        "evaluation_id",
+        "criterion_id",
+        "profile_id",
+        "profile_version",
+        "mode",
+        "state",
+        "created_at"
+      ],
+      "title": "SecondOpinion",
+      "type": "object"
+    },
     "Section": {
       "additionalProperties": false,
       "properties": {
@@ -6127,6 +6258,9 @@
     "ScoringHashInput": {
       "$ref": "#/$defs/ScoringHashInput"
     },
+    "SecondOpinion": {
+      "$ref": "#/$defs/SecondOpinion"
+    },
     "Section": {
       "$ref": "#/$defs/Section"
     },
@@ -6241,6 +6375,7 @@
     "ScoringChoice",
     "ScoringCriterion",
     "ScoringHashInput",
+    "SecondOpinion",
     "Section",
     "SectionResult",
     "SemanticChoice",
