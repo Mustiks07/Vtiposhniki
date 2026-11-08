@@ -9,7 +9,7 @@ import { ErrorPanel } from './States';
 function modelText(run: AssistantRun): string {
   const call = run.calls?.at(-1);
   const actual = call?.actual;
-  return actual ? `${actual.provider} / ${actual.model}${actual.provider === 'xerosharc' ? ' · внутренняя модель шлюза не подтверждена' : ''}` : 'модель неизвестна';
+  return actual ? `${actual.provider} / ${actual.model}${(actual.provider === 'xerosharc' || actual.provider === 'basisweb') ? ' · внутренняя модель шлюза не подтверждена' : ''}` : 'модель неизвестна';
 }
 
 export function CoachingInline({ run, messageId }: { run: AssistantRun | undefined; messageId: string }) {

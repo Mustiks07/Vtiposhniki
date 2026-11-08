@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 import pytest
 from cqa_ai.providers import (
+    BasisWebTransport,
     DeepSeekTransport,
     GeminiTransport,
     OpenRouterTransport,
@@ -43,7 +44,7 @@ def openai_body(content: Any = '{"criteria": []}', finish: str = "stop", **extra
     }
 
 
-@pytest.mark.parametrize("cls", [DeepSeekTransport, OpenRouterTransport])
+@pytest.mark.parametrize("cls", [DeepSeekTransport, OpenRouterTransport, BasisWebTransport])
 async def test_openai_compatible_success_and_request_shape(cls: Any) -> None:
     seen: list[httpx.Request] = []
 
@@ -322,6 +323,37 @@ async def test_xerosharc_routes_credential_and_preserves_reported_model() -> Non
     body = json.loads(seen[0].content)
     assert body["response_format"] == {"type": "json_object"}
     assert "seed" not in body
+
+
+async def test_basisweb_uses_own_key_endpoint_and_reported_identity() -> None:
+    from _cqa_ai_helpers import profile
+    from cqa_contracts.interfaces import ConfigurationError
+    from cqa_contracts.models import EvaluatorProfile
+    from cqa_contracts.runtime import require_production_configuration
+
+    data = profile().model_dump(mode="json")
+    data.update(mode="production", reviewer=None, fallbacks=[])
+    data["primary"].update(
+        provider="basisweb", model="gpt-6-astra", configuration_ref="BASISWEB_API_KEY"
+    )
+    prof = EvaluatorProfile.model_validate(data)
+    with pytest.raises(ConfigurationError):
+        require_production_configuration(prof, {"XEROSHARC_API_KEY": KEY})
+    env = {"BASISWEB_API_KEY": KEY, "XEROSHARC_API_KEY": "wrong-service-key"}
+    require_production_configuration(prof, env)
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=openai_body(model="reported-by-basisweb"))
+
+    async with client(handler) as c:
+        built = transports_from_environment(prof, env, c)
+        assert list(built) == ["basisweb"]
+        result = await built["basisweb"].complete(REQUEST)
+    assert str(seen[0].url) == "https://api.basisweb.ru/v1/chat/completions"
+    assert seen[0].headers["Authorization"] == f"Bearer {KEY}"
+    assert result.actual_model == "reported-by-basisweb"
 
 
 @pytest.mark.parametrize(

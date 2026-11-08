@@ -49,7 +49,7 @@ export function ConversationAssistant({ evaluation, scope, messages, onShow }: {
           <p className="assistant-question"><strong>{r.question}</strong></p>
           <p className="hint">{scopeLabel(r.scope)} · версия оценки {r.evaluation_revision} · {serverTime(r.created_at)}{current ? '' : ' · другое сохранённое состояние'}</p>
           <p><strong>{r.mode === 'test' ? 'Тестовая подсказка · не AI-анализ' : 'Подсказка AI'}</strong></p>
-          <p className="hint">Модель по API: {actual ? `${actual.provider} / ${actual.model}` : 'неизвестна'}{actual?.provider === 'xerosharc' ? ' · внутренняя модель шлюза не подтверждена' : ''}</p>
+          <p className="hint">Модель по API: {actual ? `${actual.provider} / ${actual.model}` : 'неизвестна'}{(actual?.provider === 'xerosharc' || actual?.provider === 'basisweb') ? ' · внутренняя модель шлюза не подтверждена' : ''}</p>
           {r.state === 'running' ? <p role="status">Ответ ещё выполняется.</p> : null}
           {r.error ? <p className="notice notice-warn" role="status">{r.error.message}</p> : null}
           {r.answer ? <>

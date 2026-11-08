@@ -20,6 +20,7 @@ export function profileLabel(profile: ProfileSummary['profile']): string {
     (
       {
         xerosharc: 'Xerosharc',
+        basisweb: 'BasisWeb',
         gemini: 'Gemini',
         deepseek: 'DeepSeek',
         openrouter: 'OpenRouter',

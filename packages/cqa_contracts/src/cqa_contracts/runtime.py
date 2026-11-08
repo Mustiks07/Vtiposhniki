@@ -11,6 +11,7 @@ PROVIDER_ENV_KEYS = {
     "deepseek": "DEEPSEEK_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
     "xerosharc": "XEROSHARC_API_KEY",
+    "basisweb": "BASISWEB_API_KEY",
 }
 XEROSHARC_BASE_URL = "https://xerosharc.site/v1"
 

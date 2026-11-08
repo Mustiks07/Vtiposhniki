@@ -4065,6 +4065,7 @@
               "deepseek",
               "openrouter",
               "xerosharc",
+              "basisweb",
               "test"
             ],
             "title": "Provider",
@@ -5641,7 +5642,7 @@
   },
   "info": {
     "title": "CQA API",
-    "version": "1.10.0"
+    "version": "1.11.0"
   },
   "openapi": "3.1.0",
   "paths": {

@@ -12,7 +12,7 @@ import { ErrorPanel } from './States';
 
 function modelText(run: CriterionSuggestionRun): string {
   const actual = run.calls?.at(-1)?.actual;
-  return actual ? `${actual.provider} / ${actual.model}${actual.provider === 'xerosharc' ? ' · внутренняя модель шлюза не подтверждена' : ''}` : 'модель неизвестна';
+  return actual ? `${actual.provider} / ${actual.model}${(actual.provider === 'xerosharc' || actual.provider === 'basisweb') ? ' · внутренняя модель шлюза не подтверждена' : ''}` : 'модель неизвестна';
 }
 
 export function CriterionDesigner({ onAdd }: { onAdd: (criterion: Criterion) => void }) {

@@ -394,6 +394,23 @@ class XerosharcTransport(OpenAICompatibleTransport):
         super().__init__(api_key, client, base_url)
 
 
+class BasisWebTransport(OpenAICompatibleTransport):
+    """Separate gateway identity; never relabel BasisWeb calls as Xerosharc."""
+
+    provider = "basisweb"
+    capabilities = Capabilities(
+        json_object=True,
+        json_schema_strict=False,
+        seed=False,
+        reports_usage=True,
+        reports_reasoning_tokens=True,
+        notes=("third-party gateway; underlying model identity is not independently verified",),
+    )
+
+    def __init__(self, api_key: str, client: httpx.AsyncClient) -> None:
+        super().__init__(api_key, client, "https://api.basisweb.ru/v1")
+
+
 def transports_from_environment(
     profile: EvaluatorProfile, environment: Mapping[str, str], client: httpx.AsyncClient
 ) -> dict[str, ProviderTransport]:
@@ -402,6 +419,7 @@ def transports_from_environment(
         "gemini": GeminiTransport,
         "deepseek": DeepSeekTransport,
         "openrouter": OpenRouterTransport,
+        "basisweb": BasisWebTransport,
         "xerosharc": lambda key, client: XerosharcTransport(
             key, client, xerosharc_base_url(environment)
         ),

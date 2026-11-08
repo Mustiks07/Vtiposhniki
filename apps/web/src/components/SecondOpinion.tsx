@@ -45,7 +45,7 @@ export function SecondOpinionPanel({ appeal, criterion, messages, onShow }: {
       return <article className="ai-advice-result" key={item.id}>
         <p><strong>{item.mode === 'test' ? 'Тестовая подсказка · не AI-анализ' : 'Подсказка AI'}</strong> · {serverTime(item.created_at)}</p>
         <p className="hint">Модель по API: {actual ? `${actual.provider} / ${actual.model}` : 'неизвестна'}
-          {actual?.provider === 'xerosharc' ? ' · внутренняя модель шлюза не подтверждена' : ''}
+          {(actual?.provider === 'xerosharc' || actual?.provider === 'basisweb') ? ' · внутренняя модель шлюза не подтверждена' : ''}
           {requested ? ` · запрошена ${requested.model}` : ''}</p>
         {item.state === 'running' ? <p role="status">Подсказка выполняется. Журнал сохранится после завершения.</p> : null}
         {item.error ? <p className="notice notice-warn" role="status">Подсказка недоступна: {item.error.message}</p> : null}

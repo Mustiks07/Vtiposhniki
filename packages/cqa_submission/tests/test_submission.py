@@ -379,7 +379,7 @@ def test_effective_overrides_never_change_submission():
     assert convert(replace(item, evaluation=edited), CONFIG) == convert(item, CONFIG)
 
 
-@pytest.mark.parametrize("provider", ["gemini", "xerosharc"])
+@pytest.mark.parametrize("provider", ["gemini", "xerosharc", "basisweb"])
 def test_actual_models_include_reviewer_and_fallback_not_unused_configuration(provider):
     items, manifest = dataset()
     call = items[0].calls[0]
