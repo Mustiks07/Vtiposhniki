@@ -2,6 +2,9 @@
 // outside react-query memory, no localStorage. Every read accepts an AbortSignal so a stale
 // response cannot leak into a newly selected card.
 import type {
+  CriterionSuggestionRun,
+  CriterionSuggestionPage,
+  SuggestCriterionRequest,
   Appeal,
   AppealPage,
   APIErrorBody,
@@ -184,6 +187,11 @@ export const api = {
     request<SecondOpinion>(`/appeals/${enc(appealId)}/second-opinions`, { method: 'POST', headers: { 'Idempotency-Key': key } }),
   listSecondOpinions: (appealId: string, signal?: AbortSignal) =>
     request<SecondOpinionPage>(`/appeals/${enc(appealId)}/second-opinions`, { signal }),
+
+  suggestCriterion: (body: SuggestCriterionRequest, key: string) =>
+    request<CriterionSuggestionRun>('/criterion-suggestions', { method: 'POST', body, headers: { 'Idempotency-Key': key } }),
+  listCriterionSuggestions: (signal?: AbortSignal) =>
+    request<CriterionSuggestionPage>('/criterion-suggestions', { query: { limit: 20 }, signal }),
 
   listAppeals: (
     filters: { state?: string | null; evaluation_id?: string | null; limit?: number; offset?: number },

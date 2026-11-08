@@ -1501,3 +1501,9 @@ small {
 .ai-advice-result { padding-block: 18px; border-top: 1px solid #d8dffc; margin-top: 18px; }
 .ai-advice-result p { overflow-wrap: anywhere; }
 @media (max-width: 640px) { .ai-advice { padding: 16px; border-radius: 14px; } }
+.criterion-designer > summary { cursor: pointer; color: #244dff; font-size: 1.04rem; font-weight: 650; }
+.criterion-designer input, .criterion-designer textarea, .criterion-designer select { max-width: 100%; }
+.criterion-designer .ai-advice-result { overflow-wrap: anywhere; }
+.criterion-design-choices { padding-left: 20px; }
+.criterion-design-choices li { margin: 12px 0; }
+.criterion-design-choices small { display: block; margin-top: 5px; color: #626779; }

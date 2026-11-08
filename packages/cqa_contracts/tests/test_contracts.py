@@ -32,8 +32,8 @@ def test_http_contract_ids_and_safe_errors():
         for method, op in item.items()
         if method in {"get", "post"}
     ]
-    assert len(operations) == 25
-    assert len({op["operationId"] for op in operations}) == 25
+    assert len(operations) == 27
+    assert len({op["operationId"] for op in operations}) == 27
     assert {"createSecondOpinion", "listSecondOpinions"} <= {op["operationId"] for op in operations}
     assert client.get("/api/v1/health").json()["business_ready"] is False
     error = client.get("/api/v1/conversations")

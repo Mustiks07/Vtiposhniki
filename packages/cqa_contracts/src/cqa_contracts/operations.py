@@ -20,6 +20,7 @@ from .http_models import (
     CreateAppeal,
     CreateBatch,
     CreateChecklistVersion,
+    CriterionSuggestionRun,
     EvaluationBatch,
     FlagScope,
     FlagStatus,
@@ -30,6 +31,7 @@ from .http_models import (
     Page,
     ProfileSummary,
     SecondOpinion,
+    SuggestCriterionRequest,
     VersionList,
     WorkQueue,
 )
@@ -317,6 +319,28 @@ async def create_second_opinion(
     response_model=Page[SecondOpinion],
 )
 async def list_second_opinions(id: str, limit: Limit = 50, offset: Offset = 0) -> None:
+    unimplemented()
+
+
+@router.post(
+    "/criterion-suggestions",
+    operation_id="suggestCriterion",
+    response_model=CriterionSuggestionRun,
+    status_code=201,
+)
+async def suggest_criterion(
+    body: SuggestCriterionRequest,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> None:
+    unimplemented()
+
+
+@router.get(
+    "/criterion-suggestions",
+    operation_id="listCriterionSuggestions",
+    response_model=Page[CriterionSuggestionRun],
+)
+async def list_criterion_suggestions(limit: Limit = 50, offset: Offset = 0) -> None:
     unimplemented()
 
 

@@ -18,6 +18,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .assistance import recover as recover_assistance
 from .checklists import seed_original_checklist
+from .criterion_suggestions import recover as recover_criterion_suggestions
 from .errors import install_error_handlers, make_error
 from .ports import DomainPort, production_domain
 from .registry import sync_registry
@@ -137,6 +138,7 @@ def create_app(
         )
         services.db.migrate()
         recover_assistance(services)
+        recover_criterion_suggestions(services)
         sync_registry(services)
         seed_original_checklist(services)
         worker = Worker(services)

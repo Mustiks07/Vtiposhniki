@@ -1592,6 +1592,88 @@
       "title": "Criterion",
       "type": "object"
     },
+    "CriterionBlueprint": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_na": {
+          "title": "Allow Na",
+          "type": "boolean"
+        },
+        "choices": {
+          "items": {
+            "$ref": "#/$defs/Choice"
+          },
+          "maxItems": 10,
+          "minItems": 2,
+          "title": "Choices",
+          "type": "array"
+        },
+        "definition": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Definition",
+          "type": "string"
+        },
+        "explanation": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Explanation",
+          "type": "string"
+        },
+        "flag_when_choice_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Flag When Choice Ids",
+          "type": "array"
+        },
+        "na_condition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Na Condition"
+        },
+        "response_type": {
+          "enum": [
+            "binary",
+            "scale",
+            "flag"
+          ],
+          "title": "Response Type",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "definition",
+        "response_type",
+        "choices",
+        "allow_na",
+        "na_condition",
+        "explanation"
+      ],
+      "title": "CriterionBlueprint",
+      "type": "object"
+    },
     "CriterionProposal": {
       "additionalProperties": false,
       "properties": {
@@ -1684,6 +1766,114 @@
         "evidence"
       ],
       "title": "CriterionProposal",
+      "type": "object"
+    },
+    "CriterionSuggestionRun": {
+      "additionalProperties": false,
+      "properties": {
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/CallRecord"
+          },
+          "title": "Calls",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/APIError"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "production",
+            "test"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "suggestion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CriterionBlueprint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "profile_id",
+        "profile_version",
+        "mode",
+        "state",
+        "created_at"
+      ],
+      "title": "CriterionSuggestionRun",
       "type": "object"
     },
     "DTO": {
@@ -5928,6 +6118,44 @@
       "title": "SubmissionRun",
       "type": "object"
     },
+    "SuggestCriterionRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Description",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "description",
+        "profile_id"
+      ],
+      "title": "SuggestCriterionRequest",
+      "type": "object"
+    },
     "TokenUsage": {
       "additionalProperties": false,
       "properties": {
@@ -6111,8 +6339,14 @@
     "Criterion": {
       "$ref": "#/$defs/Criterion"
     },
+    "CriterionBlueprint": {
+      "$ref": "#/$defs/CriterionBlueprint"
+    },
     "CriterionProposal": {
       "$ref": "#/$defs/CriterionProposal"
+    },
+    "CriterionSuggestionRun": {
+      "$ref": "#/$defs/CriterionSuggestionRun"
     },
     "DTO": {
       "$ref": "#/$defs/DTO"
@@ -6294,6 +6528,9 @@
     "SubmissionRun": {
       "$ref": "#/$defs/SubmissionRun"
     },
+    "SuggestCriterionRequest": {
+      "$ref": "#/$defs/SuggestCriterionRequest"
+    },
     "TokenUsage": {
       "$ref": "#/$defs/TokenUsage"
     },
@@ -6326,7 +6563,9 @@
     "CreateBatch",
     "CreateChecklistVersion",
     "Criterion",
+    "CriterionBlueprint",
     "CriterionProposal",
+    "CriterionSuggestionRun",
     "DTO",
     "Decision",
     "DecisionRequest",
@@ -6387,6 +6626,7 @@
     "SubmissionConfig",
     "SubmissionManifest",
     "SubmissionRun",
+    "SuggestCriterionRequest",
     "TokenUsage",
     "VersionList"
   ],

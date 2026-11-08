@@ -31,6 +31,7 @@ from . import (
     audio,
     checklists,
     conversations,
+    criterion_suggestions,
     evaluations,
     exports,
     importing,
@@ -41,6 +42,32 @@ from . import (
 from .services import Services
 
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
+
+
+@router.post(
+    "/criterion-suggestions",
+    operation_id="suggestCriterion",
+    response_model=h.CriterionSuggestionRun,
+    status_code=201,
+)
+async def suggest_criterion(
+    request: Request,
+    body: h.SuggestCriterionRequest,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> h.CriterionSuggestionRun:
+    return await criterion_suggestions.create(_services(request), body, idempotency_key)
+
+
+@router.get(
+    "/criterion-suggestions",
+    operation_id="listCriterionSuggestions",
+    response_model=Page[h.CriterionSuggestionRun],
+)
+def list_criterion_suggestions(
+    request: Request, limit: Limit = 50, offset: Offset = 0
+) -> Page[h.CriterionSuggestionRun]:
+    items, total = criterion_suggestions.list_suggestions(_services(request), limit, offset)
+    return Page[h.CriterionSuggestionRun](items=items, total=total, limit=limit, offset=offset)
 
 
 @router.post(

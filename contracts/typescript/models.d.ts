@@ -246,15 +246,37 @@ export type ProfileId1 = string;
 export type SchemaVersion32 = "1.0";
 export type ExpectedLatestVersionId = string;
 export type SchemaVersion33 = "1.0";
+export type AllowNa1 = boolean;
+/**
+ * @minItems 2
+ * @maxItems 10
+ */
+export type Choices1 =
+  | [Choice, Choice]
+  | [Choice, Choice, Choice]
+  | [Choice, Choice, Choice, Choice]
+  | [Choice, Choice, Choice, Choice, Choice]
+  | [Choice, Choice, Choice, Choice, Choice, Choice]
+  | [Choice, Choice, Choice, Choice, Choice, Choice, Choice]
+  | [Choice, Choice, Choice, Choice, Choice, Choice, Choice, Choice]
+  | [Choice, Choice, Choice, Choice, Choice, Choice, Choice, Choice, Choice]
+  | [Choice, Choice, Choice, Choice, Choice, Choice, Choice, Choice, Choice, Choice];
+export type Definition1 = string;
+export type Explanation = string;
+export type FlagWhenChoiceIds1 = string[];
+export type NaCondition1 = string | null;
+export type ResponseType1 = "binary" | "scale" | "flag";
+export type SchemaVersion34 = "1.0";
+export type Title6 = string;
 export type AnswerChoiceId1 = string | null;
 export type Applicability = "applicable" | "not_applicable" | "undetermined";
 export type CriterionId3 = string;
 export type EndMessageId = string | null;
-export type Explanation = string;
+export type Explanation1 = string;
 export type Kind = "message" | "range" | "source";
 export type MessageIds = string[];
 export type Relation = "support" | "counter" | "context";
-export type SchemaVersion34 = "1.0";
+export type SchemaVersion35 = "1.0";
 export type SourceChunkId = string | null;
 export type StartMessageId = string | null;
 export type Evidence = Evidence1[];
@@ -284,58 +306,68 @@ export type ReasonCode =
   | "human_confirmed"
   | "human_changed";
 export type ReviewReasons1 = string[];
-export type SchemaVersion35 = "1.0";
 export type SchemaVersion36 = "1.0";
-export type AppealId = string;
+export type Calls = CallRecord[];
 export type CreatedAt3 = string;
+export type FinishedAt1 = string | null;
+export type Id8 = string;
+export type Mode2 = "production" | "test";
+export type ProfileId2 = string;
+export type ProfileVersion = string;
+export type SchemaVersion37 = "1.0";
+export type State1 = "running" | "succeeded" | "failed";
+export type Title7 = string;
+export type SchemaVersion38 = "1.0";
+export type AppealId = string;
+export type CreatedAt4 = string;
 export type CriterionId4 = string;
 export type Decision1 = "confirmed" | "changed";
 export type EvaluationId1 = string;
 export type ExpectedRevision1 = number;
-export type Id8 = string;
+export type Id9 = string;
 export type Reason1 = string;
 /**
  * @minItems 1
  */
 export type ReasonCodes1 = [ReasonCode, ...ReasonCode[]];
 export type Revision1 = number;
-export type SchemaVersion37 = "1.0";
+export type SchemaVersion39 = "1.0";
 export type Decision2 = "confirmed" | "changed";
 export type ExpectedRevision2 = number;
 export type Reason2 = string;
-export type SchemaVersion38 = "1.0";
+export type SchemaVersion40 = "1.0";
 export type AutomaticFinal = CriterionProposal[];
-export type Calls = CallRecord[];
+export type Calls1 = CallRecord[];
 export type EvaluatorMode = "production" | "test";
 export type AudioContentHash = string | null;
 export type ChecklistSemanticHash = string;
 export type ConversationContentHash = string;
 export type CorpusSnapshotHash = string;
 export type ProfileHash = string;
-export type SchemaVersion39 = "1.0";
+export type SchemaVersion41 = "1.0";
 export type Initial = CriterionProposal[];
 export type Limitations1 = string[];
 export type CallIds = string[];
 export type CriterionId5 = string;
 export type Limitations2 = string[];
 export type Outcome1 = "agreed" | "conflicted" | "skipped" | "failed";
-export type SchemaVersion40 = "1.0";
-export type Reviews = ReviewRecord[];
-export type SchemaVersion41 = "1.0";
 export type SchemaVersion42 = "1.0";
+export type Reviews = ReviewRecord[];
+export type SchemaVersion43 = "1.0";
+export type SchemaVersion44 = "1.0";
 export type SourceFragments = SourceFragment[];
 export type Status1 = "complete" | "partial" | "failed";
 export type ChecklistVersionId4 = string;
 export type CorpusSnapshotId = string;
-export type CreatedAt4 = string;
-export type Id9 = string;
+export type CreatedAt5 = string;
+export type Id10 = string;
 export type AttemptId2 = string | null;
 export type AttemptId3 = string;
-export type FinishedAt1 = string | null;
+export type FinishedAt2 = string | null;
 export type Number = number;
-export type SchemaVersion43 = "1.0";
+export type SchemaVersion45 = "1.0";
 export type StartedAt1 = string;
-export type State1 = "running" | "succeeded" | "failed" | "expired" | "cancelled";
+export type State2 = "running" | "succeeded" | "failed" | "expired" | "cancelled";
 export type Attempts = JobAttempt[];
 export type BatchId = string | null;
 export type AttemptId4 = string;
@@ -348,31 +380,31 @@ export type LogicalJobId1 = string;
 export type MaxCost = string | null;
 export type MaxProviderCalls = number;
 export type MaxTotalTokens = number | null;
-export type SchemaVersion44 = "1.0";
+export type SchemaVersion46 = "1.0";
 export type UsageComplete = boolean;
 export type ConversationId = string;
 export type ConversationRevision = number;
 export type EvaluationId2 = string | null;
-export type Id10 = string;
+export type Id11 = string;
 export type LeaseExpiresAt = string | null;
 export type LeaseId = string | null;
 export type MaxAttempts = number;
 export type NextAttemptAt = string | null;
 export type CompletedCalls = number;
-export type SchemaVersion45 = "1.0";
-export type Stage = "queued" | "evaluating" | "reviewing" | "persisting" | "done";
-export type SchemaVersion46 = "1.0";
-export type State2 = "queued" | "running" | "succeeded" | "retry_wait" | "failed" | "cancelled";
-export type Jobs = Job[];
-export type Mode2 = "fresh" | "reuse_if_compatible";
-export type ProfileId2 = string;
-export type ProfileVersion = string;
 export type SchemaVersion47 = "1.0";
-export type Calls1 = CallRecord[];
+export type Stage = "queued" | "evaluating" | "reviewing" | "persisting" | "done";
+export type SchemaVersion48 = "1.0";
+export type State3 = "queued" | "running" | "succeeded" | "retry_wait" | "failed" | "cancelled";
+export type Jobs = Job[];
+export type Mode3 = "fresh" | "reuse_if_compatible";
+export type ProfileId3 = string;
+export type ProfileVersion1 = string;
+export type SchemaVersion49 = "1.0";
+export type Calls2 = CallRecord[];
 export type Cost1 = string | null;
 export type CostComplete = boolean;
 export type Currency2 = "USD";
-export type SchemaVersion48 = "1.0";
+export type SchemaVersion50 = "1.0";
 export type AnswerChoiceId2 = string | null;
 export type Applicability1 = "applicable" | "not_applicable" | "undetermined";
 export type ApplicableWeight = string;
@@ -381,12 +413,12 @@ export type EarnedWeight = string | null;
 export type NormalizedContribution = string | null;
 export type OriginalWeight = string;
 export type RawValue1 = boolean | number | string | null;
-export type SchemaVersion49 = "1.0";
+export type SchemaVersion51 = "1.0";
 export type ScoreFraction1 = string | null;
 export type Contributions = ScoreContribution[];
 export type Flags = FlagResult[];
-export type SchemaVersion50 = "1.0";
-export type SchemaVersion51 = "1.0";
+export type SchemaVersion52 = "1.0";
+export type SchemaVersion53 = "1.0";
 export type SectionApplicableWeight = string;
 export type SectionEarnedWeight = string;
 export type SectionId1 = string;
@@ -398,27 +430,27 @@ export type ChecklistVersionId5 = string;
 export type ConversationId1 = string;
 export type ConversationRevision1 = number;
 export type CorpusSnapshotId1 = string;
-export type CreatedAt5 = string;
+export type CreatedAt6 = string;
 export type EffectiveProposals = CriterionProposal[];
 export type HumanDecisions = Decision[];
-export type Id11 = string;
-export type ProfileId3 = string;
-export type ProfileVersion1 = string;
-export type Mode3 = "fresh" | "reuse_if_compatible";
+export type Id12 = string;
+export type ProfileId4 = string;
+export type ProfileVersion2 = string;
+export type Mode4 = "fresh" | "reuse_if_compatible";
 export type ReuseKey = string;
 export type ReusedFromEvaluationId = string | null;
-export type SchemaVersion52 = "1.0";
+export type SchemaVersion54 = "1.0";
 export type Revision2 = number;
-export type SchemaVersion53 = "1.0";
+export type SchemaVersion55 = "1.0";
 export type SourceFragments1 = SourceFragment[];
 export type CorpusSnapshotId2 = string;
 export type Fallbacks = ProviderSelection[];
 export type MaxOutputTokens = number;
-export type SchemaVersion54 = "1.0";
+export type SchemaVersion56 = "1.0";
 export type Seed = number | null;
 export type Temperature = string;
-export type Id12 = string;
-export type Mode4 = "production" | "test";
+export type Id13 = string;
+export type Mode5 = "production" | "test";
 export type OutputSchemaVersion = "1.0";
 export type PreprocessingVersion = string;
 export type PromptVersion = string;
@@ -431,20 +463,20 @@ export type MaxJobAttempts = number;
 export type MaxProviderCalls1 = number;
 export type MaxTotalTokens1 = number | null;
 export type MaxTransportRetries = number;
-export type SchemaVersion55 = "1.0";
+export type SchemaVersion57 = "1.0";
 export type Blind = true;
 export type Enabled = boolean;
 export type MaxCriteria = number;
-export type SchemaVersion56 = "1.0";
+export type SchemaVersion58 = "1.0";
 export type Version1 = "keep_valid_initial_v1";
-export type SchemaVersion57 = "1.0";
+export type SchemaVersion59 = "1.0";
 export type Version2 = string;
 export type BusinessReady = boolean;
 export type EvaluatorMode1 = "production" | "test";
 export type Phase = "foundation" | "application";
-export type SchemaVersion58 = "1.0";
+export type SchemaVersion60 = "1.0";
 export type Status3 = "ok";
-export type SchemaVersion59 = "1.0";
+export type SchemaVersion61 = "1.0";
 export type Speaker2 = "client" | "operator" | "bot" | "system";
 export type Text3 = string;
 export type TimestampOriginal2 = string;
@@ -456,33 +488,33 @@ export type Language2 = "RU" | "KZ" | "EN";
  */
 export type Messages2 = [ImportMessage, ...ImportMessage[]];
 export type OccurredAt2 = string | null;
-export type SchemaVersion60 = "1.0";
+export type SchemaVersion62 = "1.0";
 export type Atomic = true;
 export type DeduplicatedCount = number;
 export type ConversationId2 = string;
 export type Disposition = "created" | "new_revision" | "unchanged";
 export type Revision3 = number;
-export type SchemaVersion61 = "1.0";
+export type SchemaVersion63 = "1.0";
 /**
  * @minItems 1
  */
 export type SourceIndices = [number, ...number[]];
 export type Items = ImportedRevision[];
 export type ReceivedCount = number;
-export type SchemaVersion62 = "1.0";
+export type SchemaVersion64 = "1.0";
 /**
  * @minItems 1
  * @maxItems 1000
  */
 export type Records = [ImportRecord, ...ImportRecord[]];
-export type SchemaVersion63 = "1.0";
+export type SchemaVersion65 = "1.0";
 export type Source = "json";
 export type Items1 = SourceVersion1[];
 export type Limit = number;
 export type Offset = number;
-export type SchemaVersion64 = "1.0";
+export type SchemaVersion66 = "1.0";
 export type Total1 = number;
-export type Mode5 = "local" | "external_api" | "hybrid";
+export type Mode6 = "local" | "external_api" | "hybrid";
 export type Name = string;
 /**
  * @minItems 1
@@ -530,29 +562,29 @@ export type Criteria3 = [];
 export type Error = string;
 export type Score = null;
 export type Status5 = "error";
-export type SchemaVersion65 = "1.0";
+export type SchemaVersion67 = "1.0";
 export type TeamName = string;
 export type GroupId = string;
-export type SchemaVersion66 = "1.0";
+export type SchemaVersion68 = "1.0";
 export type Source1 = "organizer_api";
 export type Items2 = unknown[];
 export type Limit1 = number;
 export type Offset1 = number;
-export type SchemaVersion67 = "1.0";
+export type SchemaVersion69 = "1.0";
 export type Total2 = number;
 export type Items3 = ChecklistVersion[];
 export type Limit2 = number;
 export type Offset2 = number;
-export type SchemaVersion68 = "1.0";
+export type SchemaVersion70 = "1.0";
 export type Total3 = number;
 export type Items4 = SourceVersion1[];
 export type Limit3 = number;
 export type Offset3 = number;
-export type SchemaVersion69 = "1.0";
+export type SchemaVersion71 = "1.0";
 export type Total4 = number;
 export type Configured = boolean;
 export type Preferred = boolean;
-export type SchemaVersion70 = "1.0";
+export type SchemaVersion72 = "1.0";
 export type AnswerChoiceId3 = string | null;
 export type Applicability2 = "applicable" | "not_applicable" | "undetermined";
 export type ApplicableWeight1 = string;
@@ -562,7 +594,7 @@ export type EndMessageId1 = string | null;
 export type Kind1 = "message" | "range" | "source";
 export type MessageIds1 = string[];
 export type Relation1 = "support" | "counter" | "context";
-export type SchemaVersion71 = "1.0";
+export type SchemaVersion73 = "1.0";
 export type SourceChunkId1 = string | null;
 export type StartMessageId1 = string | null;
 export type Evidence2 = SafeEvidenceRef[];
@@ -570,15 +602,15 @@ export type FlagDetected = boolean | null;
 export type NormalizedContribution1 = string | null;
 export type Origin1 = "ai" | "human" | "test";
 export type ReasonCodes2 = ReasonCode[];
-export type SchemaVersion72 = "1.0";
+export type SchemaVersion74 = "1.0";
 export type ScoreFraction2 = string | null;
 export type AppealId1 = string;
 export type CriterionId12 = string;
 export type Decision3 = "confirmed" | "changed";
-export type Id13 = string;
+export type Id14 = string;
 export type ReasonCodes3 = ReasonCode[];
 export type Revision4 = number;
-export type SchemaVersion73 = "1.0";
+export type SchemaVersion75 = "1.0";
 export type BatchId1 = string | null;
 export type GeneratedAt = string;
 export type ChecklistVersionId6 = string;
@@ -604,60 +636,60 @@ export type LimitationCodes = (
   | "cost_unknown"
   | "other"
 )[];
-export type ProfileId4 = string;
-export type ProfileVersion2 = string;
-export type SchemaVersion74 = "1.0";
+export type ProfileId5 = string;
+export type ProfileVersion3 = string;
+export type SchemaVersion76 = "1.0";
 export type ScoreStatus = ("complete" | "no_applicable_weight" | "incomplete_evaluation") | null;
 export type TotalScore2 = string | null;
 export type Items5 = SafeExportItem[];
-export type SchemaVersion75 = "1.0";
-export type Scope1 = "automatic" | "effective";
-export type Id14 = string;
-export type SchemaVersion76 = "1.0";
-export type ScoreFraction3 = string | null;
-export type Choices1 = ScoringChoice[];
-export type Id15 = string;
 export type SchemaVersion77 = "1.0";
+export type Scope1 = "automatic" | "effective";
+export type Id15 = string;
+export type SchemaVersion78 = "1.0";
+export type ScoreFraction3 = string | null;
+export type Choices2 = ScoringChoice[];
+export type Id16 = string;
+export type SchemaVersion79 = "1.0";
 export type SectionId2 = string | null;
 export type Weight1 = string;
 export type Criteria5 = ScoringCriterion[];
-export type SchemaVersion78 = "1.0";
+export type SchemaVersion80 = "1.0";
 export type Sections2 = Section[];
 export type AppealId2 = string;
-export type Calls2 = CallRecord[];
-export type CreatedAt6 = string;
+export type Calls3 = CallRecord[];
+export type CreatedAt7 = string;
 export type CriterionId13 = string;
 export type EvaluationId4 = string;
-export type FinishedAt2 = string | null;
-export type Id16 = string;
-export type Mode6 = "production" | "test";
-export type ProfileId5 = string;
-export type ProfileVersion3 = string;
-export type SchemaVersion79 = "1.0";
-export type SourceFragments2 = SourceFragment[];
-export type State3 = "running" | "succeeded" | "failed";
-export type Anchor1 = string;
+export type FinishedAt3 = string | null;
 export type Id17 = string;
-export type Label1 = string;
-export type RawValue2 = boolean | number | string;
-export type SchemaVersion80 = "1.0";
-export type AllowNa1 = boolean;
-export type Choices2 = SemanticChoice[];
-export type Definition1 = string;
-export type FlagWhenChoiceIds1 = string[];
-export type Id18 = string;
-export type NaCondition1 = string | null;
-export type RequiresReference1 = boolean;
-export type ResponseType1 = "binary" | "scale" | "flag";
-export type SchemaVersion81 = "1.0";
-export type Title6 = string;
-export type Criteria6 = SemanticCriterion[];
-export type SchemaVersion82 = "1.0";
-export type ChecklistVersionId7 = string;
+export type Mode7 = "production" | "test";
 export type ProfileId6 = string;
 export type ProfileVersion4 = string;
-export type Redactions = string[];
+export type SchemaVersion81 = "1.0";
+export type SourceFragments2 = SourceFragment[];
+export type State4 = "running" | "succeeded" | "failed";
+export type Anchor1 = string;
+export type Id18 = string;
+export type Label1 = string;
+export type RawValue2 = boolean | number | string;
+export type SchemaVersion82 = "1.0";
+export type AllowNa2 = boolean;
+export type Choices3 = SemanticChoice[];
+export type Definition2 = string;
+export type FlagWhenChoiceIds2 = string[];
+export type Id19 = string;
+export type NaCondition2 = string | null;
+export type RequiresReference1 = boolean;
+export type ResponseType2 = "binary" | "scale" | "flag";
 export type SchemaVersion83 = "1.0";
+export type Title8 = string;
+export type Criteria6 = SemanticCriterion[];
+export type SchemaVersion84 = "1.0";
+export type ChecklistVersionId7 = string;
+export type ProfileId7 = string;
+export type ProfileVersion5 = string;
+export type Redactions = string[];
+export type SchemaVersion85 = "1.0";
 export type SubmissionBranch = string;
 export type TeamName1 = string;
 export type Dataset = "dev" | "prod";
@@ -666,26 +698,30 @@ export type ConversationId6 = string;
 export type ExternalId2 = string;
 export type Language3 = "RU" | "KZ" | "EN";
 export type Revision5 = number;
-export type SchemaVersion84 = "1.0";
+export type SchemaVersion86 = "1.0";
 /**
  * @minItems 1
  */
 export type TurnHashes = [string, ...string[]];
 export type Entries = SubmissionEntry[];
-export type SchemaVersion85 = "1.0";
+export type SchemaVersion87 = "1.0";
 export type SourceSha256 = string;
 export type BatchId2 = string | null;
 export type ExternalId3 = string;
 export type IdempotencyKey = string;
-export type SchemaVersion86 = "1.0";
+export type SchemaVersion88 = "1.0";
 export type Attempts1 = SubmissionAttempt[];
 export type ConfigSha256 = string;
 export type ManifestSha256 = string;
-export type SchemaVersion87 = "1.0";
+export type SchemaVersion89 = "1.0";
+export type Description = string;
+export type ProfileId8 = string;
+export type SchemaVersion90 = "1.0";
+export type Title9 = string;
 export type Items6 = ChecklistVersion[];
 export type Limit4 = number;
 export type Offset4 = number;
-export type SchemaVersion88 = "1.0";
+export type SchemaVersion91 = "1.0";
 export type Total5 = number;
 
 export interface CQAContracts {
@@ -713,7 +749,9 @@ export interface CQAContracts {
   CreateBatch: CreateBatch;
   CreateChecklistVersion: CreateChecklistVersion;
   Criterion: Criterion;
+  CriterionBlueprint: CriterionBlueprint;
   CriterionProposal: CriterionProposal;
+  CriterionSuggestionRun: CriterionSuggestionRun;
   DTO: DTO;
   Decision: Decision;
   DecisionRequest: DecisionRequest;
@@ -774,6 +812,7 @@ export interface CQAContracts {
   SubmissionConfig: SubmissionConfig;
   SubmissionManifest: SubmissionManifest;
   SubmissionRun: SubmissionRun;
+  SuggestCriterionRequest: SuggestCriterionRequest;
   TokenUsage: TokenUsage;
   VersionList: VersionList;
 }
@@ -1210,6 +1249,21 @@ export interface CreateChecklistVersion {
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
+ * via the `definition` "CriterionBlueprint".
+ */
+export interface CriterionBlueprint {
+  allow_na: AllowNa1;
+  choices: Choices1;
+  definition: Definition1;
+  explanation: Explanation;
+  flag_when_choice_ids?: FlagWhenChoiceIds1;
+  na_condition: NaCondition1;
+  response_type: ResponseType1;
+  schema_version?: SchemaVersion34;
+  title: Title6;
+}
+/**
+ * This interface was referenced by `CQAContracts`'s JSON-Schema
  * via the `definition` "CriterionProposal".
  */
 export interface CriterionProposal {
@@ -1222,7 +1276,7 @@ export interface CriterionProposal {
   rationale: Rationale;
   reason_codes: ReasonCodes;
   review_reasons?: ReviewReasons1;
-  schema_version?: SchemaVersion35;
+  schema_version?: SchemaVersion36;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1230,20 +1284,38 @@ export interface CriterionProposal {
  */
 export interface Evidence1 {
   end_message_id?: EndMessageId;
-  explanation: Explanation;
+  explanation: Explanation1;
   kind: Kind;
   message_ids?: MessageIds;
   relation: Relation;
-  schema_version?: SchemaVersion34;
+  schema_version?: SchemaVersion35;
   source_chunk_id?: SourceChunkId;
   start_message_id?: StartMessageId;
+}
+/**
+ * This interface was referenced by `CQAContracts`'s JSON-Schema
+ * via the `definition` "CriterionSuggestionRun".
+ */
+export interface CriterionSuggestionRun {
+  calls?: Calls;
+  created_at: CreatedAt3;
+  error?: APIError | null;
+  finished_at?: FinishedAt1;
+  id: Id8;
+  mode: Mode2;
+  profile_id: ProfileId2;
+  profile_version: ProfileVersion;
+  schema_version?: SchemaVersion37;
+  state: State1;
+  suggestion?: CriterionBlueprint | null;
+  title: Title7;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
  * via the `definition` "DTO".
  */
 export interface DTO {
-  schema_version?: SchemaVersion36;
+  schema_version?: SchemaVersion38;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1251,17 +1323,17 @@ export interface DTO {
  */
 export interface Decision {
   appeal_id: AppealId;
-  created_at: CreatedAt3;
+  created_at: CreatedAt4;
   criterion_id: CriterionId4;
   decision: Decision1;
   evaluation_id: EvaluationId1;
   expected_revision: ExpectedRevision1;
-  id: Id8;
+  id: Id9;
   reason: Reason1;
   reason_codes: ReasonCodes1;
   replacement?: CriterionProposal | null;
   revision: Revision1;
-  schema_version?: SchemaVersion37;
+  schema_version?: SchemaVersion39;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1272,7 +1344,7 @@ export interface DecisionRequest {
   expected_revision: ExpectedRevision2;
   reason: Reason2;
   replacement?: CriterionProposal | null;
-  schema_version?: SchemaVersion38;
+  schema_version?: SchemaVersion40;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1280,14 +1352,14 @@ export interface DecisionRequest {
  */
 export interface EvaluationArtifact {
   automatic_final: AutomaticFinal;
-  calls: Calls;
+  calls: Calls1;
   error?: APIError | null;
   evaluator_mode: EvaluatorMode;
   identity: EvaluationIdentity;
   initial: Initial;
   limitations?: Limitations1;
   reviews: Reviews;
-  schema_version?: SchemaVersion41;
+  schema_version?: SchemaVersion43;
   source_fragments?: SourceFragments;
   status: Status1;
 }
@@ -1301,7 +1373,7 @@ export interface EvaluationIdentity {
   conversation_content_hash: ConversationContentHash;
   corpus_snapshot_hash: CorpusSnapshotHash;
   profile_hash: ProfileHash;
-  schema_version?: SchemaVersion39;
+  schema_version?: SchemaVersion41;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1313,7 +1385,7 @@ export interface ReviewRecord {
   limitations?: Limitations2;
   outcome: Outcome1;
   proposal: CriterionProposal | null;
-  schema_version?: SchemaVersion40;
+  schema_version?: SchemaVersion42;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1321,7 +1393,7 @@ export interface ReviewRecord {
  */
 export interface SourceFragment {
   chunk: SourceChunk;
-  schema_version?: SchemaVersion42;
+  schema_version?: SchemaVersion44;
   source: SourceVersion1;
 }
 /**
@@ -1331,14 +1403,14 @@ export interface SourceFragment {
 export interface EvaluationBatch {
   checklist_version_id: ChecklistVersionId4;
   corpus_snapshot_id: CorpusSnapshotId;
-  created_at: CreatedAt4;
-  id: Id9;
+  created_at: CreatedAt5;
+  id: Id10;
   jobs: Jobs;
-  mode: Mode2;
-  profile_id: ProfileId2;
-  profile_version: ProfileVersion;
+  mode: Mode3;
+  profile_id: ProfileId3;
+  profile_version: ProfileVersion1;
   progress: BatchProgress;
-  schema_version?: SchemaVersion47;
+  schema_version?: SchemaVersion49;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1353,14 +1425,14 @@ export interface Job {
   conversation_revision: ConversationRevision;
   error: APIError | null;
   evaluation_id: EvaluationId2;
-  id: Id10;
+  id: Id11;
   lease_expires_at: LeaseExpiresAt;
   lease_id: LeaseId;
   max_attempts: MaxAttempts;
   next_attempt_at: NextAttemptAt;
   progress: JobProgress;
-  schema_version?: SchemaVersion46;
-  state: State2;
+  schema_version?: SchemaVersion48;
+  state: State3;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1369,11 +1441,11 @@ export interface Job {
 export interface JobAttempt {
   attempt_id: AttemptId3;
   error: APIError | null;
-  finished_at: FinishedAt1;
+  finished_at: FinishedAt2;
   number: Number;
-  schema_version?: SchemaVersion43;
+  schema_version?: SchemaVersion45;
   started_at: StartedAt1;
-  state: State1;
+  state: State2;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1390,7 +1462,7 @@ export interface ExecutionBudget {
   max_cost?: MaxCost;
   max_provider_calls: MaxProviderCalls;
   max_total_tokens?: MaxTotalTokens;
-  schema_version?: SchemaVersion44;
+  schema_version?: SchemaVersion46;
   usage_complete?: UsageComplete;
 }
 /**
@@ -1399,7 +1471,7 @@ export interface ExecutionBudget {
  */
 export interface JobProgress {
   completed_calls: CompletedCalls;
-  schema_version?: SchemaVersion45;
+  schema_version?: SchemaVersion47;
   stage: Stage;
 }
 /**
@@ -1409,12 +1481,12 @@ export interface JobProgress {
  * via the `definition` "EvaluationRun".
  */
 export interface EvaluationRun {
-  calls: Calls1;
+  calls: Calls2;
   cost: Cost1;
   cost_complete: CostComplete;
   currency?: Currency2;
   job: Job;
-  schema_version?: SchemaVersion48;
+  schema_version?: SchemaVersion50;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1427,17 +1499,17 @@ export interface EvaluationView {
   conversation_id: ConversationId1;
   conversation_revision: ConversationRevision1;
   corpus_snapshot_id: CorpusSnapshotId1;
-  created_at: CreatedAt5;
+  created_at: CreatedAt6;
   effective_proposals: EffectiveProposals;
   effective_score: ScoreSummary;
   human_decisions: HumanDecisions;
-  id: Id11;
-  profile_id: ProfileId3;
-  profile_version: ProfileVersion1;
+  id: Id12;
+  profile_id: ProfileId4;
+  profile_version: ProfileVersion2;
   reuse: ReuseProvenance;
   revision: Revision2;
   run?: EvaluationRun | null;
-  schema_version?: SchemaVersion53;
+  schema_version?: SchemaVersion55;
   source_fragments: SourceFragments1;
 }
 /**
@@ -1447,7 +1519,7 @@ export interface EvaluationView {
 export interface ScoreSummary {
   contributions: Contributions;
   flags: Flags;
-  schema_version?: SchemaVersion50;
+  schema_version?: SchemaVersion52;
   section_results: SectionResults;
   status: Status2;
   total_score: TotalScore1;
@@ -1465,7 +1537,7 @@ export interface ScoreContribution {
   normalized_contribution: NormalizedContribution;
   original_weight: OriginalWeight;
   raw_value: RawValue1;
-  schema_version?: SchemaVersion49;
+  schema_version?: SchemaVersion51;
   score_fraction: ScoreFraction1;
 }
 /**
@@ -1473,7 +1545,7 @@ export interface ScoreContribution {
  * via the `definition` "SectionResult".
  */
 export interface SectionResult {
-  schema_version?: SchemaVersion51;
+  schema_version?: SchemaVersion53;
   section_applicable_weight: SectionApplicableWeight;
   section_earned_weight: SectionEarnedWeight;
   section_id: SectionId1;
@@ -1484,10 +1556,10 @@ export interface SectionResult {
  * via the `definition` "ReuseProvenance".
  */
 export interface ReuseProvenance {
-  mode: Mode3;
+  mode: Mode4;
   reuse_key: ReuseKey;
   reused_from_evaluation_id: ReusedFromEvaluationId;
-  schema_version?: SchemaVersion52;
+  schema_version?: SchemaVersion54;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1497,8 +1569,8 @@ export interface EvaluatorProfile {
   corpus_snapshot_id: CorpusSnapshotId2;
   fallbacks?: Fallbacks;
   generation: GenerationSettings;
-  id: Id12;
-  mode: Mode4;
+  id: Id13;
+  mode: Mode5;
   output_schema_version?: OutputSchemaVersion;
   preprocessing_version: PreprocessingVersion;
   primary: ProviderSelection;
@@ -1506,7 +1578,7 @@ export interface EvaluatorProfile {
   retries: RetryPolicy;
   reviewer?: ProviderSelection | null;
   reviewer_policy: ReviewerPolicy;
-  schema_version?: SchemaVersion57;
+  schema_version?: SchemaVersion59;
   version: Version2;
 }
 /**
@@ -1515,7 +1587,7 @@ export interface EvaluatorProfile {
  */
 export interface GenerationSettings {
   max_output_tokens?: MaxOutputTokens;
-  schema_version?: SchemaVersion54;
+  schema_version?: SchemaVersion56;
   seed?: Seed;
   temperature?: Temperature;
 }
@@ -1533,7 +1605,7 @@ export interface RetryPolicy {
   max_provider_calls?: MaxProviderCalls1;
   max_total_tokens?: MaxTotalTokens1;
   max_transport_retries?: MaxTransportRetries;
-  schema_version?: SchemaVersion55;
+  schema_version?: SchemaVersion57;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1543,7 +1615,7 @@ export interface ReviewerPolicy {
   blind?: Blind;
   enabled?: Enabled;
   max_criteria?: MaxCriteria;
-  schema_version?: SchemaVersion56;
+  schema_version?: SchemaVersion58;
   version?: Version1;
 }
 /**
@@ -1554,7 +1626,7 @@ export interface Health {
   business_ready?: BusinessReady;
   evaluator_mode?: EvaluatorMode1;
   phase?: Phase;
-  schema_version?: SchemaVersion58;
+  schema_version?: SchemaVersion60;
   status?: Status3;
 }
 /**
@@ -1562,7 +1634,7 @@ export interface Health {
  * via the `definition` "ImportMessage".
  */
 export interface ImportMessage {
-  schema_version?: SchemaVersion59;
+  schema_version?: SchemaVersion61;
   speaker: Speaker2;
   text: Text3;
   timestamp_original: TimestampOriginal2;
@@ -1577,7 +1649,7 @@ export interface ImportRecord {
   language: Language2;
   messages: Messages2;
   occurred_at?: OccurredAt2;
-  schema_version?: SchemaVersion60;
+  schema_version?: SchemaVersion62;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1588,7 +1660,7 @@ export interface ImportResult {
   deduplicated_count: DeduplicatedCount;
   items: Items;
   received_count: ReceivedCount;
-  schema_version?: SchemaVersion62;
+  schema_version?: SchemaVersion64;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1598,7 +1670,7 @@ export interface ImportedRevision {
   conversation_id: ConversationId2;
   disposition: Disposition;
   revision: Revision3;
-  schema_version?: SchemaVersion61;
+  schema_version?: SchemaVersion63;
   source_indices: SourceIndices;
 }
 /**
@@ -1607,7 +1679,7 @@ export interface ImportedRevision {
  */
 export interface JSONImport {
   records: Records;
-  schema_version?: SchemaVersion63;
+  schema_version?: SchemaVersion65;
   source: Source;
 }
 /**
@@ -1618,7 +1690,7 @@ export interface KnowledgeSources {
   items: Items1;
   limit: Limit;
   offset: Offset;
-  schema_version?: SchemaVersion64;
+  schema_version?: SchemaVersion66;
   total: Total1;
 }
 /**
@@ -1628,7 +1700,7 @@ export interface KnowledgeSources {
 export interface OfficialResults {
   model: OfficialModel;
   results: Results;
-  schema_version: SchemaVersion65;
+  schema_version: SchemaVersion67;
   team_name: TeamName;
 }
 /**
@@ -1636,7 +1708,7 @@ export interface OfficialResults {
  * via the `definition` "OfficialModel".
  */
 export interface OfficialModel {
-  mode: Mode5;
+  mode: Mode6;
   name: Name;
 }
 /**
@@ -1714,7 +1786,7 @@ export interface OfficialError {
  */
 export interface OrganizerImport {
   group_id: GroupId;
-  schema_version?: SchemaVersion66;
+  schema_version?: SchemaVersion68;
   source: Source1;
 }
 /**
@@ -1725,7 +1797,7 @@ export interface Page {
   items: Items2;
   limit: Limit1;
   offset: Offset1;
-  schema_version?: SchemaVersion67;
+  schema_version?: SchemaVersion69;
   total: Total2;
 }
 /**
@@ -1736,7 +1808,7 @@ export interface PageChecklistVersion {
   items: Items3;
   limit: Limit2;
   offset: Offset2;
-  schema_version?: SchemaVersion68;
+  schema_version?: SchemaVersion70;
   total: Total3;
 }
 /**
@@ -1747,7 +1819,7 @@ export interface PageSourceVersion {
   items: Items4;
   limit: Limit3;
   offset: Offset3;
-  schema_version?: SchemaVersion69;
+  schema_version?: SchemaVersion71;
   total: Total4;
 }
 /**
@@ -1759,7 +1831,7 @@ export interface ProfileSummary {
   configured: Configured;
   preferred?: Preferred;
   profile: EvaluatorProfile;
-  schema_version?: SchemaVersion70;
+  schema_version?: SchemaVersion72;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1776,7 +1848,7 @@ export interface SafeCriterionResult {
   normalized_contribution: NormalizedContribution1;
   origin: Origin1;
   reason_codes: ReasonCodes2;
-  schema_version?: SchemaVersion72;
+  schema_version?: SchemaVersion74;
   score_fraction: ScoreFraction2;
 }
 /**
@@ -1788,7 +1860,7 @@ export interface SafeEvidenceRef {
   kind: Kind1;
   message_ids?: MessageIds1;
   relation: Relation1;
-  schema_version?: SchemaVersion71;
+  schema_version?: SchemaVersion73;
   source_chunk_id?: SourceChunkId1;
   start_message_id?: StartMessageId1;
 }
@@ -1800,10 +1872,10 @@ export interface SafeDecision {
   appeal_id: AppealId1;
   criterion_id: CriterionId12;
   decision: Decision3;
-  id: Id13;
+  id: Id14;
   reason_codes: ReasonCodes3;
   revision: Revision4;
-  schema_version?: SchemaVersion73;
+  schema_version?: SchemaVersion75;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1813,7 +1885,7 @@ export interface SafeExport {
   batch_id: BatchId1;
   generated_at: GeneratedAt;
   items: Items5;
-  schema_version?: SchemaVersion75;
+  schema_version?: SchemaVersion77;
   scope: Scope1;
 }
 /**
@@ -1837,9 +1909,9 @@ export interface SafeExportItem {
   job_id: JobId;
   job_state: JobState;
   limitation_codes: LimitationCodes;
-  profile_id: ProfileId4;
-  profile_version: ProfileVersion2;
-  schema_version?: SchemaVersion74;
+  profile_id: ProfileId5;
+  profile_version: ProfileVersion3;
+  schema_version?: SchemaVersion76;
   score_status: ScoreStatus;
   total_score: TotalScore2;
 }
@@ -1848,8 +1920,8 @@ export interface SafeExportItem {
  * via the `definition` "ScoringChoice".
  */
 export interface ScoringChoice {
-  id: Id14;
-  schema_version?: SchemaVersion76;
+  id: Id15;
+  schema_version?: SchemaVersion78;
   score_fraction: ScoreFraction3;
 }
 /**
@@ -1857,9 +1929,9 @@ export interface ScoringChoice {
  * via the `definition` "ScoringCriterion".
  */
 export interface ScoringCriterion {
-  choices: Choices1;
-  id: Id15;
-  schema_version?: SchemaVersion77;
+  choices: Choices2;
+  id: Id16;
+  schema_version?: SchemaVersion79;
   section_id?: SectionId2;
   weight: Weight1;
 }
@@ -1870,7 +1942,7 @@ export interface ScoringCriterion {
 export interface ScoringHashInput {
   criteria: Criteria5;
   rounding: RoundingPolicy;
-  schema_version?: SchemaVersion78;
+  schema_version?: SchemaVersion80;
   sections: Sections2;
 }
 /**
@@ -1879,20 +1951,20 @@ export interface ScoringHashInput {
  */
 export interface SecondOpinion {
   appeal_id: AppealId2;
-  calls?: Calls2;
-  created_at: CreatedAt6;
+  calls?: Calls3;
+  created_at: CreatedAt7;
   criterion_id: CriterionId13;
   error?: APIError | null;
   evaluation_id: EvaluationId4;
-  finished_at?: FinishedAt2;
-  id: Id16;
-  mode: Mode6;
-  profile_id: ProfileId5;
-  profile_version: ProfileVersion3;
+  finished_at?: FinishedAt3;
+  id: Id17;
+  mode: Mode7;
+  profile_id: ProfileId6;
+  profile_version: ProfileVersion4;
   proposal?: CriterionProposal | null;
-  schema_version?: SchemaVersion79;
+  schema_version?: SchemaVersion81;
   source_fragments?: SourceFragments2;
-  state: State3;
+  state: State4;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1900,28 +1972,28 @@ export interface SecondOpinion {
  */
 export interface SemanticChoice {
   anchor: Anchor1;
-  id: Id17;
+  id: Id18;
   label: Label1;
   raw_value: RawValue2;
-  schema_version?: SchemaVersion80;
+  schema_version?: SchemaVersion82;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
  * via the `definition` "SemanticCriterion".
  */
 export interface SemanticCriterion {
-  allow_na: AllowNa1;
+  allow_na: AllowNa2;
   channel_instructions: ChannelInstructions;
-  choices: Choices2;
-  definition: Definition1;
+  choices: Choices3;
+  definition: Definition2;
   evidence_policy: EvidencePolicy;
-  flag_when_choice_ids?: FlagWhenChoiceIds1;
-  id: Id18;
-  na_condition: NaCondition1;
+  flag_when_choice_ids?: FlagWhenChoiceIds2;
+  id: Id19;
+  na_condition: NaCondition2;
   requires_reference: RequiresReference1;
-  response_type: ResponseType1;
-  schema_version?: SchemaVersion81;
-  title: Title6;
+  response_type: ResponseType2;
+  schema_version?: SchemaVersion83;
+  title: Title8;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1929,7 +2001,7 @@ export interface SemanticCriterion {
  */
 export interface SemanticHashInput {
   criteria: Criteria6;
-  schema_version?: SchemaVersion82;
+  schema_version?: SchemaVersion84;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1937,10 +2009,10 @@ export interface SemanticHashInput {
  */
 export interface SubmissionConfig {
   checklist_version_id: ChecklistVersionId7;
-  profile_id: ProfileId6;
-  profile_version: ProfileVersion4;
+  profile_id: ProfileId7;
+  profile_version: ProfileVersion5;
   redactions?: Redactions;
-  schema_version?: SchemaVersion83;
+  schema_version?: SchemaVersion85;
   submission_branch: SubmissionBranch;
   team_name: TeamName1;
 }
@@ -1951,7 +2023,7 @@ export interface SubmissionConfig {
 export interface SubmissionManifest {
   dataset: Dataset;
   entries: Entries;
-  schema_version?: SchemaVersion85;
+  schema_version?: SchemaVersion87;
   source_sha256: SourceSha256;
 }
 /**
@@ -1964,7 +2036,7 @@ export interface SubmissionEntry {
   external_id: ExternalId2;
   language: Language3;
   revision: Revision5;
-  schema_version?: SchemaVersion84;
+  schema_version?: SchemaVersion86;
   turn_hashes: TurnHashes;
 }
 /**
@@ -1975,7 +2047,7 @@ export interface SubmissionRun {
   attempts: Attempts1;
   config_sha256: ConfigSha256;
   manifest_sha256: ManifestSha256;
-  schema_version?: SchemaVersion87;
+  schema_version?: SchemaVersion89;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1985,7 +2057,17 @@ export interface SubmissionAttempt {
   batch_id?: BatchId2;
   external_id: ExternalId3;
   idempotency_key: IdempotencyKey;
-  schema_version?: SchemaVersion86;
+  schema_version?: SchemaVersion88;
+}
+/**
+ * This interface was referenced by `CQAContracts`'s JSON-Schema
+ * via the `definition` "SuggestCriterionRequest".
+ */
+export interface SuggestCriterionRequest {
+  description: Description;
+  profile_id: ProfileId8;
+  schema_version?: SchemaVersion90;
+  title: Title9;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -1995,6 +2077,6 @@ export interface VersionList {
   items: Items6;
   limit: Limit4;
   offset: Offset4;
-  schema_version?: SchemaVersion88;
+  schema_version?: SchemaVersion91;
   total: Total5;
 }

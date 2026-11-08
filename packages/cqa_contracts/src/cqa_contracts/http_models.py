@@ -11,6 +11,7 @@ from .models import (
     CallRecord,
     ChecklistDraft,
     ChecklistVersion,
+    Choice,
     Conversation,
     CriterionProposal,
     EvaluatorProfile,
@@ -221,3 +222,34 @@ class SecondOpinion(DTO):
 
 class KnowledgeSources(Page[SourceVersion]):
     pass
+
+
+class SuggestCriterionRequest(DTO):
+    title: str = Field(min_length=1, max_length=200, pattern=r"\S")
+    description: str = Field(min_length=1, max_length=2000, pattern=r"\S")
+    profile_id: ID
+
+
+class CriterionBlueprint(DTO):
+    title: Nonempty
+    definition: Nonempty
+    response_type: Literal["binary", "scale", "flag"]
+    choices: list[Choice] = Field(min_length=2, max_length=10)
+    allow_na: bool
+    na_condition: str | None
+    flag_when_choice_ids: list[ID] = Field(default_factory=list)
+    explanation: Nonempty
+
+
+class CriterionSuggestionRun(DTO):
+    id: ID
+    title: str
+    profile_id: ID
+    profile_version: ID
+    mode: Literal["production", "test"]
+    state: Literal["running", "succeeded", "failed"]
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None = None
+    suggestion: CriterionBlueprint | None = None
+    calls: list[CallRecord] = Field(default_factory=list)
+    error: APIError | None = None
