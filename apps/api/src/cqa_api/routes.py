@@ -27,6 +27,7 @@ from fastapi.responses import Response
 
 from . import (
     appeals,
+    assistance,
     audio,
     checklists,
     conversation_questions,
@@ -95,6 +96,32 @@ def list_criterion_suggestions(
 ) -> Page[h.CriterionSuggestionRun]:
     items, total = criterion_suggestions.list_suggestions(_services(request), limit, offset)
     return Page[h.CriterionSuggestionRun](items=items, total=total, limit=limit, offset=offset)
+
+
+@router.post(
+    "/appeals/{id}/second-opinions",
+    operation_id="createSecondOpinion",
+    response_model=h.SecondOpinion,
+    status_code=201,
+)
+async def create_second_opinion(
+    request: Request,
+    id: str,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> h.SecondOpinion:
+    return await assistance.create(_services(request), id, idempotency_key)
+
+
+@router.get(
+    "/appeals/{id}/second-opinions",
+    operation_id="listSecondOpinions",
+    response_model=Page[h.SecondOpinion],
+)
+def list_second_opinions(
+    request: Request, id: str, limit: Limit = 50, offset: Offset = 0
+) -> Page[h.SecondOpinion]:
+    items, total = assistance.list_opinions(_services(request), id, limit, offset)
+    return Page[h.SecondOpinion](items=items, total=total, limit=limit, offset=offset)
 
 
 def _services(request: Request) -> Services:
@@ -320,6 +347,11 @@ def list_appeals(
 ) -> Page[Appeal]:
     items, total = appeals.list_appeals(_services(request), limit, offset, state, evaluation_id)
     return Page[Appeal](items=items, total=total, limit=limit, offset=offset)
+
+
+@router.get("/appeals/{id}", operation_id="getAppeal", response_model=Appeal)
+def get_appeal(request: Request, id: str) -> Appeal:
+    return appeals.get_appeal(_services(request), id)
 
 
 @router.post("/appeals/{id}/decision", operation_id="decideAppeal", response_model=Decision)

@@ -19,6 +19,7 @@ function invalidateEvaluation(queryClient: ReturnType<typeof useQueryClient>, ev
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: ['evaluation', evaluationId] }),
     queryClient.invalidateQueries({ queryKey: ['appeals'] }),
+    queryClient.invalidateQueries({ queryKey: ['appeal'] }),
   ]);
 }
 
