@@ -221,3 +221,38 @@ class SecondOpinion(DTO):
 
 class KnowledgeSources(Page[SourceVersion]):
     pass
+
+
+class CoachingRequest(DTO):
+    criterion_id: ID
+    expected_revision: int = Field(ge=1)
+    scope: FlagScope = "effective"
+
+
+class OperatorSuggestion(DTO):
+    message_id: ID
+    text: str = Field(min_length=1, max_length=1200)
+    explanation: str = Field(min_length=1, max_length=1200)
+
+
+class CoachingResult(DTO):
+    language: Literal["RU", "KZ", "EN"]
+    suggestions: list[OperatorSuggestion] = Field(min_length=1, max_length=2)
+
+
+class AssistantRun(DTO):
+    id: ID
+    kind: Literal["coaching"]
+    evaluation_id: ID
+    evaluation_revision: int = Field(ge=1)
+    criterion_id: ID
+    scope: FlagScope
+    profile_id: ID
+    profile_version: ID
+    mode: Literal["production", "test"]
+    state: Literal["running", "succeeded", "failed"]
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None = None
+    coaching: CoachingResult | None = None
+    calls: list[CallRecord] = Field(default_factory=list)
+    error: APIError | None = None
