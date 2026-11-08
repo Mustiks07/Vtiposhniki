@@ -8,14 +8,18 @@ from .models import (
     DTO,
     ID,
     APIError,
+    CallRecord,
     ChecklistDraft,
     ChecklistVersion,
+    Choice,
     Conversation,
+    CriterionProposal,
     EvaluatorProfile,
     FlagResult,
     Job,
     Nonempty,
     Percentage,
+    SourceFragment,
     SourceVersion,
     UTCDateTime,
 )
@@ -199,5 +203,92 @@ class VersionList(Page[ChecklistVersion]):
     pass
 
 
+class SecondOpinion(DTO):
+    id: ID
+    appeal_id: ID
+    evaluation_id: ID
+    criterion_id: ID
+    profile_id: ID
+    profile_version: ID
+    mode: Literal["production", "test"]
+    state: Literal["running", "succeeded", "failed"]
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None = None
+    proposal: CriterionProposal | None = None
+    calls: list[CallRecord] = Field(default_factory=list)
+    source_fragments: list[SourceFragment] = Field(default_factory=list)
+    error: APIError | None = None
+
+
 class KnowledgeSources(Page[SourceVersion]):
     pass
+
+
+class SuggestCriterionRequest(DTO):
+    title: str = Field(min_length=1, max_length=200, pattern=r"\S")
+    description: str = Field(min_length=1, max_length=2000, pattern=r"\S")
+    profile_id: ID
+
+
+class CriterionBlueprint(DTO):
+    title: Nonempty
+    definition: Nonempty
+    response_type: Literal["binary", "scale", "flag"]
+    choices: list[Choice] = Field(min_length=2, max_length=10)
+    allow_na: bool
+    na_condition: str | None
+    flag_when_choice_ids: list[ID] = Field(default_factory=list)
+    explanation: Nonempty
+
+
+class CriterionSuggestionRun(DTO):
+    id: ID
+    title: str
+    profile_id: ID
+    profile_version: ID
+    mode: Literal["production", "test"]
+    state: Literal["running", "succeeded", "failed"]
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None = None
+    suggestion: CriterionBlueprint | None = None
+    calls: list[CallRecord] = Field(default_factory=list)
+    error: APIError | None = None
+
+
+class ConversationQuestionRequest(DTO):
+    question: str = Field(min_length=1, max_length=2000, pattern=r"\S")
+    scope: FlagScope = "effective"
+    expected_revision: int = Field(ge=1)
+
+
+class ConversationAnswer(DTO):
+    status: Literal["answered", "off_topic", "insufficient_context"]
+    text: str = Field(min_length=1, max_length=5000, pattern=r"\S")
+    message_ids: list[ID] = Field(max_length=12)
+
+    @model_validator(mode="after")
+    def cited_answer(self) -> Self:
+        if self.status == "answered" and not self.message_ids:
+            raise ValueError("An answer must cite the transcript")
+        if self.status == "off_topic" and self.message_ids:
+            raise ValueError("An off-topic refusal cannot cite evidence")
+        if len(set(self.message_ids)) != len(self.message_ids):
+            raise ValueError("Evidence references must be unique")
+        return self
+
+
+class ConversationQuestionRun(DTO):
+    id: ID
+    evaluation_id: ID
+    evaluation_revision: int = Field(ge=1)
+    scope: FlagScope
+    question: str
+    profile_id: ID
+    profile_version: ID
+    mode: Literal["production", "test"]
+    state: Literal["running", "succeeded", "failed"]
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None = None
+    answer: ConversationAnswer | None = None
+    calls: list[CallRecord] = Field(default_factory=list)
+    error: APIError | None = None

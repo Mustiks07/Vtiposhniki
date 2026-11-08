@@ -2,6 +2,12 @@
 // outside react-query memory, no localStorage. Every read accepts an AbortSignal so a stale
 // response cannot leak into a newly selected card.
 import type {
+  ConversationQuestionRequest,
+  ConversationQuestionRun,
+  ConversationQuestionPage,
+  CriterionSuggestionRun,
+  CriterionSuggestionPage,
+  SuggestCriterionRequest,
   Appeal,
   AppealPage,
   APIErrorBody,
@@ -25,6 +31,8 @@ import type {
   Job,
   OrganizerImport,
   ProfilePage,
+  SecondOpinion,
+  SecondOpinionPage,
   VersionList,
 } from './types';
 
@@ -175,8 +183,23 @@ export const api = {
   getEvaluation: (id: string, signal?: AbortSignal) =>
     request<EvaluationView>(`/evaluations/${enc(id)}`, { signal }),
 
+  askConversation: (id: string, body: ConversationQuestionRequest, key: string) =>
+    request<ConversationQuestionRun>(`/evaluations/${enc(id)}/questions`, { method: 'POST', body, headers: { 'Idempotency-Key': key } }),
+  listConversationQuestions: (id: string, signal?: AbortSignal) =>
+    request<ConversationQuestionPage>(`/evaluations/${enc(id)}/questions`, { signal }),
+
   createAppeal: (evaluationId: string, body: CreateAppeal) =>
     request<Appeal>(`/evaluations/${enc(evaluationId)}/appeals`, { method: 'POST', body }),
+
+  createSecondOpinion: (appealId: string, key: string) =>
+    request<SecondOpinion>(`/appeals/${enc(appealId)}/second-opinions`, { method: 'POST', headers: { 'Idempotency-Key': key } }),
+  listSecondOpinions: (appealId: string, signal?: AbortSignal) =>
+    request<SecondOpinionPage>(`/appeals/${enc(appealId)}/second-opinions`, { signal }),
+
+  suggestCriterion: (body: SuggestCriterionRequest, key: string) =>
+    request<CriterionSuggestionRun>('/criterion-suggestions', { method: 'POST', body, headers: { 'Idempotency-Key': key } }),
+  listCriterionSuggestions: (signal?: AbortSignal) =>
+    request<CriterionSuggestionPage>('/criterion-suggestions', { query: { limit: 20 }, signal }),
 
   listAppeals: (
     filters: { state?: string | null; evaluation_id?: string | null; limit?: number; offset?: number },

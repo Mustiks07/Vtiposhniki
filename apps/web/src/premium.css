@@ -1489,3 +1489,26 @@ small {
     transition: none !important;
   }
 }
+
+.ai-advice {
+  margin-block: 24px;
+  padding: 22px;
+  border: 1px solid #d8dffc;
+  border-radius: 18px;
+  background: #f5f7ff;
+}
+.ai-advice h3 { margin-top: 0; }
+.ai-advice-result { padding-block: 18px; border-top: 1px solid #d8dffc; margin-top: 18px; }
+.ai-advice-result p { overflow-wrap: anywhere; }
+@media (max-width: 640px) { .ai-advice { padding: 16px; border-radius: 14px; } }
+.criterion-designer > summary { cursor: pointer; color: #244dff; font-size: 1.04rem; font-weight: 650; }
+.criterion-designer input, .criterion-designer textarea, .criterion-designer select { max-width: 100%; }
+.criterion-designer .ai-advice-result { overflow-wrap: anywhere; }
+.criterion-design-choices { padding-left: 20px; }
+.criterion-design-choices li { margin: 12px 0; }
+.criterion-design-choices small { display: block; margin-top: 5px; color: #626779; }
+.conversation-assistant { margin: 20px 0; }
+.conversation-assistant > summary { cursor: pointer; color: #244dff; font-size: 1.04rem; font-weight: 650; }
+.conversation-assistant textarea { width: 100%; margin-bottom: 12px; }
+.conversation-assistant .assistant-question, .conversation-assistant .rationale { white-space: pre-wrap; overflow-wrap: anywhere; }
+.conversation-assistant .assistant-evidence { gap: 14px; }

@@ -27,9 +27,12 @@ from fastapi.responses import Response
 
 from . import (
     appeals,
+    assistance,
     audio,
     checklists,
+    conversation_questions,
     conversations,
+    criterion_suggestions,
     evaluations,
     exports,
     importing,
@@ -40,6 +43,85 @@ from . import (
 from .services import Services
 
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
+
+
+@router.post(
+    "/evaluations/{id}/questions",
+    operation_id="askConversation",
+    response_model=h.ConversationQuestionRun,
+    status_code=201,
+)
+async def ask_conversation(
+    request: Request,
+    id: str,
+    body: h.ConversationQuestionRequest,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> h.ConversationQuestionRun:
+    return await conversation_questions.create(_services(request), id, body, idempotency_key)
+
+
+@router.get(
+    "/evaluations/{id}/questions",
+    operation_id="listConversationQuestions",
+    response_model=Page[h.ConversationQuestionRun],
+)
+def list_conversation_questions(
+    request: Request, id: str, limit: Limit = 50, offset: Offset = 0
+) -> Page[h.ConversationQuestionRun]:
+    items, total = conversation_questions.list_questions(_services(request), id, limit, offset)
+    return Page[h.ConversationQuestionRun](items=items, total=total, limit=limit, offset=offset)
+
+
+@router.post(
+    "/criterion-suggestions",
+    operation_id="suggestCriterion",
+    response_model=h.CriterionSuggestionRun,
+    status_code=201,
+)
+async def suggest_criterion(
+    request: Request,
+    body: h.SuggestCriterionRequest,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> h.CriterionSuggestionRun:
+    return await criterion_suggestions.create(_services(request), body, idempotency_key)
+
+
+@router.get(
+    "/criterion-suggestions",
+    operation_id="listCriterionSuggestions",
+    response_model=Page[h.CriterionSuggestionRun],
+)
+def list_criterion_suggestions(
+    request: Request, limit: Limit = 50, offset: Offset = 0
+) -> Page[h.CriterionSuggestionRun]:
+    items, total = criterion_suggestions.list_suggestions(_services(request), limit, offset)
+    return Page[h.CriterionSuggestionRun](items=items, total=total, limit=limit, offset=offset)
+
+
+@router.post(
+    "/appeals/{id}/second-opinions",
+    operation_id="createSecondOpinion",
+    response_model=h.SecondOpinion,
+    status_code=201,
+)
+async def create_second_opinion(
+    request: Request,
+    id: str,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> h.SecondOpinion:
+    return await assistance.create(_services(request), id, idempotency_key)
+
+
+@router.get(
+    "/appeals/{id}/second-opinions",
+    operation_id="listSecondOpinions",
+    response_model=Page[h.SecondOpinion],
+)
+def list_second_opinions(
+    request: Request, id: str, limit: Limit = 50, offset: Offset = 0
+) -> Page[h.SecondOpinion]:
+    items, total = assistance.list_opinions(_services(request), id, limit, offset)
+    return Page[h.SecondOpinion](items=items, total=total, limit=limit, offset=offset)
 
 
 def _services(request: Request) -> Services:

@@ -7,6 +7,7 @@ import { DecisionComparison, DecisionForm, DecisionSavedNotice } from '../compon
 import { answerText, EvidenceList, ScaleTable } from '../components/CriterionDetail';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { Transcript } from '../components/Transcript';
+import { SecondOpinionPanel } from '../components/SecondOpinion';
 import { serverTime } from '../lib/format';
 import { ConversationName } from '../components/DisplayNames';
 import { evidenceMessageIds } from '../lib/evidence';
@@ -106,6 +107,8 @@ function AppealReview({ appeal, onDecided }: { appeal: Appeal; onDecided: (d: De
             </>
           ) : null}
           <DecisionComparison evaluation={e} criterion={criterion} decisions={decisions} appeals={[appeal]} />
+          <SecondOpinionPanel key={appeal.id} appeal={appeal} criterion={criterion} messages={messages}
+            onShow={(ids) => { setHighlighted(ids); setToken((value) => value + 1); }} />
           {appeal.state === 'open' ? (
             <DecisionForm
               appeal={appeal}

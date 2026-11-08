@@ -25,6 +25,7 @@ import { ErrorPanel, Loading } from './States';
 import { VersionDiff } from './VersionDiff';
 import { UnsavedChanges } from './UnsavedChanges';
 import { checklistVersionLabel } from './ChecklistView';
+import { CriterionDesigner } from './CriterionDesigner';
 
 function FieldError({ id, error }: { id: string; error?: string }) {
   return error ? (
@@ -246,6 +247,7 @@ function CriterionEditor({
   onMove,
   onRemove,
   onReplace,
+  aiSuggested = false,
 }: {
   criterion: Criterion;
   index: number;
@@ -259,13 +261,14 @@ function CriterionEditor({
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
   onReplace: () => void;
+  aiSuggested?: boolean;
 }) {
   const uid = useId();
   const p = `criterion.${index}`;
   const n = index + 1;
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const isFlag = criterion.response_type === 'flag';
-  const mapping = needsMappingConfirmation(criterion);
+  const mapping = needsMappingConfirmation(criterion) || aiSuggested;
 
   function suggest() {
     const s = suggestRawOverMax(criterion);
@@ -427,7 +430,7 @@ function CriterionEditor({
                   onChange={(e) => onConfirm(e.target.checked)}
                   aria-describedby={`${uid}-map-e`}
                 />{' '}
-                Подтверждаю отображение ответов в доли (ненулевая нижняя ступень или обратная шкала)
+                {aiSuggested ? 'Подтверждаю предложенные AI доли шкалы' : 'Подтверждаю отображение ответов в доли (ненулевая нижняя ступень или обратная шкала)'}
               </label>
               <FieldError id={`${uid}-map-e`} error={errors[`${p}.mapping`]} />
             </>
@@ -662,6 +665,7 @@ export function ChecklistEditor({
   const queryClient = useQueryClient();
   const uid = useId();
   const [draft, setDraft] = useState<ChecklistDraft>(initial);
+  const [aiSuggested, setAiSuggested] = useState<Set<string>>(new Set());
   const [activeCriterion, setActiveCriterion] = useState(initial.criteria[0]?.id ?? '');
   const [showAll, setShowAll] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState(false);
@@ -723,6 +727,10 @@ export function ChecklistEditor({
     e.preventDefault();
     if (mutation.isPending) return;
     const found = validateDraft(draft, confirmed);
+    draft.criteria.forEach((c, index) => {
+      if (aiSuggested.has(c.id) && c.response_type === 'scale' && !isMappingConfirmed(c, confirmed))
+        found[`criterion.${index}.mapping`] = 'Проверьте и подтвердите предложенные AI доли шкалы.';
+    });
     setErrors(found);
     if (Object.keys(found).length) {
       if (Object.keys(found).some((key) => key.startsWith('section.'))) setSectionsOpen(true);
@@ -851,6 +859,12 @@ export function ChecklistEditor({
         </fieldset>
       </details>
 
+      <CriterionDesigner onAdd={(criterion) => {
+        setDraft((current) => ({ ...current, criteria: [...current.criteria, criterion] }));
+        setAiSuggested((ids) => new Set([...ids, criterion.id]));
+        focusCriterion(criterion.id);
+      }} />
+
       <div className="editor-workspace">
         <nav className="editor-nav" aria-label="Критерии в редакторе">
           <h2>
@@ -898,6 +912,7 @@ export function ChecklistEditor({
                 sections={sections}
                 errors={errors}
                 existing={existingIds.has(c.id)}
+                aiSuggested={aiSuggested.has(c.id)}
                 confirmed={isMappingConfirmed(c, confirmed)}
                 onConfirm={(v) => confirm(c, v)}
                 onChange={(next) => setCriterion(i, next)}
@@ -911,6 +926,7 @@ export function ChecklistEditor({
                 onReplace={() => {
                   const id = newCriterionId();
                   setCriterion(i, { ...c, id });
+                  if (aiSuggested.has(c.id)) setAiSuggested((ids) => new Set([...ids, id]));
                   setActiveCriterion(id);
                 }}
               />

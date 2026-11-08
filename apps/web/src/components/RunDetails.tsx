@@ -7,7 +7,7 @@ import { costText, durations, modelPairs, reusedRunCallsText, tokenText, tokenTo
 import { callOutcomeLabel, callPurposeLabel, errorCodeLabel, jobStateLabel } from '../lib/labels';
 import { ChecklistName, ProfileName } from './DisplayNames';
 
-function CallTable({ calls, attempts }: { calls: CallRecord[]; attempts?: Job['attempts'] }) {
+export function CallTable({ calls, attempts }: { calls: CallRecord[]; attempts?: Job['attempts'] }) {
   const numbers = new Map(attempts?.map((a) => [a.attempt_id, a.number]));
   return (
     <div className="table-wrap" tabIndex={0} aria-label="Вызовы моделей">

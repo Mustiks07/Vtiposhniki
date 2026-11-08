@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import type { Criterion, Decision, EvaluationView } from '../api/types';
 import { AppealForm, DecisionComparison, DecisionForm, DecisionSavedNotice } from '../components/Appeals';
 import { AudioPanel } from '../components/AudioPanel';
+import { ConversationAssistant } from '../components/ConversationAssistant';
 import {
   answerText,
   rawStepText,
@@ -433,6 +434,7 @@ export function EvaluationPage() {
               },
             }}
           />
+          <ConversationAssistant key={`${ev.id}:${ev.revision}:${scope}`} evaluation={ev} scope={scope} messages={messages} onShow={showEvidence} />
           {checklist.isError ? <ErrorPanel error={checklist.error} onRetry={() => checklist.refetch()} /> : null}
           {checklist.isPending ? <Loading label="Загрузка чек-листа…" /> : null}
           {criteria.length ? (
