@@ -292,6 +292,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/evaluations/{id}/assistant-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Assistant Runs */
+        get: operations["listAssistantRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evaluations/{id}/coaching": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Coaching */
+        post: operations["createCoaching"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/evaluations/{id}/export": {
         parameters: {
             query?: never;
@@ -479,6 +513,58 @@ export interface components {
              * @enum {string}
              */
             state: "open" | "resolved";
+        };
+        /** AssistantRun */
+        AssistantRun: {
+            /** Calls */
+            calls?: components["schemas"]["CallRecord"][];
+            coaching?: components["schemas"]["CoachingResult"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Criterion Id */
+            criterion_id: string;
+            error?: components["schemas"]["APIError"] | null;
+            /** Evaluation Id */
+            evaluation_id: string;
+            /** Evaluation Revision */
+            evaluation_revision: number;
+            /** Finished At */
+            finished_at?: string | null;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "coaching";
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "production" | "test";
+            /** Profile Id */
+            profile_id: string;
+            /** Profile Version */
+            profile_version: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "automatic" | "effective";
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "running" | "succeeded" | "failed";
         };
         /** AudioMapping */
         AudioMapping: {
@@ -698,6 +784,41 @@ export interface components {
             schema_version: "1.0";
             /** Score Fraction */
             score_fraction: string | null;
+        };
+        /** CoachingRequest */
+        CoachingRequest: {
+            /** Criterion Id */
+            criterion_id: string;
+            /** Expected Revision */
+            expected_revision: number;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Scope
+             * @default effective
+             * @enum {string}
+             */
+            scope: "automatic" | "effective";
+        };
+        /** CoachingResult */
+        CoachingResult: {
+            /**
+             * Language
+             * @enum {string}
+             */
+            language: "RU" | "KZ" | "EN";
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Suggestions */
+            suggestions: components["schemas"]["OperatorSuggestion"][];
         };
         /** Conversation */
         Conversation: {
@@ -1717,6 +1838,21 @@ export interface components {
             /** Timestamp Original */
             timestamp_original: string;
         };
+        /** OperatorSuggestion */
+        OperatorSuggestion: {
+            /** Explanation */
+            explanation: string;
+            /** Message Id */
+            message_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Text */
+            text: string;
+        };
         /** OrganizerImport */
         OrganizerImport: {
             /** Group Id */
@@ -1737,6 +1873,23 @@ export interface components {
         Page_Appeal_: {
             /** Items */
             items: components["schemas"]["Appeal"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Total */
+            total: number;
+        };
+        /** Page[AssistantRun] */
+        Page_AssistantRun_: {
+            /** Items */
+            items: components["schemas"]["AssistantRun"][];
             /** Limit */
             limit: number;
             /** Offset */
@@ -4823,6 +4976,239 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Appeal"];
+                };
+            };
+            /** @description Invalid operation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Version/state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Payload limit exceeded */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Invalid request (no input values echoed) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Internal failure */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Foundation placeholder */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Unavailable or configuration error */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    listAssistantRuns: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AssistantRun_"];
+                };
+            };
+            /** @description Invalid operation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Version/state conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Payload limit exceeded */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Invalid request (no input values echoed) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Internal failure */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Foundation placeholder */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Unavailable or configuration error */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    createCoaching: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoachingRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantRun"];
                 };
             };
             /** @description Invalid operation */

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AudioMetadata, Conversation, Message } from '../api/types';
 import { decimalRu } from '../lib/format';
 import { speakerLabel } from '../lib/labels';
@@ -34,6 +34,7 @@ export function Transcript({
   canSeek,
   citations,
   onCriterion,
+  afterMessage,
 }: {
   conversation: Conversation;
   highlighted: string[];
@@ -45,6 +46,7 @@ export function Transcript({
   canSeek: boolean;
   citations?: Map<string, { id: string; number: number; title: string }[]>;
   onCriterion?: (id: string) => void;
+  afterMessage?: (messageId: string) => ReactNode;
 }) {
   const [onlyEvidence, setOnlyEvidence] = useState(false);
   const listRef = useRef<HTMLOListElement>(null);
@@ -141,6 +143,7 @@ export function Transcript({
                 ) : null}
               </div>
               <MessageText text={m.text} />
+              {afterMessage?.(m.id)}
               {refs.length ? (
                 <div className="margin-cites" lang="ru" aria-label="Связанные критерии">
                   {refs.map((c) => (

@@ -14,7 +14,9 @@ from starlette.exceptions import HTTPException
 
 from . import API_VERSION
 from .http_models import (
+    AssistantRun,
     ChecklistSummary,
+    CoachingRequest,
     ConversationQuestionRequest,
     ConversationQuestionRun,
     ConversationSort,
@@ -371,6 +373,29 @@ async def ask_conversation(
     response_model=Page[ConversationQuestionRun],
 )
 async def list_conversation_questions(id: str, limit: Limit = 50, offset: Offset = 0) -> None:
+    unimplemented()
+
+
+@router.post(
+    "/evaluations/{id}/coaching",
+    operation_id="createCoaching",
+    response_model=AssistantRun,
+    status_code=201,
+)
+async def create_coaching(
+    id: str,
+    body: CoachingRequest,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> None:
+    unimplemented()
+
+
+@router.get(
+    "/evaluations/{id}/assistant-runs",
+    operation_id="listAssistantRuns",
+    response_model=Page[AssistantRun],
+)
+async def list_assistant_runs(id: str, limit: Limit = 50, offset: Offset = 0) -> None:
     unimplemented()
 
 

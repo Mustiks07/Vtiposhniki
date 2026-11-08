@@ -8,6 +8,9 @@ import type {
   CriterionSuggestionRun,
   CriterionSuggestionPage,
   SuggestCriterionRequest,
+  AssistantRun,
+  AssistantRunPage,
+  CoachingRequest,
   Appeal,
   AppealPage,
   APIErrorBody,
@@ -187,6 +190,10 @@ export const api = {
     request<ConversationQuestionRun>(`/evaluations/${enc(id)}/questions`, { method: 'POST', body, headers: { 'Idempotency-Key': key } }),
   listConversationQuestions: (id: string, signal?: AbortSignal) =>
     request<ConversationQuestionPage>(`/evaluations/${enc(id)}/questions`, { signal }),
+  createCoaching: (id: string, body: CoachingRequest, key: string) =>
+    request<AssistantRun>(`/evaluations/${enc(id)}/coaching`, { method: 'POST', body, headers: { 'Idempotency-Key': key } }),
+  listAssistantRuns: (id: string, signal?: AbortSignal) =>
+    request<AssistantRunPage>(`/evaluations/${enc(id)}/assistant-runs`, { signal }),
 
   createAppeal: (evaluationId: string, body: CreateAppeal) =>
     request<Appeal>(`/evaluations/${enc(evaluationId)}/appeals`, { method: 'POST', body }),

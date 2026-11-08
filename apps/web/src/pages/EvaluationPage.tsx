@@ -6,6 +6,7 @@ import type { Criterion, Decision, EvaluationView } from '../api/types';
 import { AppealForm, DecisionComparison, DecisionForm, DecisionSavedNotice } from '../components/Appeals';
 import { AudioPanel } from '../components/AudioPanel';
 import { ConversationAssistant } from '../components/ConversationAssistant';
+import { CoachingInline, CoachingPanel } from '../components/Coaching';
 import {
   answerText,
   rawStepText,
@@ -146,6 +147,12 @@ export function EvaluationPage() {
     queryFn: ({ signal }) => api.getEvaluation(id, signal),
   });
   const e = evaluation.data;
+  const assistantRuns = useQuery({
+    queryKey: ['assistant-runs', id],
+    queryFn: ({ signal }) => api.listAssistantRuns(id, signal),
+    enabled: Boolean(e), retry: 0,
+    refetchInterval: (query) => query.state.data?.items.some((r) => r.state === 'running') ? 1500 : false,
+  });
   const conversation = useQuery({
     queryKey: ['conversation', e?.conversation_id, e?.conversation_revision],
     queryFn: ({ signal }) => api.getConversation(e!.conversation_id, e!.conversation_revision, signal),
@@ -233,6 +240,8 @@ export function EvaluationPage() {
   const criteria = checklist.data?.criteria ?? [];
   const selected = selectedParam ?? criteria[0]?.id ?? null;
   const criterion = criteria.find((c) => c.id === selected) ?? null;
+  const coachingRuns = (assistantRuns.data?.items ?? []).filter((r) => r.kind === 'coaching' && r.criterion_id === selected && r.scope === scope && r.evaluation_revision === ev.revision);
+  const coaching = coachingRuns.find((r) => r.coaching);
   const autoP = criterion ? ev.artifact.automatic_final.find((p) => p.criterion_id === criterion.id) : undefined;
   const effP = criterion ? ev.effective_proposals.find((p) => p.criterion_id === criterion.id) : undefined;
   const autoC = criterion ? ev.automatic_score.contributions.find((c) => c.criterion_id === criterion.id) : undefined;
@@ -379,6 +388,7 @@ export function EvaluationPage() {
               onSeek={seek}
               citations={citations}
               onCriterion={fromMessage}
+              afterMessage={(messageId) => <CoachingInline run={coaching} messageId={messageId} />}
             />
           ) : null}
         </div>
@@ -481,6 +491,10 @@ export function EvaluationPage() {
                 ) : null}
               </details>
               <ReviewNote review={review} />
+              <CoachingPanel key={`${ev.id}:${ev.revision}:${scope}:${criterion.id}`}
+                evaluationId={ev.id} request={{ schema_version: '1.0', criterion_id: criterion.id, scope, expected_revision: ev.revision }}
+                contribution={scope === 'automatic' ? autoC : effC} runs={coachingRuns} onShow={showEvidence} />
+              {assistantRuns.isError ? <p className="hint" role="status">Журнал подсказок недоступен. Оценка и апелляции работают как обычно.</p> : null}
               {effP && effP.origin === 'human' ? (
                 <>
                   <h3>Действующий ответ (решение проверяющего)</h3>

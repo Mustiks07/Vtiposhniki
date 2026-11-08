@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .assistance import recover as recover_assistance
+from .assistant import recover as recover_assistant
 from .checklists import seed_original_checklist
 from .conversation_questions import recover as recover_questions
 from .criterion_suggestions import recover as recover_criterion_suggestions
@@ -141,6 +142,7 @@ def create_app(
         recover_assistance(services)
         recover_criterion_suggestions(services)
         recover_questions(services)
+        recover_assistant(services)
         sync_registry(services)
         seed_original_checklist(services)
         worker = Worker(services)
