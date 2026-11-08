@@ -17,7 +17,6 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .assistance import recover as recover_assistance
-from .assistant import recover as recover_assistant
 from .checklists import seed_original_checklist
 from .errors import install_error_handlers, make_error
 from .ports import DomainPort, production_domain
@@ -138,7 +137,6 @@ def create_app(
         )
         services.db.migrate()
         recover_assistance(services)
-        recover_assistant(services)
         sync_registry(services)
         seed_original_checklist(services)
         worker = Worker(services)

@@ -4,12 +4,11 @@ import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal
-from typing import Literal
 from uuid import uuid4
 
 from cqa_ai.assistance import second_opinion
 from cqa_ai.transport import ProviderFailure
-from cqa_contracts.http_models import AssistantRun, SecondOpinion
+from cqa_contracts.http_models import SecondOpinion
 from cqa_contracts.interfaces import ContractError
 from cqa_contracts.models import (
     APIError,
@@ -124,16 +123,9 @@ def _prepare(services: Services, appeal_id: str, key: str) -> tuple[SecondOpinio
         return result, inputs
 
 
-def _record_call(
-    services: Services,
-    identity: str,
-    event: CallEvent,
-    *,
-    table: Literal["second_opinions", "assistant_runs"] = "second_opinions",
-    record_type: type[SecondOpinion] | type[AssistantRun] = SecondOpinion,
-) -> ExecutionBudget:
+def _record_call(services: Services, identity: str, event: CallEvent) -> ExecutionBudget:
     with services.db.write() as conn:
-        stored = row(conn, f"SELECT * FROM {table} WHERE id=:id", {"id": identity})
+        stored = row(conn, "SELECT * FROM second_opinions WHERE id=:id", {"id": identity})
         if (
             stored is None
             or stored["state"] != "running"
@@ -141,7 +133,7 @@ def _record_call(
             or event.attempt_id != identity
         ):
             raise ApiFailure(make_error(ErrorCode.INVALID_STATE, "Advisory request is not active"))
-        record = record_type.model_validate_json(stored["document_json"])
+        record = SecondOpinion.model_validate_json(stored["document_json"])
         budget = ExecutionBudget.model_validate_json(stored["budget_json"])
         calls = list(record.calls)
         index = next((i for i, call in enumerate(calls) if call.call_id == event.call_id), None)
@@ -187,7 +179,7 @@ def _record_call(
         record = record.model_copy(update={"calls": calls})
         run(
             conn,
-            f"UPDATE {table} SET document_json=:document,budget_json=:budget WHERE id=:id",
+            "UPDATE second_opinions SET document_json=:document,budget_json=:budget WHERE id=:id",
             {
                 "id": identity,
                 "document": record.model_dump_json(),

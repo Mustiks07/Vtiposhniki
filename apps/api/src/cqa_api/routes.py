@@ -28,7 +28,6 @@ from fastapi.responses import Response
 from . import (
     appeals,
     assistance,
-    assistant,
     audio,
     checklists,
     conversations,
@@ -42,33 +41,6 @@ from . import (
 from .services import Services
 
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
-
-
-@router.post(
-    "/evaluations/{id}/coaching",
-    operation_id="createCoaching",
-    response_model=h.AssistantRun,
-    status_code=201,
-)
-async def create_coaching(
-    request: Request,
-    id: str,
-    body: h.CoachingRequest,
-    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
-) -> h.AssistantRun:
-    return await assistant.create_coaching(_services(request), id, body, idempotency_key)
-
-
-@router.get(
-    "/evaluations/{id}/assistant-runs",
-    operation_id="listAssistantRuns",
-    response_model=Page[h.AssistantRun],
-)
-def list_assistant_runs(
-    request: Request, id: str, limit: Limit = 50, offset: Offset = 0
-) -> Page[h.AssistantRun]:
-    items, total = assistant.list_runs(_services(request), id, limit, offset)
-    return Page[h.AssistantRun](items=items, total=total, limit=limit, offset=offset)
 
 
 @router.post(
