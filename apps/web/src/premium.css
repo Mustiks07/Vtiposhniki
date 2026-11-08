@@ -1512,3 +1512,9 @@ small {
 .conversation-assistant textarea { width: 100%; margin-bottom: 12px; }
 .conversation-assistant .assistant-question, .conversation-assistant .rationale { white-space: pre-wrap; overflow-wrap: anywhere; }
 .conversation-assistant .assistant-evidence { gap: 14px; }
+.coaching-panel > .link { display: block; margin-top: 14px; text-align: left; }
+.coaching-inline { margin-top: 18px; padding: 20px; border: 1px solid #cbd5ff; border-radius: 16px; background: #f2f4ff; color: #19243d; }
+.coaching-inline .coaching-label { color: #244dff; font-size: .78rem; font-weight: 700; letter-spacing: .02em; }
+.coaching-inline blockquote { margin: 12px 0; padding: 0; border: 0; font-size: 1.05rem; line-height: 1.65; font-weight: 600; white-space: pre-wrap; overflow-wrap: anywhere; }
+.coaching-inline .hint { font-size: .73rem; margin-bottom: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .coaching-inline { padding: 15px; } }

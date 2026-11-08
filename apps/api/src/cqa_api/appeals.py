@@ -96,6 +96,14 @@ def create_appeal(services: Services, evaluation_id: str, body: CreateAppeal) ->
         return _appeal_dto(created)
 
 
+def get_appeal(services: Services, appeal_id: str) -> Appeal:
+    with services.db.read() as conn:
+        found = row(conn, "SELECT * FROM appeals WHERE id = :id", {"id": appeal_id})
+        if found is None:
+            raise not_found("Appeal")
+        return _appeal_dto(found)
+
+
 def list_appeals(
     services: Services, limit: int, offset: int, state: str | None, evaluation_id: str | None
 ) -> tuple[list[Appeal], int]:

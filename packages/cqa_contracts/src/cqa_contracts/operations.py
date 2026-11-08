@@ -14,7 +14,9 @@ from starlette.exceptions import HTTPException
 
 from . import API_VERSION
 from .http_models import (
+    AssistantRun,
     ChecklistSummary,
+    CoachingRequest,
     ConversationQuestionRequest,
     ConversationQuestionRun,
     ConversationSort,
@@ -32,6 +34,7 @@ from .http_models import (
     KnowledgeSources,
     Page,
     ProfileSummary,
+    SecondOpinion,
     SuggestCriterionRequest,
     VersionList,
     WorkQueue,
@@ -244,6 +247,11 @@ async def list_appeals(
     unimplemented()
 
 
+@router.get("/appeals/{id}", operation_id="getAppeal", response_model=Appeal)
+async def get_appeal(id: str) -> None:
+    unimplemented()
+
+
 @router.post("/appeals/{id}/decision", operation_id="decideAppeal", response_model=Decision)
 async def decide_appeal(id: str, body: DecisionRequest) -> None:
     unimplemented()
@@ -302,6 +310,28 @@ async def list_sources(
 
 
 @router.post(
+    "/appeals/{id}/second-opinions",
+    operation_id="createSecondOpinion",
+    response_model=SecondOpinion,
+    status_code=201,
+)
+async def create_second_opinion(
+    id: str,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> None:
+    unimplemented()
+
+
+@router.get(
+    "/appeals/{id}/second-opinions",
+    operation_id="listSecondOpinions",
+    response_model=Page[SecondOpinion],
+)
+async def list_second_opinions(id: str, limit: Limit = 50, offset: Offset = 0) -> None:
+    unimplemented()
+
+
+@router.post(
     "/criterion-suggestions",
     operation_id="suggestCriterion",
     response_model=CriterionSuggestionRun,
@@ -343,6 +373,29 @@ async def ask_conversation(
     response_model=Page[ConversationQuestionRun],
 )
 async def list_conversation_questions(id: str, limit: Limit = 50, offset: Offset = 0) -> None:
+    unimplemented()
+
+
+@router.post(
+    "/evaluations/{id}/coaching",
+    operation_id="createCoaching",
+    response_model=AssistantRun,
+    status_code=201,
+)
+async def create_coaching(
+    id: str,
+    body: CoachingRequest,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> None:
+    unimplemented()
+
+
+@router.get(
+    "/evaluations/{id}/assistant-runs",
+    operation_id="listAssistantRuns",
+    response_model=Page[AssistantRun],
+)
+async def list_assistant_runs(id: str, limit: Limit = 50, offset: Offset = 0) -> None:
     unimplemented()
 
 

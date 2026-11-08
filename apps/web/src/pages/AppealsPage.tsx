@@ -7,6 +7,7 @@ import { DecisionComparison, DecisionForm, DecisionSavedNotice } from '../compon
 import { answerText, EvidenceList, ScaleTable } from '../components/CriterionDetail';
 import { Badge, Empty, ErrorPanel, Loading } from '../components/States';
 import { Transcript } from '../components/Transcript';
+import { SecondOpinionPanel } from '../components/SecondOpinion';
 import { serverTime } from '../lib/format';
 import { ConversationName } from '../components/DisplayNames';
 import { evidenceMessageIds } from '../lib/evidence';
@@ -106,6 +107,8 @@ function AppealReview({ appeal, onDecided }: { appeal: Appeal; onDecided: (d: De
             </>
           ) : null}
           <DecisionComparison evaluation={e} criterion={criterion} decisions={decisions} appeals={[appeal]} />
+          <SecondOpinionPanel key={appeal.id} appeal={appeal} criterion={criterion} messages={messages}
+            onShow={(ids) => { setHighlighted(ids); setToken((value) => value + 1); }} />
           {appeal.state === 'open' ? (
             <DecisionForm
               appeal={appeal}
@@ -148,6 +151,13 @@ export function AppealsPage() {
   const offset = Math.max(0, Number(params.get('offset') ?? 0) || 0);
   const filterId = useId();
   const [lastDecision, setLastDecision] = useState<Decision | null>(null);
+  // A deep link must work regardless of queue page or state filter.
+  const selected = useQuery({
+    queryKey: ['appeal', openId],
+    queryFn: ({ signal }) => api.getAppeal(openId!, signal),
+    enabled: Boolean(openId),
+    retry: 0,
+  });
   const list = useQuery({
     queryKey: ['appeals', { state, offset, evaluationId }],
     queryFn: ({ signal }) =>
@@ -241,17 +251,24 @@ export function AppealsPage() {
           ))}
         </ul>
         <section className="panel appeal-detail-pane" aria-label="Рассмотрение обращения">
-          {list.data?.items.find((a) => a.id === openId) ? (
+          {openId && selected.isPending ? <Loading /> : null}
+          {openId && selected.isError ? <ErrorPanel error={selected.error} onRetry={() => selected.refetch()} /> : null}
+          {openId && selected.data ? (
+            <>
+            {list.data && !list.isPlaceholderData && !list.data.items.some((a) => a.id === openId) ? (
+              <p className="notice">Открыто обращение по прямой ссылке. Оно не входит в текущую страницу списка.</p>
+            ) : null}
             <AppealReview
               key={openId}
-              appeal={list.data.items.find((a) => a.id === openId)!}
+              appeal={selected.data}
               onDecided={setLastDecision}
             />
-          ) : (
+            </>
+          ) : !openId ? (
             <Empty title="Выберите обращение">
               Откройте апелляцию, чтобы проверить доказательства и принять решение.
             </Empty>
-          )}
+          ) : null}
         </section>
       </div>
       {list.data && list.data.total > PAGE_SIZE ? (

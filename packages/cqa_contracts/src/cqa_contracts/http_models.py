@@ -13,11 +13,13 @@ from .models import (
     ChecklistVersion,
     Choice,
     Conversation,
+    CriterionProposal,
     EvaluatorProfile,
     FlagResult,
     Job,
     Nonempty,
     Percentage,
+    SourceFragment,
     SourceVersion,
     UTCDateTime,
 )
@@ -201,6 +203,23 @@ class VersionList(Page[ChecklistVersion]):
     pass
 
 
+class SecondOpinion(DTO):
+    id: ID
+    appeal_id: ID
+    evaluation_id: ID
+    criterion_id: ID
+    profile_id: ID
+    profile_version: ID
+    mode: Literal["production", "test"]
+    state: Literal["running", "succeeded", "failed"]
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None = None
+    proposal: CriterionProposal | None = None
+    calls: list[CallRecord] = Field(default_factory=list)
+    source_fragments: list[SourceFragment] = Field(default_factory=list)
+    error: APIError | None = None
+
+
 class KnowledgeSources(Page[SourceVersion]):
     pass
 
@@ -271,5 +290,40 @@ class ConversationQuestionRun(DTO):
     created_at: UTCDateTime
     finished_at: UTCDateTime | None = None
     answer: ConversationAnswer | None = None
+    calls: list[CallRecord] = Field(default_factory=list)
+    error: APIError | None = None
+
+
+class CoachingRequest(DTO):
+    criterion_id: ID
+    expected_revision: int = Field(ge=1)
+    scope: FlagScope = "effective"
+
+
+class OperatorSuggestion(DTO):
+    message_id: ID
+    text: str = Field(min_length=1, max_length=1200)
+    explanation: str = Field(min_length=1, max_length=1200)
+
+
+class CoachingResult(DTO):
+    language: Literal["RU", "KZ", "EN"]
+    suggestions: list[OperatorSuggestion] = Field(min_length=1, max_length=2)
+
+
+class AssistantRun(DTO):
+    id: ID
+    kind: Literal["coaching"]
+    evaluation_id: ID
+    evaluation_revision: int = Field(ge=1)
+    criterion_id: ID
+    scope: FlagScope
+    profile_id: ID
+    profile_version: ID
+    mode: Literal["production", "test"]
+    state: Literal["running", "succeeded", "failed"]
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None = None
+    coaching: CoachingResult | None = None
     calls: list[CallRecord] = Field(default_factory=list)
     error: APIError | None = None

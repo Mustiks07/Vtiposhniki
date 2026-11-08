@@ -109,6 +109,144 @@
       "title": "Appeal",
       "type": "object"
     },
+    "AssistantRun": {
+      "additionalProperties": false,
+      "properties": {
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/CallRecord"
+          },
+          "title": "Calls",
+          "type": "array"
+        },
+        "coaching": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CoachingResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "criterion_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/APIError"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evaluation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Evaluation Id",
+          "type": "string"
+        },
+        "evaluation_revision": {
+          "minimum": 1,
+          "title": "Evaluation Revision",
+          "type": "integer"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "coaching",
+          "title": "Kind",
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "production",
+            "test"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "automatic",
+            "effective"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "evaluation_id",
+        "evaluation_revision",
+        "criterion_id",
+        "scope",
+        "profile_id",
+        "profile_version",
+        "mode",
+        "state",
+        "created_at"
+      ],
+      "title": "AssistantRun",
+      "type": "object"
+    },
     "AudioMapping": {
       "additionalProperties": false,
       "properties": {
@@ -755,6 +893,78 @@
         "score_fraction"
       ],
       "title": "Choice",
+      "type": "object"
+    },
+    "CoachingRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 1,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scope": {
+          "default": "effective",
+          "enum": [
+            "automatic",
+            "effective"
+          ],
+          "title": "Scope",
+          "type": "string"
+        }
+      },
+      "required": [
+        "criterion_id",
+        "expected_revision"
+      ],
+      "title": "CoachingRequest",
+      "type": "object"
+    },
+    "CoachingResult": {
+      "additionalProperties": false,
+      "properties": {
+        "language": {
+          "enum": [
+            "RU",
+            "KZ",
+            "EN"
+          ],
+          "title": "Language",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "suggestions": {
+          "items": {
+            "$ref": "#/$defs/OperatorSuggestion"
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Suggestions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "language",
+        "suggestions"
+      ],
+      "title": "CoachingResult",
       "type": "object"
     },
     "Consultation": {
@@ -4052,6 +4262,42 @@
       "title": "OfficialSuccess",
       "type": "object"
     },
+    "OperatorSuggestion": {
+      "additionalProperties": false,
+      "properties": {
+        "explanation": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "message_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Message Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message_id",
+        "text",
+        "explanation"
+      ],
+      "title": "OperatorSuggestion",
+      "type": "object"
+    },
     "OptionalBinary": {
       "additionalProperties": false,
       "properties": {
@@ -5494,6 +5740,137 @@
       "title": "ScoringHashInput",
       "type": "object"
     },
+    "SecondOpinion": {
+      "additionalProperties": false,
+      "properties": {
+        "appeal_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Appeal Id",
+          "type": "string"
+        },
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/CallRecord"
+          },
+          "title": "Calls",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "criterion_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Criterion Id",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/APIError"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evaluation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Evaluation Id",
+          "type": "string"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "production",
+            "test"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "proposal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CriterionProposal"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_fragments": {
+          "items": {
+            "$ref": "#/$defs/SourceFragment"
+          },
+          "title": "Source Fragments",
+          "type": "array"
+        },
+        "state": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "appeal_id",
+        "evaluation_id",
+        "criterion_id",
+        "profile_id",
+        "profile_version",
+        "mode",
+        "state",
+        "created_at"
+      ],
+      "title": "SecondOpinion",
+      "type": "object"
+    },
     "Section": {
       "additionalProperties": false,
       "properties": {
@@ -6354,6 +6731,9 @@
     "Appeal": {
       "$ref": "#/$defs/Appeal"
     },
+    "AssistantRun": {
+      "$ref": "#/$defs/AssistantRun"
+    },
     "AudioMapping": {
       "$ref": "#/$defs/AudioMapping"
     },
@@ -6383,6 +6763,12 @@
     },
     "Choice": {
       "$ref": "#/$defs/Choice"
+    },
+    "CoachingRequest": {
+      "$ref": "#/$defs/CoachingRequest"
+    },
+    "CoachingResult": {
+      "$ref": "#/$defs/CoachingResult"
     },
     "ContentMessage": {
       "$ref": "#/$defs/ContentMessage"
@@ -6519,6 +6905,9 @@
     "OfficialResults": {
       "$ref": "#/$defs/OfficialResults"
     },
+    "OperatorSuggestion": {
+      "$ref": "#/$defs/OperatorSuggestion"
+    },
     "OrganizerImport": {
       "$ref": "#/$defs/OrganizerImport"
     },
@@ -6582,6 +6971,9 @@
     "ScoringHashInput": {
       "$ref": "#/$defs/ScoringHashInput"
     },
+    "SecondOpinion": {
+      "$ref": "#/$defs/SecondOpinion"
+    },
     "Section": {
       "$ref": "#/$defs/Section"
     },
@@ -6628,6 +7020,7 @@
   "required": [
     "APIError",
     "Appeal",
+    "AssistantRun",
     "AudioMapping",
     "AudioMetadata",
     "BatchProgress",
@@ -6638,6 +7031,8 @@
     "ChecklistSummary",
     "ChecklistVersion",
     "Choice",
+    "CoachingRequest",
+    "CoachingResult",
     "ContentMessage",
     "Conversation",
     "ConversationAnswer",
@@ -6683,6 +7078,7 @@
     "KnowledgeSources",
     "Message",
     "OfficialResults",
+    "OperatorSuggestion",
     "OrganizerImport",
     "Page",
     "Page[ChecklistVersion]",
@@ -6704,6 +7100,7 @@
     "ScoringChoice",
     "ScoringCriterion",
     "ScoringHashInput",
+    "SecondOpinion",
     "Section",
     "SectionResult",
     "SemanticChoice",
