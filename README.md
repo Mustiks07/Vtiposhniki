@@ -136,7 +136,7 @@ uv run uvicorn cqa_api.main:app --host 127.0.0.1 --port 8000 --workers 1
 | `packages/cqa_ai` | Провайдеры, промпты, проверка ответа, repair и лимиты |
 | `packages/cqa_contracts` | Единые DTO и генерация OpenAPI / TypeScript |
 | `packages/cqa_submission` | Официальный экспорт и проверка происхождения |
-| `results/dev` | Опубликованный DEV; настоящий PROD появится после получения контроля |
+| `results/dev`, `results/prod` | Исторический DEV и 10 реальных контрольных чатов; [происхождение и ограничения](docs/PROD_SUBMISSION_20261108.md) |
 
 RU/KZ/EN, чаты и расшифровки звонков поддерживаются. Анализ звука и точность
 распознавания речи не заявляются. HTTP API 1.10.0; официальный JSON 1.0 отделён
