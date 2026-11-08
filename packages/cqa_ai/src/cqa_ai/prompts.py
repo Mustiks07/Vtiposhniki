@@ -31,6 +31,7 @@ SUPPORTED_PROMPT_VERSIONS = frozenset(
         "cqa-eval-v6",
         PROMPT_VERSION,
         "cqa-eval-v8",
+        "cqa-eval-v9",
     }
 )
 PREPROCESSING_VERSION = "identity-v1"
@@ -266,6 +267,30 @@ These instructions clarify only criteria with these meanings; follow the supplie
 rubric for every custom criterion. Do not infer answers from external conversation IDs.
 """
 
+NA_FIRST_V9 = """
+NEED DISCOVERY — decide in this order:
+1. List what the customer had already stated (including to the bot) before the
+   operator's first substantive answer.
+2. If that was enough to answer and the operator answered without needing to ask
+   anything, the "enough information from the start" N/A condition holds: return
+   not_applicable, NOT a positive answer. Not asking an unnecessary question is not
+   a performed discovery action.
+3. Positive only if a necessary fact was missing AND the operator asked for it before
+   the dependent answer (an opening "how can I help?" when the topic was unknown counts).
+4. Negative if the operator asked again for something already stated, or answered
+   while a necessary fact was still missing.
+IDENTIFICATION — decide in this order:
+1. Did the operator disclose information about this customer's specific account or
+   perform a protected action? General product information, menu paths and
+   instructions for the customer to do something themselves are neither.
+2. If neither happened and the request served was general, the "request did not
+   require identification" N/A condition holds: return not_applicable, not a
+   positive answer. Do not answer positively merely because no harm occurred.
+3. Positive only if such disclosure/action happened after explicit confirmed identity;
+   negative if before it or without it. Keep the existing rules for declined or
+   postponed verification unchanged.
+"""
+
 OUTPUT_SHAPE: dict[str, Any] = {
     "criteria": [
         {
@@ -384,14 +409,22 @@ def build_messages(
         system += "\n" + DECISION_DISCIPLINE_V3
     if prompt_version == "cqa-eval-v4":
         system += "\n" + CONSISTENCY_V4
-    if prompt_version in {"cqa-eval-v5", "cqa-eval-v6", "cqa-eval-v7", "cqa-eval-v8"}:
+    if prompt_version in {
+        "cqa-eval-v5",
+        "cqa-eval-v6",
+        "cqa-eval-v7",
+        "cqa-eval-v8",
+        "cqa-eval-v9",
+    }:
         system += "\n" + BOUNDARIES_V5
-    if prompt_version in {"cqa-eval-v6", "cqa-eval-v7", "cqa-eval-v8"}:
+    if prompt_version in {"cqa-eval-v6", "cqa-eval-v7", "cqa-eval-v8", "cqa-eval-v9"}:
         system += "\n" + OBSERVABLE_CONDUCT_V6
-    if prompt_version in {"cqa-eval-v7", "cqa-eval-v8"}:
+    if prompt_version in {"cqa-eval-v7", "cqa-eval-v8", "cqa-eval-v9"}:
         system += "\n" + AUTHORIZATION_AND_CLOSURE_V7
     if prompt_version == "cqa-eval-v8":
         system += "\n" + NEED_AND_CLOSING_PHASES_V8
+    if prompt_version == "cqa-eval-v9":
+        system += "\n" + NA_FIRST_V9
     user = json.dumps(payload, ensure_ascii=False, indent=1)
     return (ChatMessage("system", system), ChatMessage("user", user))
 
