@@ -2,6 +2,9 @@
 // outside react-query memory, no localStorage. Every read accepts an AbortSignal so a stale
 // response cannot leak into a newly selected card.
 import type {
+  ConversationQuestionRequest,
+  ConversationQuestionRun,
+  ConversationQuestionPage,
   CriterionSuggestionRun,
   CriterionSuggestionPage,
   SuggestCriterionRequest,
@@ -179,6 +182,11 @@ export const api = {
 
   getEvaluation: (id: string, signal?: AbortSignal) =>
     request<EvaluationView>(`/evaluations/${enc(id)}`, { signal }),
+
+  askConversation: (id: string, body: ConversationQuestionRequest, key: string) =>
+    request<ConversationQuestionRun>(`/evaluations/${enc(id)}/questions`, { method: 'POST', body, headers: { 'Idempotency-Key': key } }),
+  listConversationQuestions: (id: string, signal?: AbortSignal) =>
+    request<ConversationQuestionPage>(`/evaluations/${enc(id)}/questions`, { signal }),
 
   createAppeal: (evaluationId: string, body: CreateAppeal) =>
     request<Appeal>(`/evaluations/${enc(evaluationId)}/appeals`, { method: 'POST', body }),

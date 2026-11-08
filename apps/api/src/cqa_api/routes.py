@@ -30,6 +30,7 @@ from . import (
     assistance,
     audio,
     checklists,
+    conversation_questions,
     conversations,
     criterion_suggestions,
     evaluations,
@@ -42,6 +43,33 @@ from . import (
 from .services import Services
 
 router = APIRouter(prefix="/api/v1", responses=ERROR_RESPONSES)
+
+
+@router.post(
+    "/evaluations/{id}/questions",
+    operation_id="askConversation",
+    response_model=h.ConversationQuestionRun,
+    status_code=201,
+)
+async def ask_conversation(
+    request: Request,
+    id: str,
+    body: h.ConversationQuestionRequest,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> h.ConversationQuestionRun:
+    return await conversation_questions.create(_services(request), id, body, idempotency_key)
+
+
+@router.get(
+    "/evaluations/{id}/questions",
+    operation_id="listConversationQuestions",
+    response_model=Page[h.ConversationQuestionRun],
+)
+def list_conversation_questions(
+    request: Request, id: str, limit: Limit = 50, offset: Offset = 0
+) -> Page[h.ConversationQuestionRun]:
+    items, total = conversation_questions.list_questions(_services(request), id, limit, offset)
+    return Page[h.ConversationQuestionRun](items=items, total=total, limit=limit, offset=offset)
 
 
 @router.post(

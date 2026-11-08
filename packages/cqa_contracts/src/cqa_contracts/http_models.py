@@ -253,3 +253,42 @@ class CriterionSuggestionRun(DTO):
     suggestion: CriterionBlueprint | None = None
     calls: list[CallRecord] = Field(default_factory=list)
     error: APIError | None = None
+
+
+class ConversationQuestionRequest(DTO):
+    question: str = Field(min_length=1, max_length=2000, pattern=r"\S")
+    scope: FlagScope = "effective"
+    expected_revision: int = Field(ge=1)
+
+
+class ConversationAnswer(DTO):
+    status: Literal["answered", "off_topic", "insufficient_context"]
+    text: str = Field(min_length=1, max_length=5000, pattern=r"\S")
+    message_ids: list[ID] = Field(max_length=12)
+
+    @model_validator(mode="after")
+    def cited_answer(self) -> Self:
+        if self.status == "answered" and not self.message_ids:
+            raise ValueError("An answer must cite the transcript")
+        if self.status == "off_topic" and self.message_ids:
+            raise ValueError("An off-topic refusal cannot cite evidence")
+        if len(set(self.message_ids)) != len(self.message_ids):
+            raise ValueError("Evidence references must be unique")
+        return self
+
+
+class ConversationQuestionRun(DTO):
+    id: ID
+    evaluation_id: ID
+    evaluation_revision: int = Field(ge=1)
+    scope: FlagScope
+    question: str
+    profile_id: ID
+    profile_version: ID
+    mode: Literal["production", "test"]
+    state: Literal["running", "succeeded", "failed"]
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None = None
+    answer: ConversationAnswer | None = None
+    calls: list[CallRecord] = Field(default_factory=list)
+    error: APIError | None = None

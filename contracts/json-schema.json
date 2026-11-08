@@ -937,6 +937,50 @@
       "title": "Conversation",
       "type": "object"
     },
+    "ConversationAnswer": {
+      "additionalProperties": false,
+      "properties": {
+        "message_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Message Ids",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "answered",
+            "off_topic",
+            "insufficient_context"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 5000,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "text",
+        "message_ids"
+      ],
+      "title": "ConversationAnswer",
+      "type": "object"
+    },
     "ConversationFlagQuery": {
       "additionalProperties": false,
       "description": "Validated selection for listConversations; no business filtering here.",
@@ -1118,6 +1162,174 @@
         "messages"
       ],
       "title": "ConversationHashInput",
+      "type": "object"
+    },
+    "ConversationQuestionRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_revision": {
+          "minimum": 1,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "question": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Question",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scope": {
+          "default": "effective",
+          "enum": [
+            "automatic",
+            "effective"
+          ],
+          "title": "Scope",
+          "type": "string"
+        }
+      },
+      "required": [
+        "question",
+        "expected_revision"
+      ],
+      "title": "ConversationQuestionRequest",
+      "type": "object"
+    },
+    "ConversationQuestionRun": {
+      "additionalProperties": false,
+      "properties": {
+        "answer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConversationAnswer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/CallRecord"
+          },
+          "title": "Calls",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/APIError"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evaluation_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Evaluation Id",
+          "type": "string"
+        },
+        "evaluation_revision": {
+          "minimum": 1,
+          "title": "Evaluation Revision",
+          "type": "integer"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "production",
+            "test"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "profile_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "automatic",
+            "effective"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "running",
+            "succeeded",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "evaluation_id",
+        "evaluation_revision",
+        "scope",
+        "question",
+        "profile_id",
+        "profile_version",
+        "mode",
+        "state",
+        "created_at"
+      ],
+      "title": "ConversationQuestionRun",
       "type": "object"
     },
     "ConversationSummary": {
@@ -6309,6 +6521,9 @@
     "Conversation": {
       "$ref": "#/$defs/Conversation"
     },
+    "ConversationAnswer": {
+      "$ref": "#/$defs/ConversationAnswer"
+    },
     "ConversationFlagQuery": {
       "$ref": "#/$defs/ConversationFlagQuery"
     },
@@ -6317,6 +6532,12 @@
     },
     "ConversationHashInput": {
       "$ref": "#/$defs/ConversationHashInput"
+    },
+    "ConversationQuestionRequest": {
+      "$ref": "#/$defs/ConversationQuestionRequest"
+    },
+    "ConversationQuestionRun": {
+      "$ref": "#/$defs/ConversationQuestionRun"
     },
     "ConversationSummary": {
       "$ref": "#/$defs/ConversationSummary"
@@ -6553,9 +6774,12 @@
     "Choice",
     "ContentMessage",
     "Conversation",
+    "ConversationAnswer",
     "ConversationFlagQuery",
     "ConversationFlagSummary",
     "ConversationHashInput",
+    "ConversationQuestionRequest",
+    "ConversationQuestionRun",
     "ConversationSummary",
     "CorpusHashInput",
     "CorpusSnapshot",

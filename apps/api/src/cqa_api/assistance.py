@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from cqa_ai.assistance import second_opinion
 from cqa_ai.transport import ProviderFailure
-from cqa_contracts.http_models import CriterionSuggestionRun, SecondOpinion
+from cqa_contracts.http_models import ConversationQuestionRun, CriterionSuggestionRun, SecondOpinion
 from cqa_contracts.interfaces import ContractError
 from cqa_contracts.models import (
     APIError,
@@ -129,8 +129,12 @@ def _record_call(
     identity: str,
     event: CallEvent,
     *,
-    table: Literal["second_opinions", "criterion_suggestions"] = "second_opinions",
-    record_type: type[SecondOpinion] | type[CriterionSuggestionRun] = SecondOpinion,
+    table: Literal[
+        "second_opinions", "criterion_suggestions", "conversation_questions"
+    ] = "second_opinions",
+    record_type: type[SecondOpinion]
+    | type[CriterionSuggestionRun]
+    | type[ConversationQuestionRun] = SecondOpinion,
 ) -> ExecutionBudget:
     with services.db.write() as conn:
         stored = row(conn, f"SELECT * FROM {table} WHERE id=:id", {"id": identity})

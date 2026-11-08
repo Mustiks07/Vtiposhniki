@@ -1507,3 +1507,8 @@ small {
 .criterion-design-choices { padding-left: 20px; }
 .criterion-design-choices li { margin: 12px 0; }
 .criterion-design-choices small { display: block; margin-top: 5px; color: #626779; }
+.conversation-assistant { margin: 20px 0; }
+.conversation-assistant > summary { cursor: pointer; color: #244dff; font-size: 1.04rem; font-weight: 650; }
+.conversation-assistant textarea { width: 100%; margin-bottom: 12px; }
+.conversation-assistant .assistant-question, .conversation-assistant .rationale { white-space: pre-wrap; overflow-wrap: anywhere; }
+.conversation-assistant .assistant-evidence { gap: 14px; }
