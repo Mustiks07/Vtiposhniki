@@ -32,7 +32,6 @@ from .http_models import (
     KnowledgeSources,
     Page,
     ProfileSummary,
-    SecondOpinion,
     SuggestCriterionRequest,
     VersionList,
     WorkQueue,
@@ -299,28 +298,6 @@ async def list_profiles(limit: Limit = 50, offset: Offset = 0) -> None:
 async def list_sources(
     limit: Limit = 50, offset: Offset = 0, corpus_snapshot_id: str | None = None
 ) -> None:
-    unimplemented()
-
-
-@router.post(
-    "/appeals/{id}/second-opinions",
-    operation_id="createSecondOpinion",
-    response_model=SecondOpinion,
-    status_code=201,
-)
-async def create_second_opinion(
-    id: str,
-    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
-) -> None:
-    unimplemented()
-
-
-@router.get(
-    "/appeals/{id}/second-opinions",
-    operation_id="listSecondOpinions",
-    response_model=Page[SecondOpinion],
-)
-async def list_second_opinions(id: str, limit: Limit = 50, offset: Offset = 0) -> None:
     unimplemented()
 
 

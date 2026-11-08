@@ -16,7 +16,6 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .assistance import recover as recover_assistance
 from .checklists import seed_original_checklist
 from .conversation_questions import recover as recover_questions
 from .criterion_suggestions import recover as recover_criterion_suggestions
@@ -138,7 +137,6 @@ def create_app(
             host_resolver=host_resolver,
         )
         services.db.migrate()
-        recover_assistance(services)
         recover_criterion_suggestions(services)
         recover_questions(services)
         sync_registry(services)

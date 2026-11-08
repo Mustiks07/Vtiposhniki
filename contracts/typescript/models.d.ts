@@ -692,41 +692,28 @@ export type Weight1 = string;
 export type Criteria5 = ScoringCriterion[];
 export type SchemaVersion83 = "1.0";
 export type Sections2 = Section[];
-export type AppealId2 = string;
-export type Calls4 = CallRecord[];
-export type CreatedAt8 = string;
-export type CriterionId13 = string;
-export type EvaluationId5 = string;
-export type FinishedAt4 = string | null;
-export type Id18 = string;
-export type Mode8 = "production" | "test";
-export type ProfileId7 = string;
-export type ProfileVersion5 = string;
-export type SchemaVersion84 = "1.0";
-export type SourceFragments2 = SourceFragment[];
-export type State5 = "running" | "succeeded" | "failed";
 export type Anchor1 = string;
-export type Id19 = string;
+export type Id18 = string;
 export type Label1 = string;
 export type RawValue2 = boolean | number | string;
-export type SchemaVersion85 = "1.0";
+export type SchemaVersion84 = "1.0";
 export type AllowNa2 = boolean;
 export type Choices3 = SemanticChoice[];
 export type Definition2 = string;
 export type FlagWhenChoiceIds2 = string[];
-export type Id20 = string;
+export type Id19 = string;
 export type NaCondition2 = string | null;
 export type RequiresReference1 = boolean;
 export type ResponseType2 = "binary" | "scale" | "flag";
-export type SchemaVersion86 = "1.0";
+export type SchemaVersion85 = "1.0";
 export type Title8 = string;
 export type Criteria6 = SemanticCriterion[];
-export type SchemaVersion87 = "1.0";
+export type SchemaVersion86 = "1.0";
 export type ChecklistVersionId7 = string;
-export type ProfileId8 = string;
-export type ProfileVersion6 = string;
+export type ProfileId7 = string;
+export type ProfileVersion5 = string;
 export type Redactions = string[];
-export type SchemaVersion88 = "1.0";
+export type SchemaVersion87 = "1.0";
 export type SubmissionBranch = string;
 export type TeamName1 = string;
 export type Dataset = "dev" | "prod";
@@ -735,30 +722,30 @@ export type ConversationId6 = string;
 export type ExternalId2 = string;
 export type Language3 = "RU" | "KZ" | "EN";
 export type Revision5 = number;
-export type SchemaVersion89 = "1.0";
+export type SchemaVersion88 = "1.0";
 /**
  * @minItems 1
  */
 export type TurnHashes = [string, ...string[]];
 export type Entries = SubmissionEntry[];
-export type SchemaVersion90 = "1.0";
+export type SchemaVersion89 = "1.0";
 export type SourceSha256 = string;
 export type BatchId2 = string | null;
 export type ExternalId3 = string;
 export type IdempotencyKey = string;
-export type SchemaVersion91 = "1.0";
+export type SchemaVersion90 = "1.0";
 export type Attempts1 = SubmissionAttempt[];
 export type ConfigSha256 = string;
 export type ManifestSha256 = string;
-export type SchemaVersion92 = "1.0";
+export type SchemaVersion91 = "1.0";
 export type Description = string;
-export type ProfileId9 = string;
-export type SchemaVersion93 = "1.0";
+export type ProfileId8 = string;
+export type SchemaVersion92 = "1.0";
 export type Title9 = string;
 export type Items6 = ChecklistVersion[];
 export type Limit4 = number;
 export type Offset4 = number;
-export type SchemaVersion94 = "1.0";
+export type SchemaVersion93 = "1.0";
 export type Total5 = number;
 
 export interface CQAContracts {
@@ -840,7 +827,6 @@ export interface CQAContracts {
   ScoringChoice: ScoringChoice;
   ScoringCriterion: ScoringCriterion;
   ScoringHashInput: ScoringHashInput;
-  SecondOpinion: SecondOpinion;
   Section: Section;
   SectionResult: SectionResult;
   SemanticChoice: SemanticChoice;
@@ -2028,35 +2014,14 @@ export interface ScoringHashInput {
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
- * via the `definition` "SecondOpinion".
- */
-export interface SecondOpinion {
-  appeal_id: AppealId2;
-  calls?: Calls4;
-  created_at: CreatedAt8;
-  criterion_id: CriterionId13;
-  error?: APIError | null;
-  evaluation_id: EvaluationId5;
-  finished_at?: FinishedAt4;
-  id: Id18;
-  mode: Mode8;
-  profile_id: ProfileId7;
-  profile_version: ProfileVersion5;
-  proposal?: CriterionProposal | null;
-  schema_version?: SchemaVersion84;
-  source_fragments?: SourceFragments2;
-  state: State5;
-}
-/**
- * This interface was referenced by `CQAContracts`'s JSON-Schema
  * via the `definition` "SemanticChoice".
  */
 export interface SemanticChoice {
   anchor: Anchor1;
-  id: Id19;
+  id: Id18;
   label: Label1;
   raw_value: RawValue2;
-  schema_version?: SchemaVersion85;
+  schema_version?: SchemaVersion84;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -2069,11 +2034,11 @@ export interface SemanticCriterion {
   definition: Definition2;
   evidence_policy: EvidencePolicy;
   flag_when_choice_ids?: FlagWhenChoiceIds2;
-  id: Id20;
+  id: Id19;
   na_condition: NaCondition2;
   requires_reference: RequiresReference1;
   response_type: ResponseType2;
-  schema_version?: SchemaVersion86;
+  schema_version?: SchemaVersion85;
   title: Title8;
 }
 /**
@@ -2082,7 +2047,7 @@ export interface SemanticCriterion {
  */
 export interface SemanticHashInput {
   criteria: Criteria6;
-  schema_version?: SchemaVersion87;
+  schema_version?: SchemaVersion86;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -2090,10 +2055,10 @@ export interface SemanticHashInput {
  */
 export interface SubmissionConfig {
   checklist_version_id: ChecklistVersionId7;
-  profile_id: ProfileId8;
-  profile_version: ProfileVersion6;
+  profile_id: ProfileId7;
+  profile_version: ProfileVersion5;
   redactions?: Redactions;
-  schema_version?: SchemaVersion88;
+  schema_version?: SchemaVersion87;
   submission_branch: SubmissionBranch;
   team_name: TeamName1;
 }
@@ -2104,7 +2069,7 @@ export interface SubmissionConfig {
 export interface SubmissionManifest {
   dataset: Dataset;
   entries: Entries;
-  schema_version?: SchemaVersion90;
+  schema_version?: SchemaVersion89;
   source_sha256: SourceSha256;
 }
 /**
@@ -2117,7 +2082,7 @@ export interface SubmissionEntry {
   external_id: ExternalId2;
   language: Language3;
   revision: Revision5;
-  schema_version?: SchemaVersion89;
+  schema_version?: SchemaVersion88;
   turn_hashes: TurnHashes;
 }
 /**
@@ -2128,7 +2093,7 @@ export interface SubmissionRun {
   attempts: Attempts1;
   config_sha256: ConfigSha256;
   manifest_sha256: ManifestSha256;
-  schema_version?: SchemaVersion92;
+  schema_version?: SchemaVersion91;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -2138,7 +2103,7 @@ export interface SubmissionAttempt {
   batch_id?: BatchId2;
   external_id: ExternalId3;
   idempotency_key: IdempotencyKey;
-  schema_version?: SchemaVersion91;
+  schema_version?: SchemaVersion90;
 }
 /**
  * This interface was referenced by `CQAContracts`'s JSON-Schema
@@ -2146,8 +2111,8 @@ export interface SubmissionAttempt {
  */
 export interface SuggestCriterionRequest {
   description: Description;
-  profile_id: ProfileId9;
-  schema_version?: SchemaVersion93;
+  profile_id: ProfileId8;
+  schema_version?: SchemaVersion92;
   title: Title9;
 }
 /**
@@ -2158,6 +2123,6 @@ export interface VersionList {
   items: Items6;
   limit: Limit4;
   offset: Offset4;
-  schema_version?: SchemaVersion94;
+  schema_version?: SchemaVersion93;
   total: Total5;
 }
